@@ -18,7 +18,7 @@ export interface Try<A, B = Error> {
 
 export class Success<A, B> implements Try<A, B> {
 
-    constructor(
+    public constructor(
         private readonly value: A
     ) { }
 
@@ -60,47 +60,50 @@ export class Success<A, B> implements Try<A, B> {
 
 export class Failure<A, B> implements Try<A, B> {
 
-    constructor(
+    public constructor(
         private readonly value: B
     ) { }
 
-    isSuccess(): boolean {
+    public isSuccess(): boolean {
         return false
     }
 
-    success(): Option<A> {
+    public success(): Option<A> {
         return new None()
     }
 
-    error(): Option<B> {
+    public error(): Option<B> {
         return new Some(this.value)
     }
 
-    map<T>(): Failure<T, B> {
+    public map<T>(): Failure<T, B> {
         return new Failure(this.value)
     }
 
-    flatMap<T>(): Failure<T, B> {
+    public flatMap<T>(): Failure<T, B> {
         return new Failure(this.value)
     }
 
-    recover<T>(f: (b: B) => T): Try<T, B> {
+    public recover<T>(f: (b: B) => T): Try<T, B> {
         return new Success(f(this.value))
     }
 
-    flatRecover<T>(f: (b: B) => Try<T, B>): Try<T, B> {
+    public flatRecover<T>(f: (b: B) => Try<T, B>): Try<T, B> {
         return f(this.value)
     }
 
-    filter(): Failure<A, B> {
+    public filter(): Failure<A, B> {
         return this
     }
 }
 
-export function of<A>(throwingProvider: () => A): Try<A> {
-    try {
-        return new Success(throwingProvider())
-    } catch (e) {
-        return new Failure(e)
+export namespace Try {
+
+    export function of<A>(throwingProvider: () => A): Try<A> {
+        try {
+            return new Success(throwingProvider())
+        } catch (e) {
+            return new Failure(e)
+        }
     }
 }

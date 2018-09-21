@@ -1,14 +1,14 @@
-import { lazy } from "../../src/lazy"
+import { Lazy } from "../../src/lazy"
 
 describe("lazy", () => {
 
     it("returns the result of the function", () => {
-        expect(lazy(() => 1)()).toEqual(1)
+        expect(Lazy.lazy(() => 1)()).toEqual(1)
     })
 
     it("caches the result of the function", () => {
         let invoked = 0
-        const l = lazy(() => {
+        const l = Lazy.lazy(() => {
             if (invoked > 0) {
                 throw Error()
             }

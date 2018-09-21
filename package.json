@@ -1,7 +1,7 @@
 {
-    "name": "monads-ts",
-    "version": "1.0.0",
-    "description": "NOT TO BE PUBLISHED",
+    "name": "lazy-space",
+    "version": "0.0.1",
+    "description": "Monads and collections in typescript",
     "main": "main.ts",
     "license": "MIT",
     "scripts": {
@@ -22,19 +22,11 @@
         "babel-jest": "^22.1.0",
         "jest": "^23.5.0",
         "jsverify": "^0.8.3",
+        "npm-run-all": "^4.1.3",
         "ts-jest": "^22.0.1",
         "ts-loader": "^4.4.2",
         "tslint": "^5.11.0",
         "typescript": "^3.0.1",
         "typescript-formatter": "^7.1.0"
-    },
-    "engines": {
-        "node": ">= 6.0.0",
-        "npm": ">= 3.0.0"
-    },
-    "browserslist": [
-        "> 1%",
-        "last 2 versions",
-        "not ie <= 8"
-    ]
+    }
 }

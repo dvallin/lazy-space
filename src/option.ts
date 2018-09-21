@@ -88,6 +88,9 @@ export class None<A> implements Option<A> {
     }
 }
 
-export function of<A>(value: A | undefined | null): Option<A> {
-    return (value === undefined || value === null) ? new None() : new Some(value)
+export namespace Option {
+
+    export function of<A>(value: A | undefined | null): Option<A> {
+        return (value === undefined || value === null) ? new None() : new Some(value)
+    }
 }
