@@ -1,4 +1,4 @@
-import { SparseStorage, DenseStorage, Storage } from "../../src/ecs/storage"
+import { SparseStorage, DenseStorage, Storage } from "../../src/ecs"
 import { Some, None } from "../../src/option"
 
 describe("SparseStorage", () => {

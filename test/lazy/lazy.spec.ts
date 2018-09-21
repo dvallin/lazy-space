@@ -1,4 +1,4 @@
-import { lazy } from "../src/lazy"
+import { lazy } from "../../src/lazy"
 
 describe("lazy", () => {
 

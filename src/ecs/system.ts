@@ -1,5 +1,5 @@
-import { Entity } from "@/ecs/entity"
-import { Component } from "@/ecs/component"
+import { Entity } from "../ecs/entity"
+import { Component } from "../ecs/component"
 
 export interface System {
     components(): string[]

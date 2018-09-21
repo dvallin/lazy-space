@@ -1,9 +1,15 @@
 export interface Option<A> {
 
+    isPresent(): boolean
+
+    get<B>(defaultValue: B): A | B
+
     map<B>(f: (a: A) => B): Option<B>
     flatMap<B>(f: (a: A) => Option<B>): Option<B>
-    get<B>(defaultValue: B): A | B
+
     or<B>(other: Option<B>): Option<A | B>
+    and<B>(other: Option<B>): Option<A | B>
+
     filter(f: (a: A) => boolean): Option<A>
 }
 
@@ -13,7 +19,11 @@ export class Some<A> implements Option<A> {
         private readonly value: A
     ) { }
 
-    map<B>(f: (a: A) => B): Option<B> {
+    public isPresent(): boolean {
+        return true
+    }
+
+    public map<B>(f: (a: A) => B): Option<B> {
         const value = f(this.value)
         if (value === undefined) {
             return new None()
@@ -22,19 +32,23 @@ export class Some<A> implements Option<A> {
         }
     }
 
-    flatMap<B>(f: (a: A) => Option<B>): Option<B> {
+    public flatMap<B>(f: (a: A) => Option<B>): Option<B> {
         return f(this.value)
     }
 
-    get(): A {
+    public get(): A {
         return this.value
     }
 
-    or(): Some<A> {
+    public or(): Some<A> {
         return this
     }
 
-    filter(f: (a: A) => boolean): Option<A> {
+    public and<B>(other: Option<B>): Option<B> {
+        return other
+    }
+
+    public filter(f: (a: A) => boolean): Option<A> {
         if (f(this.value)) {
             return this
         } else {
@@ -45,27 +59,35 @@ export class Some<A> implements Option<A> {
 
 export class None<A> implements Option<A> {
 
-    map<B>(): None<B> {
+    public isPresent(): boolean {
+        return false
+    }
+
+    public map<B>(): None<B> {
         return new None()
     }
 
-    flatMap<B>(): None<B> {
+    public flatMap<B>(): None<B> {
         return new None()
     }
 
-    get<B>(defaultValue: B): B {
+    public get<B>(defaultValue: B): B {
         return defaultValue
     }
 
-    or<B>(other: Option<B>): Option<B> {
+    public or<B>(other: Option<B>): Option<B> {
         return other
     }
 
-    filter(): None<A> {
+    public and(): None<A> {
+        return this
+    }
+
+    public filter(): None<A> {
         return this
     }
 }
 
-export function of<A>(value: A | undefined): Option<A> {
-    return value === undefined ? new None() : new Some(value)
+export function of<A>(value: A | undefined | null): Option<A> {
+    return (value === undefined || value === null) ? new None() : new Some(value)
 }

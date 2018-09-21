@@ -1,5 +1,7 @@
-import { World } from "@/ecs/world"
-import { Component } from "@/ecs/component"
+import { World } from "./world"
+import { Component } from "./component"
+
+import { evaluate } from "../lazy"
 
 export type Entity = number
 
@@ -23,6 +25,6 @@ export class EntityModifier {
     }
 
     delete(): void {
-        this.world.allStorages().map(s => s.remove(this.entity)).evaluate()
+        evaluate(this.world.allStorages().map(s => s.remove(this.entity)))
     }
 }

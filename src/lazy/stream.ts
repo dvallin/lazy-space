@@ -1,5 +1,5 @@
-import { Option, Some, None } from "@/option"
-import { lazy } from "@/lazy/lazy"
+import { Option, Some, None } from "../option"
+import { lazy } from "../lazy/lazy"
 
 export type Predicate<A> = (a: A) => boolean
 export type Accumulator<A, B> = (accumulate: B, result: A) => B
@@ -7,8 +7,10 @@ export type LazyAccumulator<A, B> = (result: A, accumulate: () => B) => B
 
 export interface Stream<A> {
 
+    isEmpty(): boolean
+
     head(): Option<A>
-    tail(): Option<Stream<A>>
+    tail(): Stream<A>
 
     take(n: number): Stream<A>
     drop(n: number): Stream<A>
@@ -20,24 +22,22 @@ export interface Stream<A> {
 
     map<B>(f: (a: A) => B): Stream<B>
     filter(f: (a: A) => boolean): Stream<A>
-    filterMap<B>(f: (a: A) => Option<B>): Stream<B>
     flatMap<B>(f: (a: A) => Stream<B>): Stream<B>
     append(other: () => Stream<A>): Stream<A>
-
-    exists(f: Predicate<A>): boolean
-    all(f: Predicate<A>): boolean
-
-    evaluate(): A[]
 }
 
 class Empty<A> implements Stream<A> {
+
+    public isEmpty(): boolean {
+        return true
+    }
 
     public head(): Option<A> {
         return new None()
     }
 
-    public tail(): Option<Stream<A>> {
-        return new None()
+    public tail(): Stream<A> {
+        return this
     }
 
     public take(): Empty<A> {
@@ -72,28 +72,12 @@ class Empty<A> implements Stream<A> {
         return new Empty()
     }
 
-    public filterMap<B>(): Empty<B> {
-        return new Empty()
-    }
-
     public flatMap<B>(): Empty<B> {
         return new Empty()
     }
 
     public append<B>(other: () => Stream<B>): Stream<B> {
         return other()
-    }
-
-    public exists(): boolean {
-        return false
-    }
-
-    public all(): boolean {
-        return true
-    }
-
-    public evaluate(): A[] {
-        return []
     }
 }
 
@@ -104,12 +88,16 @@ class Cons<A> implements Stream<A> {
         readonly _tail: () => Stream<A>
     ) { }
 
+    public isEmpty(): boolean {
+        return false
+    }
+
     public head(): Option<A> {
         return new Some(this._head())
     }
 
-    public tail(): Option<Stream<A>> {
-        return new Some(this._tail())
+    public tail(): Stream<A> {
+        return this._tail()
     }
 
     public take(n: number): Stream<A> {
@@ -160,36 +148,12 @@ class Cons<A> implements Stream<A> {
         return this._tail().filter(f)
     }
 
-    public filterMap<B>(f: (a: A) => Option<B>): Stream<B> {
-        const value = f(this._head()).get(undefined)
-        if (value !== undefined) {
-            return new Cons(() => value, () => this._tail().filterMap(f))
-        }
-        return this._tail().filterMap(f)
-    }
-
     public flatMap<B>(f: (a: A) => Stream<B>): Stream<B> {
         return this.foldRight(() => new Empty() as Stream<B>, (head, tail) => f(head).append(tail))
     }
 
     public append(other: () => Stream<A>): Stream<A> {
         return this.foldRight(other, (head, tail) => new Cons(() => head, tail))
-    }
-
-    public exists(f: Predicate<A>): boolean {
-        return this.foldRight(() => false, (result, accumulate) => f(result) || accumulate())
-    }
-
-    public all(f: Predicate<A>): boolean {
-        return this.foldRight(() => true, (result, accumulate) => f(result) && accumulate())
-    }
-
-    public evaluate(): A[] {
-        const initial: A[] = []
-        return this.fold(initial, (accumulate, result) => {
-            accumulate.push(result)
-            return accumulate
-        })
     }
 }
 
@@ -256,5 +220,25 @@ export function iterator<A>(iter: IterableIterator<A>): Stream<A> {
                 state: {}
             })
         }
+    })
+}
+
+export function exists<A>(stream: Stream<A>, f: Predicate<A>): boolean {
+    return stream.foldRight(() => false, (result, accumulate) => f(result) || accumulate())
+}
+
+export function all<A>(stream: Stream<A>, f: Predicate<A>): boolean {
+    return stream.foldRight(() => true, (result, accumulate) => f(result) && accumulate())
+}
+
+export function find<A>(stream: Stream<A>, f: (a: A) => boolean): Option<A> {
+    return stream.foldRight(() => new None() as Option<A>, (result, accumulate) => f(result) ? new Some(result) : accumulate())
+}
+
+export function evaluate<A>(stream: Stream<A>): A[] {
+    const initial: A[] = []
+    return stream.fold(initial, (accumulate, result) => {
+        accumulate.push(result)
+        return accumulate
     })
 }

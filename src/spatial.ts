@@ -1,5 +1,5 @@
-import { Stream, just } from "@/lazy/stream"
-import { lazy } from "@/lazy/lazy";
+import { Stream, just } from "./lazy/stream"
+import { lazy } from "./lazy/lazy"
 
 export class Vector {
 

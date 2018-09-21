@@ -1,6 +1,7 @@
-import { Entity } from "@/ecs/entity"
-import { Component } from "@/ecs/component"
-import { Option, of } from "@/option"
+import { Entity } from "./entity"
+import { Component } from "./component"
+
+import { Option, of } from "../option"
 
 export interface Storage<A extends Component> {
 

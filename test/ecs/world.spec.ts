@@ -1,7 +1,6 @@
-import { World } from "../../src/ecs/world"
-import { DenseStorage } from "../../src/ecs/storage"
+import { World, DenseStorage } from "../../src/ecs"
 import { Vector } from "../../src/spatial"
-import { None } from "../../src/option";
+import { None } from "../../src/option"
 
 describe("World", () => {
 

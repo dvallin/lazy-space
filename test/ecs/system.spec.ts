@@ -1,10 +1,5 @@
-import { System } from "../../src/ecs/system"
-
-import { World } from "../../src/ecs/world"
+import { World, Entity, Component, System, DenseStorage } from "../../src/ecs"
 import { Vector } from "../../src/spatial"
-import { Entity } from "../../src/ecs/entity"
-import { Component } from "../../src/ecs/component"
-import { DenseStorage } from "../../src/ecs/storage"
 
 describe("Single Component Systems", () => {
     let world: World

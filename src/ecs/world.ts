@@ -1,9 +1,10 @@
-import { Storage } from "@/ecs/storage"
-import { System } from "@/ecs/system"
-import { Component } from "@/ecs/component"
-import { Option, of, None, Some } from "@/option"
-import { EntityModifier, Entity } from "@/ecs/entity"
-import { interval, Stream, iterator } from "@/lazy/stream"
+import { Storage } from "./storage"
+import { System } from "./system"
+import { Component } from "./component"
+import { EntityModifier, Entity } from "./entity"
+
+import { Option, of, None, Some } from "../option"
+import { interval, Stream, iterator } from "../lazy/stream"
 
 export interface FetchedEntity {
     entity: Entity
@@ -67,8 +68,8 @@ export class World {
         return new Some({ entity, components })
     }
 
-    tick(): void {
-        interval(0, this.lastEntity)
+    tick(): Stream<void> {
+        return interval(0, this.lastEntity)
             .filter(e => !this.openEntities.has(e))
             .flatMap(e => {
                 return iterator(this.systems.values()).map(system => {
@@ -76,7 +77,6 @@ export class World {
                         .map((entity) => system.process(e, entity.components))
                 })
             })
-            .evaluate()
     }
 
 
