@@ -1,8 +1,9 @@
 {
     "name": "lazy-space",
-    "version": "0.0.3",
+    "version": "0.0.5",
     "description": "Monads and collections in typescript",
-    "main": "main.ts",
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
     "repository": "github:dvallin/spacegun",
     "license": "MIT",
     "scripts": {

@@ -83,7 +83,7 @@ export class Empty<A> implements Stream<A> {
 
 export class Cons<A> implements Stream<A> {
 
-    constructor(
+    public constructor(
         readonly headFunction: () => A,
         readonly tailFunction: () => Stream<A>
     ) { }
@@ -244,5 +244,4 @@ export namespace Stream {
             return accumulate
         })
     }
-
 }

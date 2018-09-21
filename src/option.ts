@@ -17,7 +17,7 @@ export interface Option<A> {
 
 export class Some<A> implements Option<A> {
 
-    constructor(
+    public constructor(
         private readonly value: A
     ) { }
 
