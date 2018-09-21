@@ -1,0 +1,40 @@
+{
+    "name": "monads-ts",
+    "version": "1.0.0",
+    "description": "NOT TO BE PUBLISHED",
+    "main": "main.ts",
+    "license": "MIT",
+    "scripts": {
+        "build": "tsc",
+        "unit": "tsc --noEmit -p test/tsconfig.test.json && jest --config config/jest.conf.js --coverage",
+        "unit:watch": "jest --watch --config config/jest.conf.js",
+        "test": "npm run unit",
+        "format": "tsfmt -r $(find config src test -name '*.js' -or -name '*.ts')  --no-tslint --no-tsconfig --no-editorconfig",
+        "lint:config": "tslint -c tslint.json config/**/*.js",
+        "lint:main": "tslint -c tslint.json -p tsconfig.json src/**/*.ts",
+        "lint:test": "tslint -c tslint.json -p test/tsconfig.test.json test/**/*.{ts,js}",
+        "lint": "npm-run-all --parallel lint:main lint:config lint:test"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@types/jest": "^23.3.1",
+        "@types/node": "^10.10.1",
+        "babel-jest": "^22.1.0",
+        "jest": "^23.5.0",
+        "jsverify": "^0.8.3",
+        "ts-jest": "^22.0.1",
+        "ts-loader": "^4.4.2",
+        "tslint": "^5.11.0",
+        "typescript": "^3.0.1",
+        "typescript-formatter": "^7.1.0"
+    },
+    "engines": {
+        "node": ">= 6.0.0",
+        "npm": ">= 3.0.0"
+    },
+    "browserslist": [
+        "> 1%",
+        "last 2 versions",
+        "not ie <= 8"
+    ]
+}
