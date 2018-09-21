@@ -1,3 +1,5 @@
+import { Predicate } from "./predicate"
+
 export interface Option<A> {
 
     isPresent(): boolean
@@ -10,7 +12,7 @@ export interface Option<A> {
     or<B>(other: Option<B>): Option<A | B>
     and<B>(other: Option<B>): Option<A | B>
 
-    filter(f: (a: A) => boolean): Option<A>
+    filter(f: Predicate<A>): Option<A>
 }
 
 export class Some<A> implements Option<A> {

@@ -1,4 +1,5 @@
 import { Option, Some, None } from "./option"
+import { Predicate } from "./predicate"
 
 export interface Try<A, B = Error> {
 
@@ -13,7 +14,7 @@ export interface Try<A, B = Error> {
     recover<T>(f: (b: B) => T): Try<T | A, B>
     flatRecover<T>(f: (b: B) => Try<T, B>): Try<T | A, B>
 
-    filter(f: (a: A) => boolean): Try<A, B | Error>
+    filter(f: Predicate<A>): Try<A, B | Error>
 }
 
 export class Success<A, B> implements Try<A, B> {

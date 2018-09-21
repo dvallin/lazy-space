@@ -1,7 +1,7 @@
 import { Option, Some, None } from "../option"
 import { Lazy } from "../lazy"
+import { Predicate } from "../predicate"
 
-export type Predicate<A> = (a: A) => boolean
 export type Accumulator<A, B> = (accumulate: B, result: A) => B
 export type LazyAccumulator<A, B> = (result: A, accumulate: () => B) => B
 
