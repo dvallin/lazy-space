@@ -1,5 +1,4 @@
 import { Option, Some, None } from "./option"
-import { Predicate } from "./predicate"
 
 export interface Try<A, B = Error> {
 
@@ -11,10 +10,9 @@ export interface Try<A, B = Error> {
     map<T>(f: (a: A) => T): Try<T, B>
     flatMap<T>(f: (a: A) => Try<T, B>): Try<T, B>
 
-    recover<T>(f: (b: B) => T): Try<T | A, B>
-    flatRecover<T>(f: (b: B) => Try<T, B>): Try<T | A, B>
+    recover<T>(f: (b: B) => T): T | A
 
-    filter(f: Predicate<A>): Try<A, B | Error>
+    filter(f: (a: A) => boolean): Try<A, B | Error>
 }
 
 export class Success<A, B> implements Try<A, B> {
@@ -43,12 +41,8 @@ export class Success<A, B> implements Try<A, B> {
         return f(this.value)
     }
 
-    public recover(): Try<A, B> {
-        return this
-    }
-
-    public flatRecover(): Try<A, B> {
-        return this
+    public recover(): A {
+        return this.value
     }
 
     public filter(f: (a: A) => boolean): Try<A, B | Error> {
@@ -85,11 +79,7 @@ export class Failure<A, B> implements Try<A, B> {
         return new Failure(this.value)
     }
 
-    public recover<T>(f: (b: B) => T): Try<T, B> {
-        return new Success(f(this.value))
-    }
-
-    public flatRecover<T>(f: (b: B) => Try<T, B>): Try<T, B> {
+    public recover<T>(f: (b: B) => T): T {
         return f(this.value)
     }
 
@@ -105,6 +95,14 @@ export namespace Try {
             return new Success(throwingProvider())
         } catch (e) {
             return new Failure(e)
+        }
+    }
+
+    export async function ofPromise<T>(p: Promise<T>): Promise<Try<T>> {
+        try {
+            return new Success(await p)
+        } catch (error) {
+            return new Failure(error)
         }
     }
 }

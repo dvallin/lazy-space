@@ -28,6 +28,43 @@ describe("Stream.of", () => {
     })
 })
 
+describe("isEmpty", () => {
+
+    it("is true for empty streams", () => {
+        expect(Stream.just([]).isEmpty()).toBeTruthy()
+    })
+
+    it("is false for non-empty streams", () => {
+        expect(Stream.just([1]).isEmpty()).toBeFalsy()
+    })
+
+    it("is false for infinite streams", () => {
+        expect(Stream.natural().isEmpty()).toBeFalsy()
+    })
+})
+
+describe("head", () => {
+
+    it("is not present for empty stream", () => {
+        expect(Stream.just([]).head().isPresent()).toBeFalsy()
+    })
+
+    it("is the head value of non-empty stream", () => {
+        expect(Stream.just([1]).head().get(undefined)).toEqual(1)
+    })
+})
+
+describe("tail", () => {
+
+    it("is the empty stream for empty stream", () => {
+        expect(Stream.just([]).tail().isEmpty()).toBeTruthy()
+    })
+
+    it("is the tail for non-empty streams", () => {
+        expect(Stream.natural().tail().head().get(undefined)).toEqual(2)
+    })
+})
+
 describe("just", () => {
 
     it("wraps empty lists in a stream", () => {
@@ -189,6 +226,18 @@ describe("unfold", () => {
     })
 })
 
+describe("iterator", () => {
+
+    it("constructs a stream from an iterator", () => {
+        const s = new Set()
+        s.add(1)
+        s.add(2)
+        s.add(3)
+
+        expect(Stream.evaluate(Stream.iterator(s.values()))).toEqual([1, 2, 3])
+    })
+})
+
 describe("find", () => {
 
     it("can find none on empty stream", () => {
@@ -197,5 +246,12 @@ describe("find", () => {
 
     it("can find none on empty stream", () => {
         expect(Stream.find(Stream.natural(1), (n) => n === 5)).toEqual(new Some(5))
+    })
+})
+
+describe("interval", () => {
+
+    it("gives the interval", () => {
+        expect(Stream.evaluate(Stream.interval(-14, -12))).toEqual([-14, -13, -12])
     })
 })

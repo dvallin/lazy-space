@@ -1,10 +1,9 @@
-import { Predicate } from "./predicate"
-
 export interface Option<A> {
 
     isPresent(): boolean
 
     get<B>(defaultValue: B): A | B
+    orElse<B>(f: () => B): A | B
 
     map<B>(f: (a: A) => B): Option<B>
     flatMap<B>(f: (a: A) => Option<B>): Option<B>
@@ -12,7 +11,7 @@ export interface Option<A> {
     or<B>(other: Option<B>): Option<A | B>
     and<B>(other: Option<B>): Option<A | B>
 
-    filter(f: Predicate<A>): Option<A>
+    filter(f: (a: A) => boolean): Option<A>
 }
 
 export class Some<A> implements Option<A> {
@@ -39,6 +38,10 @@ export class Some<A> implements Option<A> {
     }
 
     public get(): A {
+        return this.value
+    }
+
+    public orElse(): A {
         return this.value
     }
 
@@ -75,6 +78,10 @@ export class None<A> implements Option<A> {
 
     public get<B>(defaultValue: B): B {
         return defaultValue
+    }
+
+    public orElse<B>(f: () => B): B {
+        return f()
     }
 
     public or<B>(other: Option<B>): Option<B> {
