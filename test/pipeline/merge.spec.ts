@@ -58,11 +58,6 @@ describe("Merge", () => {
 
     describe("merging", () => {
 
-        it("returns empty if only one push has happened", () => {
-            expect(new Concat().pushL.push("someText")).toEqual(new Empty())
-            expect(new Concat().pushR.push(2)).toEqual(new Empty())
-        })
-
         it("resets right when both merges have happened", () => {
             concat.pushL.push("someText")
             concat.pushR.push(2)

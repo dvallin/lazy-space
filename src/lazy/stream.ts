@@ -17,6 +17,7 @@ export interface Stream<A> {
     dropWhile(f: (a: A) => boolean): Stream<A>
 
     fold<B>(initial: B, f: Accumulator<A, B>): B
+    flatten(combine: Accumulator<A, A>): Option<A>
     foldRight<B>(initial: () => B, combine: LazyAccumulator<A, B>): B
 
     map<B>(f: (a: A) => B): Stream<B>
@@ -61,6 +62,10 @@ export class Empty<A> implements Stream<A> {
 
     public foldRight<B>(initial: () => B): B {
         return initial()
+    }
+
+    public flatten(): None<A> {
+        return new None()
     }
 
     public map<B>(): Empty<B> {
@@ -130,6 +135,11 @@ export class Cons<A> implements Stream<A> {
     public fold<B>(initial: B, combine: Accumulator<A, B>): B {
         const accumulate = combine(initial, this.headFunction())
         return this.tailFunction().fold(accumulate, combine)
+    }
+
+    public flatten(combine: Accumulator<A, A>): Option<A> {
+        const head = this.headFunction()
+        return new Some(this.tailFunction().fold(head, combine))
     }
 
     public foldRight<B>(initial: () => B, combine: LazyAccumulator<A, B>): B {

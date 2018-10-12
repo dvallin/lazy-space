@@ -1,15 +1,16 @@
 import { pushOf, Push } from "../../src/pipeline/elements"
-import { Stream } from "../../src/lazy"
+import { PromiseEval } from "../../src/eval"
 
 describe("pushOf", () => {
 
-    it("constructs a push from a function", () => {
+    it("constructs a push from a function", async () => {
         const effect = jest.fn()
-        const effectTimes = (n: number) => Stream.interval(0, n).map(i => effect(i))
+        const effectTimes = (n: number) => new PromiseEval(Promise.resolve(effect(n)))
         const p: Push<number> = pushOf<number>(effectTimes)
 
-        Stream.evaluate(p.push(2))
+        await p.push(42)
 
-        expect(effect).toHaveBeenCalledTimes(3)
+        expect(effect).toHaveBeenCalledTimes(1)
+        expect(effect).toHaveBeenCalledWith(42)
     })
 })

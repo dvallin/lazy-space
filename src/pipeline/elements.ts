@@ -1,7 +1,7 @@
-import { Stream } from "../lazy"
+import { Eval } from "../eval"
 
 export interface Push<I> {
-    push(input: I): Stream<void>
+    push(input: I): Eval<void>
 }
 
 export interface Push2<L, R> {
@@ -14,9 +14,9 @@ export interface Source<O> {
     subscribe(p: Push<O>): void
 }
 
-export function pushOf<T>(f: (input: T) => Stream<void>): Push<T> {
+export function pushOf<T>(f: (input: T) => Eval<void>): Push<T> {
     return {
-        push(input: T): Stream<void> {
+        push(input: T): Eval<void> {
             return f(input)
         }
     }

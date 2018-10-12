@@ -1,7 +1,8 @@
 
 import { Push2, Source, pushOf, Push } from "./elements"
 import { Option, None } from "../option"
-import { Stream, Empty } from "../lazy"
+import { Stream } from "../lazy"
+import { Eval, flattenEvals } from "../eval"
 
 export abstract class Merge<L, R, T> implements Push2<L, R>, Source<T> {
 
@@ -31,15 +32,12 @@ export abstract class Merge<L, R, T> implements Push2<L, R>, Source<T> {
 
     protected abstract merge(): Option<T>
 
-    private tryPush(): Stream<void> {
+    private tryPush(): Eval<void> {
         const t = this.merge()
-        if (t.isPresent()) {
+        return flattenEvals(t.toStream().flatMap(o => {
             this.reset()
-        }
-        return t.map(o => Stream
-            .iterator(this.subscriptions.values())
-            .flatMap<void>(s => s.push(o))
-        ).orElse(() => new Empty())
+            return Stream.iterator(this.subscriptions.values()).map(s => s.push(o))
+        })).orElse(() => Eval.noop())
     }
 
     private reset(): void {

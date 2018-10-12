@@ -1,3 +1,5 @@
+import { Stream, Empty } from "./lazy"
+
 export interface Option<A> {
 
     isPresent(): boolean
@@ -12,6 +14,8 @@ export interface Option<A> {
     and<B>(other: Option<B>): Option<A | B>
 
     filter(f: (a: A) => boolean): Option<A>
+
+    toStream(): Stream<A>
 }
 
 export class Some<A> implements Option<A> {
@@ -60,6 +64,10 @@ export class Some<A> implements Option<A> {
             return new None()
         }
     }
+
+    public toStream(): Stream<A> {
+        return Stream.just([this.value])
+    }
 }
 
 export class None<A> implements Option<A> {
@@ -94,6 +102,10 @@ export class None<A> implements Option<A> {
 
     public filter(): None<A> {
         return this
+    }
+
+    public toStream(): Stream<A> {
+        return new Empty()
     }
 }
 

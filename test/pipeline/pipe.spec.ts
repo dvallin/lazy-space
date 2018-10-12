@@ -1,13 +1,13 @@
-import { Empty } from "../../src/lazy"
 import { Pipe } from "../../src/pipeline/pipe"
 import { pushOf } from "../../src/pipeline/elements"
+import { Eval, PromiseEval } from "../../src/eval"
 
 const pass = jest.fn()
 class ToString<T> extends Pipe<T, string> {
 
-    public pass(input: T): string {
+    public pass(input: T): Eval<string> {
         pass(input)
-        return input.toString()
+        return new PromiseEval(Promise.resolve(input.toString()))
     }
 }
 
@@ -30,13 +30,13 @@ describe("Merge", () => {
 
     describe("subscriptions", () => {
 
-        it("calls subscriptions", () => {
-            const sub1 = jest.fn(() => new Empty())
-            const sub2 = jest.fn(() => new Empty())
+        it("calls subscriptions", async () => {
+            const sub1 = jest.fn(() => Eval.noop())
+            const sub2 = jest.fn(() => Eval.noop())
             toString.subscribe(pushOf(i => sub1(i)))
             toString.subscribe(pushOf(i => sub2(i)))
 
-            toString.push(2)
+            await toString.push(2).toPromise()
 
             expect(sub1).toHaveBeenCalledWith("2")
             expect(sub2).toHaveBeenCalledWith("2")
