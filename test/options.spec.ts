@@ -1,4 +1,4 @@
-import { Some, None, Option } from "../src/option"
+import { Some, None, Option } from "../src"
 
 describe("isPresent", () => {
 
@@ -115,5 +115,15 @@ describe("of", () => {
         expect(Option.of(() => {
             throw new Error()
         }).isPresent()).toBeTruthy()
+    })
+})
+describe("toStream", () => {
+
+    it("maps none to empty stream", () => {
+        expect(new None().toStream().isEmpty()).toBeTruthy()
+    })
+
+    it("maps some to a stream", () => {
+        expect(new Some(2).toStream().head()).toEqual(new Some(2))
     })
 })

@@ -1,5 +1,4 @@
-import { pushOf, Push } from "../../src/pipeline/elements"
-import { PromiseEval } from "../../src/eval"
+import { pushOf, Push, PromiseEval } from "../../src"
 
 describe("pushOf", () => {
 

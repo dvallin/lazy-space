@@ -1,5 +1,4 @@
-import { Success, Failure, Try } from "../src/try"
-import { None, Some } from "../src/option"
+import { Success, Failure, Try, None, Some } from "../src"
 
 describe("map", () => {
 

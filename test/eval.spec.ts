@@ -1,4 +1,4 @@
-import { Eval, PromiseEval, TryEval } from "../src/eval"
+import { Eval, PromiseEval, TryEval } from "../src"
 
 describe("PromiseEval", () => {
 
