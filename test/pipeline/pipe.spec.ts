@@ -1,6 +1,4 @@
-import { Pipe } from "../../src/pipeline/pipe"
-import { pushOf } from "../../src/pipeline/elements"
-import { Eval, PromiseEval } from "../../src/eval"
+import { Pipe, pushOf, Eval, PromiseEval } from "../../src"
 
 const pass = jest.fn()
 class ToString<T> extends Pipe<T, string> {

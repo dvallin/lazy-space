@@ -6,11 +6,17 @@ import { Eval, flattenEvals } from "../eval"
 
 export abstract class Merge<L, R, T> implements Push2<L, R>, Source<T> {
 
+    protected readonly subscriptions: Set<Push<T>> = new Set()
+
+    protected left: Option<L>
+    protected right: Option<R>
+
     public constructor(
-        protected left: Option<L> = new None(),
-        protected right: Option<R> = new None(),
-        protected readonly subscriptions: Set<Push<T>> = new Set()
+        protected readonly defaultLeft: Option<L> = new None(),
+        protected readonly defaultRight: Option<R> = new None()
     ) {
+        this.left = defaultLeft
+        this.right = defaultRight
     }
 
     public get pushL(): Push<L> {
@@ -30,18 +36,25 @@ export abstract class Merge<L, R, T> implements Push2<L, R>, Source<T> {
         this.subscriptions.add(p)
     }
 
-    protected abstract merge(): Option<T>
+    protected abstract merge(): Option<Eval<T>>
 
     private tryPush(): Eval<void> {
         const t = this.merge()
-        return flattenEvals(t.toStream().flatMap(o => {
+        if (t.isPresent()) {
             this.reset()
-            return Stream.iterator(this.subscriptions.values()).map(s => s.push(o))
-        })).orElse(() => Eval.noop())
+        }
+        return t.map(e => e.flatMap(o =>
+            flattenEvals(this.sendToSubscribers(o))
+                .orElse(() => Eval.noop())
+        )).orElse(() => Eval.noop())
+    }
+
+    private sendToSubscribers(output: T): Stream<Eval<void>> {
+        return Stream.iterator(this.subscriptions.values()).map(s => s.push(output))
     }
 
     private reset(): void {
-        this.left = new None()
-        this.right = new None()
+        this.left = this.defaultLeft
+        this.right = this.defaultRight
     }
 }

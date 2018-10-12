@@ -1,15 +1,12 @@
-import { Merge } from "../../src/pipeline/merge"
-import { Option, Some, None } from "../../src/option"
-import { Empty } from "../../src/lazy"
-import { pushOf } from "../../src/pipeline/elements"
+import { Merge, Option, Some, None, Empty, pushOf, Eval, TryEval } from "../../src"
 
 const merge = jest.fn()
 
 class Concat extends Merge<string, number, string> {
 
-    protected merge(): Option<string> {
+    protected merge(): Option<Eval<string>> {
         merge(this.left, this.right)
-        return this.left.flatMap(left => this.right.map(right => left + right))
+        return this.left.flatMap(left => this.right.map(right => new TryEval(() => left + right)))
     }
 }
 
@@ -68,6 +65,19 @@ describe("Merge", () => {
             expect(merge).toHaveBeenCalledWith(new Some("newText"), new None())
         })
 
+        it("resets right to predefined default", () => {
+            concat = new Concat(new None(), new Some(42))
+            concat.pushL.push("someText")
+            concat.pushL.push("newText")
+            concat.pushR.push(2)
+            concat.pushL.push("newText")
+            expect(merge).toHaveBeenCalledWith(new Some("someText"), new Some(42))
+            expect(merge).toHaveBeenCalledWith(new Some("newText"), new Some(42))
+            // here the 2 gets set for the next input of left:
+            expect(merge).toHaveBeenCalledWith(new None(), new Some(2))
+            expect(merge).toHaveBeenCalledWith(new Some("newText"), new Some(2))
+        })
+
         it("resets left when both merges have happened", () => {
             concat.pushL.push("someText")
             concat.pushR.push(2)
@@ -76,6 +86,17 @@ describe("Merge", () => {
             expect(merge).toHaveBeenCalledWith(new Some("someText"), new None())
             expect(merge).toHaveBeenCalledWith(new Some("someText"), new Some(2))
             expect(merge).toHaveBeenCalledWith(new None(), new Some(3))
+        })
+
+        it("resets left to predefined default", () => {
+            concat = new Concat(new Some("defaultValue"))
+            concat.pushL.push("someText")
+            concat.pushR.push(2)
+            concat.pushR.push(3)
+
+            expect(merge).toHaveBeenCalledWith(new Some("someText"), new None())
+            expect(merge).toHaveBeenCalledWith(new Some("someText"), new Some(2))
+            expect(merge).toHaveBeenCalledWith(new Some("defaultValue"), new Some(3))
         })
     })
 
