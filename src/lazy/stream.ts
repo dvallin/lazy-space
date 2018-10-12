@@ -1,6 +1,5 @@
 import { Option, Some, None } from "../option"
 import { Lazy } from "../lazy"
-import { Predicate } from "../predicate"
 
 export type Accumulator<A, B> = (accumulate: B, result: A) => B
 export type LazyAccumulator<A, B> = (result: A, accumulate: () => B) => B
@@ -14,10 +13,11 @@ export interface Stream<A> {
 
     take(n: number): Stream<A>
     drop(n: number): Stream<A>
-    takeWhile(f: Predicate<A>): Stream<A>
-    dropWhile(f: Predicate<A>): Stream<A>
+    takeWhile(f: (a: A) => boolean): Stream<A>
+    dropWhile(f: (a: A) => boolean): Stream<A>
 
     fold<B>(initial: B, f: Accumulator<A, B>): B
+    flatten(combine: Accumulator<A, A>): Option<A>
     foldRight<B>(initial: () => B, combine: LazyAccumulator<A, B>): B
 
     map<B>(f: (a: A) => B): Stream<B>
@@ -62,6 +62,10 @@ export class Empty<A> implements Stream<A> {
 
     public foldRight<B>(initial: () => B): B {
         return initial()
+    }
+
+    public flatten(): None<A> {
+        return new None()
     }
 
     public map<B>(): Empty<B> {
@@ -114,14 +118,14 @@ export class Cons<A> implements Stream<A> {
         return this
     }
 
-    public takeWhile(f: Predicate<A>): Stream<A> {
+    public takeWhile(f: (a: A) => boolean): Stream<A> {
         if (f(this.headFunction())) {
             return new Cons(this.headFunction, () => this.tailFunction().takeWhile(f))
         }
         return new Empty()
     }
 
-    public dropWhile(f: Predicate<A>): Stream<A> {
+    public dropWhile(f: (a: A) => boolean): Stream<A> {
         if (f(this.headFunction())) {
             return this.tailFunction().dropWhile(f)
         }
@@ -131,6 +135,11 @@ export class Cons<A> implements Stream<A> {
     public fold<B>(initial: B, combine: Accumulator<A, B>): B {
         const accumulate = combine(initial, this.headFunction())
         return this.tailFunction().fold(accumulate, combine)
+    }
+
+    public flatten(combine: Accumulator<A, A>): Option<A> {
+        const head = this.headFunction()
+        return new Some(this.tailFunction().fold(head, combine))
     }
 
     public foldRight<B>(initial: () => B, combine: LazyAccumulator<A, B>): B {
@@ -225,11 +234,11 @@ export namespace Stream {
         })
     }
 
-    export function exists<A>(stream: Stream<A>, f: Predicate<A>): boolean {
+    export function exists<A>(stream: Stream<A>, f: (a: A) => boolean): boolean {
         return stream.foldRight(() => false, (result, accumulate) => f(result) || accumulate())
     }
 
-    export function all<A>(stream: Stream<A>, f: Predicate<A>): boolean {
+    export function all<A>(stream: Stream<A>, f: (a: A) => boolean): boolean {
         return stream.foldRight(() => true, (result, accumulate) => f(result) && accumulate())
     }
 

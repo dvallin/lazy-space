@@ -1,10 +1,11 @@
-import { Predicate } from "./predicate"
+import { Stream, Empty } from "./lazy"
 
 export interface Option<A> {
 
     isPresent(): boolean
 
     get<B>(defaultValue: B): A | B
+    orElse<B>(f: () => B): A | B
 
     map<B>(f: (a: A) => B): Option<B>
     flatMap<B>(f: (a: A) => Option<B>): Option<B>
@@ -12,7 +13,9 @@ export interface Option<A> {
     or<B>(other: Option<B>): Option<A | B>
     and<B>(other: Option<B>): Option<A | B>
 
-    filter(f: Predicate<A>): Option<A>
+    filter(f: (a: A) => boolean): Option<A>
+
+    toStream(): Stream<A>
 }
 
 export class Some<A> implements Option<A> {
@@ -42,6 +45,10 @@ export class Some<A> implements Option<A> {
         return this.value
     }
 
+    public orElse(): A {
+        return this.value
+    }
+
     public or(): Some<A> {
         return this
     }
@@ -56,6 +63,10 @@ export class Some<A> implements Option<A> {
         } else {
             return new None()
         }
+    }
+
+    public toStream(): Stream<A> {
+        return Stream.just([this.value])
     }
 }
 
@@ -77,6 +88,10 @@ export class None<A> implements Option<A> {
         return defaultValue
     }
 
+    public orElse<B>(f: () => B): B {
+        return f()
+    }
+
     public or<B>(other: Option<B>): Option<B> {
         return other
     }
@@ -87,6 +102,10 @@ export class None<A> implements Option<A> {
 
     public filter(): None<A> {
         return this
+    }
+
+    public toStream(): Stream<A> {
+        return new Empty()
     }
 }
 

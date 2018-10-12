@@ -43,43 +43,16 @@ describe("recover", () => {
         const t = Try.of(() => {
             throw new Error("error")
         }).recover(v => v.toString())
-        expect(t.success()).toEqual(new Some("Error: error"))
-        expect(t.error()).toEqual(new None())
+        expect(t).toEqual("Error: error")
     })
 
     it("does not recover success", () => {
         const t = Try.of(() => 2).recover(() => 3)
-        expect(t.success()).toEqual(new Some(2))
+        expect(t).toEqual(2)
     })
 })
 
-describe("flatRecover", () => {
-
-    it("recovers using the function", () => {
-        const t = Try.of(() => {
-            throw new Error("error")
-        }).flatRecover(v => Try.of(() => v.toString()))
-        expect(t.success()).toEqual(new Some("Error: error"))
-        expect(t.error()).toEqual(new None())
-    })
-
-    it("tries to recover but it may not succeed", () => {
-        const t = Try.of(() => {
-            throw new Error("error")
-        }).flatRecover(v => Try.of(() => {
-            throw new Error(v.message + "2")
-        }))
-        expect(t.success()).toEqual(new None())
-        expect(t.error()).toEqual(new Some(new Error("error2")))
-    })
-
-    it("does not recover success", () => {
-        const t = Try.of(() => 2).flatRecover(() => Try.of(() => 3))
-        expect(t.success()).toEqual(new Some(2))
-    })
-})
-
-describe("flatRecover", () => {
+describe("filter", () => {
 
     it("does not succeed if filter is not matched", () => {
         const t = Try.of(() => 2).filter(n => n > 2)
@@ -96,5 +69,30 @@ describe("flatRecover", () => {
             throw new Error("some error")
         }).filter(n => n === 2)
         expect(t.error()).toEqual(new Some(new Error("some error")))
+    })
+})
+
+describe("isSuccess", () => {
+
+    it("true for success", async () => {
+        expect(new Success(1).isSuccess()).toBeTruthy()
+    })
+
+    it("false for failure", async () => {
+        expect(new Failure(1).isSuccess()).toBeFalsy()
+    })
+})
+
+describe("ofPromise", () => {
+
+    it("fails for rejected promise", async () => {
+        const error = new Error("hello")
+        const t = await Try.ofPromise(Promise.reject(error))
+        expect(t.error()).toEqual(new Some(error))
+    })
+
+    it("succeeds for successful promise", async () => {
+        const t = await Try.ofPromise(Promise.resolve(2))
+        expect(t.success()).toEqual(new Some(2))
     })
 })
