@@ -1,11 +1,11 @@
-import { Pipe, pushOf, Eval, PromiseEval } from "../../src"
+import { Pipe, pushOf, Eval, TryEval } from "../../src"
 
 const pass = jest.fn()
 class ToString<T> extends Pipe<T, string> {
 
     public pass(input: T): Eval<string> {
         pass(input)
-        return new PromiseEval(Promise.resolve(input.toString()))
+        return new TryEval(() => input.toString())
     }
 }
 

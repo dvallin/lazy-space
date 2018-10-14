@@ -1,5 +1,5 @@
 import { Stream } from "./lazy"
-import { Option } from "./option"
+import { Option, Some, None } from "./option"
 
 export interface Eval<A> {
 
@@ -7,6 +7,7 @@ export interface Eval<A> {
     flatMap<T>(f: (v: A) => Eval<T>): Eval<T>
 
     toPromise(): Promise<A>
+    run(): Promise<A>
 }
 
 export class PromiseEval<A> implements Eval<A>  {
@@ -25,6 +26,10 @@ export class PromiseEval<A> implements Eval<A>  {
 
     public toPromise(): Promise<A> {
         return this.p
+    }
+
+    public async run(): Promise<A> {
+        return await this.p
     }
 }
 
@@ -45,9 +50,22 @@ export class TryEval<A> implements Eval<A>  {
     public toPromise(): Promise<A> {
         return Promise.resolve(this.f())
     }
+
+    public async run(): Promise<A> {
+        return this.f()
+    }
 }
 
-export function flattenEvals<T>(effects: Stream<Eval<T>>): Option<Eval<T>> {
+export function flattenEvals<T>(effects: Eval<T>[]): Option<Eval<T>> {
+    if (effects.length === 0) {
+        return new None()
+    }
+    return new Some(effects.reduce((e1: Eval<T>, e2: Eval<T>) => {
+        return e1.flatMap(() => e2)
+    }))
+}
+
+export function flattenStream<T>(effects: Stream<Eval<T>>): Option<Eval<T>> {
     return effects.flatten((e1: Eval<T>, e2: Eval<T>) => {
         return e1.flatMap(() => e2)
     })
