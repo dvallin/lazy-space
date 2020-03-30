@@ -1,117 +1,19 @@
-import { Stream, Empty } from "./lazy"
+import { Either, isLeft, Left, left, right } from './either'
 
-export interface Option<A> {
+export type Option<T> = Either<T, undefined>
 
-    isPresent(): boolean
-
-    get<B>(defaultValue: B): A | B
-    orElse<B>(f: () => B): A | B
-
-    map<B>(f: (a: A) => B): Option<B>
-    flatMap<B>(f: (a: A) => Option<B>): Option<B>
-
-    or<B>(other: Option<B>): Option<A | B>
-    and<B>(other: Option<B>): Option<A | B>
-
-    filter(f: (a: A) => boolean): Option<A>
-
-    toStream(): Stream<A>
+export function isValid<T>(option: Option<T>): option is Left<T> {
+    return isLeft(option)
 }
 
-export class Some<A> implements Option<A> {
-
-    public constructor(
-        private readonly value: A
-    ) { }
-
-    public isPresent(): boolean {
-        return true
-    }
-
-    public map<B>(f: (a: A) => B): Option<B> {
-        const value = f(this.value)
-        if (value === undefined) {
-            return new None()
-        } else {
-            return new Some(value)
-        }
-    }
-
-    public flatMap<B>(f: (a: A) => Option<B>): Option<B> {
-        return f(this.value)
-    }
-
-    public get(): A {
-        return this.value
-    }
-
-    public orElse(): A {
-        return this.value
-    }
-
-    public or(): Some<A> {
-        return this
-    }
-
-    public and<B>(other: Option<B>): Option<B> {
-        return other
-    }
-
-    public filter(f: (a: A) => boolean): Option<A> {
-        if (f(this.value)) {
-            return this
-        } else {
-            return new None()
-        }
-    }
-
-    public toStream(): Stream<A> {
-        return Stream.just([this.value])
-    }
+export function invalid<T>(): Option<T> {
+    return right(undefined)
 }
 
-export class None<A> implements Option<A> {
-
-    public isPresent(): boolean {
-        return false
-    }
-
-    public map<B>(): None<B> {
-        return new None()
-    }
-
-    public flatMap<B>(): None<B> {
-        return new None()
-    }
-
-    public get<B>(defaultValue: B): B {
-        return defaultValue
-    }
-
-    public orElse<B>(f: () => B): B {
-        return f()
-    }
-
-    public or<B>(other: Option<B>): Option<B> {
-        return other
-    }
-
-    public and(): None<A> {
-        return this
-    }
-
-    public filter(): None<A> {
-        return this
-    }
-
-    public toStream(): Stream<A> {
-        return new Empty()
-    }
+export function just<T>(value: T): Option<T> {
+    return left(value)
 }
 
-export namespace Option {
-
-    export function of<A>(value: A | undefined | null): Option<A> {
-        return (value === undefined || value === null) ? new None() : new Some(value)
-    }
+export function of<T>(value: T | undefined): Option<T> {
+    return value !== undefined ? left(value) : right(undefined)
 }
