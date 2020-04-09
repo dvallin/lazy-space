@@ -1,6 +1,4 @@
-import { Reader, lift, pipe, join, just } from '../src/reader'
-import { Option, isSome, of } from '../src/option'
-import { recover } from '../src/either'
+import { Reader, Option } from '../src'
 
 interface Context {
     env: { readonly [key: string]: string }
@@ -8,14 +6,14 @@ interface Context {
 }
 
 function readKey(key: string): Reader<Context, Option<string>> {
-    return lift((c) => of(c.env[key]))
+    return Reader.lift((c) => Option.of(c.env[key]))
 }
 function unwrapKey(key: Option<string>): Reader<Context, string> {
-    return lift((c) => {
-        if (!isSome(key)) {
+    return Reader.lift((c) => {
+        if (!Option.isSome(key)) {
             c.errors.push('could not find key')
         }
-        return recover(key, () => 'missing')
+        return Option.recover(key, () => 'missing')
     })
 }
 
@@ -32,7 +30,7 @@ describe('Reader', () => {
 
     describe('map', () => {
         it('maps a pure function onto a reader', () => {
-            const pipeline = (key: string): Reader<Context, string> => readKey(key).map((value) => recover(value, () => 'missing'))
+            const pipeline = (key: string): Reader<Context, string> => readKey(key).map((value) => Option.recover(value, () => 'missing'))
             expect(pipeline('env1').read(context)).toEqual('1')
             expect(pipeline('env2').read(context)).toEqual('missing')
         })
@@ -48,7 +46,7 @@ describe('Reader', () => {
 
     describe('pipe', () => {
         it('concatenates pipeline steps', () => {
-            const pipeline = pipe(readKey, unwrapKey)
+            const pipeline = Reader.pipe(readKey, unwrapKey)
             const result = pipeline('env2').read(context)
             expect(result).toEqual('missing')
             expect(context.errors).toHaveLength(1)
@@ -57,7 +55,7 @@ describe('Reader', () => {
 
     describe('join', () => {
         it('flattens reader', () => {
-            const pipeline = (key: string): Reader<Context, string> => join(readKey(key).map(unwrapKey))
+            const pipeline = (key: string): Reader<Context, string> => Reader.join(readKey(key).map(unwrapKey))
             const result = pipeline('env2').read(context)
             expect(result).toEqual('missing')
             expect(context.errors).toHaveLength(1)
@@ -66,7 +64,7 @@ describe('Reader', () => {
 
     describe('just', () => {
         it('only returns value without context', () => {
-            const result = just('env2').read(context)
+            const result = Reader.just('env2').read(context)
             expect(result).toEqual('env2')
         })
     })

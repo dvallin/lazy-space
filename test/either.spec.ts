@@ -1,4 +1,6 @@
-import { left, right, pipe, join } from '../src/either'
+import { Either } from '../src/either'
+const right = Either.right
+const left = Either.left
 
 describe('either', () => {
     describe('map', () => {
@@ -22,7 +24,7 @@ describe('either', () => {
     describe('then', () => {
         it('chains lefts', () => {
             expect(
-                pipe(
+                Either.pipe(
                     (s: string) => left(s),
                     (s) => left(Number(s))
                 )('1')
@@ -30,7 +32,7 @@ describe('either', () => {
         })
         it('does not chain rights', () => {
             expect(
-                pipe(
+                Either.pipe(
                     (_s) => right(new Error()),
                     (s) => left(Number(s))
                 )('1')
@@ -40,10 +42,10 @@ describe('either', () => {
 
     describe('join', () => {
         it('flattens lefts', () => {
-            expect(join(left(left('1')))).toEqual(left('1'))
+            expect(Either.join(left(left('1')))).toEqual(left('1'))
         })
         it('does not flatten rights', () => {
-            expect(join(right(left('1')))).toEqual(right(left('1')))
+            expect(Either.join(right(left('1')))).toEqual(right(left('1')))
         })
     })
 

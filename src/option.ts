@@ -1,19 +1,19 @@
-import { Either, left, right } from './either'
+import { Either } from './either'
 
-export type Option<T> = Either<T, undefined>
+export class Option<T> extends Either<T, undefined> {
+    public static isSome<T>(option: Option<T>): boolean {
+        return option.isLeft()
+    }
 
-export function isSome<T>(option: Option<T>): boolean {
-    return option.isLeft()
-}
+    public static none<T>(): Option<T> {
+        return Either.right(undefined)
+    }
 
-export function none<T>(): Option<T> {
-    return right(undefined)
-}
+    public static some<T>(value: T): Option<T> {
+        return Either.left(value)
+    }
 
-export function some<T>(value: T): Option<T> {
-    return left(value)
-}
-
-export function of<T>(value: T | undefined): Option<T> {
-    return value !== undefined ? left(value) : right(undefined)
+    public static of<T>(value: T | undefined): Option<T> {
+        return value !== undefined ? Either.left(value) : Either.right(undefined)
+    }
 }
