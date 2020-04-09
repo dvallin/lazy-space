@@ -1,53 +1,36 @@
-import {
-    map,
-    join,
-    then,
-    natural,
-    take,
-    drop,
-    toArray,
-    bind,
-    just,
-    List,
-    head,
-    empty,
-    tail,
-    fold,
-    repeat,
-    some,
-    all,
-    find,
-} from '../src/list'
-import { invalid, just as justOption } from '../src/option'
+import { join, pipe, natural, take, toArray, just, List, empty, repeat, drop } from '../src/list'
+import { some, none } from '../src/option'
 
 describe('List', () => {
     describe('map', () => {
         it('works on infinite lists', () => {
-            // given
-            const n = natural()
-
             // when
-            const nx2 = map(n, (v) => v * 2)
+            const nx2 = natural().map((v) => v * 2)
 
             // then
             expect(toArray(take(nx2, 3))).toEqual([2, 4, 6])
+        })
+
+        it('can take very long lists', () => {
+            // when
+            const nx2 = natural().map((v) => v * 2)
+
+            // then
+            expect(toArray(take(nx2, 6000))).toHaveLength(6000)
         })
     })
 
     describe('bind', () => {
         it('works on finite lists', () => {
-            const list = bind(just([3, 3]), (s) => just([2 * s, 2 * s]))
+            const list = just([3, 3]).flatMap((s) => just([2 * s, 2 * s]))
 
             // then
-            expect(toArray(take(list, 5))).toEqual([6, 6, 6, 6])
+            expect(toArray(list)).toEqual([6, 6, 6, 6])
         })
 
         it('works on infinite lists', () => {
-            // given
-            const n = natural()
-
             // when
-            const nxn = bind(n, (x) => map(natural(), (y) => ({ x, y })))
+            const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
 
             // then
             expect(toArray(take(nxn, 3))).toEqual([
@@ -56,11 +39,19 @@ describe('List', () => {
                 { x: 1, y: 3 },
             ])
         })
+
+        it('can take very long lists', () => {
+            // when
+            const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
+
+            // then
+            expect(toArray(take(nxn, 6000))).toHaveLength(6000)
+        })
     })
 
     describe('then', () => {
         it('works on finite lists', () => {
-            const list = then(
+            const list = pipe(
                 (s: number) => just([s, s]),
                 (s) => just([2 * s, 2 * s])
             )
@@ -70,7 +61,7 @@ describe('List', () => {
         })
 
         it('works on infinite lists', () => {
-            const n = then(natural, natural)
+            const n = pipe(natural, natural)
 
             // then
             expect(toArray(take(n(0), 3))).toEqual([0, 1, 2])
@@ -87,86 +78,155 @@ describe('List', () => {
         })
 
         it('works on infinite lists', () => {
-            const doubles = join(map(natural(), (n) => just([n, n])))
+            const doubles = join(natural().map((n) => just([n, n])))
 
             // then
             expect(toArray(take(doubles, 5))).toEqual([1, 1, 2, 2, 3])
+        })
+
+        it('can join very long lists', () => {
+            // when
+            const doubles = join(natural().map((n) => just([n, n])))
+
+            // then
+            expect(toArray(take(doubles, 6000))).toHaveLength(6000)
         })
     })
 
     describe('head', () => {
         it('takes first', () => {
-            expect(head(natural())).toEqual(justOption(1))
+            expect(natural().head).toEqual(some(1))
+        })
+
+        it('takes first twice', () => {
+            const n = natural()
+            expect(n.head).toEqual(some(1))
+            expect(n.head).toEqual(some(1))
+            expect(n.tail().head).toEqual(some(2))
         })
 
         it('is invalid on empty lists', () => {
-            expect(head(empty())).toEqual(invalid())
+            expect(empty().head).toEqual(none())
         })
     })
 
     describe('tail', () => {
         it('takes tail', () => {
-            expect(head(tail(natural()))).toEqual(justOption(2))
+            expect(natural().tail().head).toEqual(some(2))
+        })
+    })
+
+    describe('takeWhile', () => {
+        it('takes', () => {
+            expect(toArray(natural().takeWhile((n) => n < 2))).toEqual([1])
+        })
+    })
+
+    describe('dropWhile', () => {
+        it('drops', () => {
+            expect(
+                toArray(
+                    natural()
+                        .dropWhile((n) => n < 2)
+                        .take()
+                )
+            ).toEqual([2])
         })
     })
 
     describe('take', () => {
         it('takes', () => {
+            expect(toArray(natural().take(1))).toEqual([1])
             expect(toArray(take(natural()))).toEqual([1])
         })
     })
 
     describe('drop', () => {
         it('drops', () => {
-            expect(toArray(take(drop(natural())))).toEqual([2])
+            expect(toArray(natural().drop().take(1))).toEqual([2])
+            expect(toArray(drop(natural()).take(1))).toEqual([2])
         })
     })
 
     describe('fold', () => {
         it('reduces', () => {
-            expect(fold(take(repeat(1), 5), 3, (l, r) => l + r)).toEqual(8)
+            expect(
+                repeat(1)
+                    .take(5)
+                    .fold(3, (l, r) => l + r)
+            ).toEqual(8)
+        })
+
+        it('reduces very long lists', () => {
+            expect(
+                repeat(1)
+                    .take(6000)
+                    .fold(3, (l, r) => l + r)
+            ).toEqual(6003)
         })
     })
 
     describe('all', () => {
         it('is true if all are true', () => {
-            expect(all(take(natural(), 5), (v) => v < 6)).toBeTruthy()
+            expect(
+                natural()
+                    .take(5)
+                    .all((v) => v < 6)
+            ).toBeTruthy()
         })
 
         it('works on undefines', () => {
-            expect(all(take(repeat(undefined), 5), (v) => v === undefined)).toBeTruthy()
+            expect(
+                repeat(undefined)
+                    .take(5)
+                    .all((v) => v === undefined)
+            ).toBeTruthy()
         })
 
         it('is false if at least one is false', () => {
-            expect(all(natural(), (v) => v < 6)).toBeFalsy()
+            expect(natural().all((v) => v < 6)).toBeFalsy()
         })
     })
 
     describe('some', () => {
         it('is true if at least one is true', () => {
-            expect(some(natural(), (v) => v > 4)).toBeTruthy()
+            expect(natural().some((v) => v > 4)).toBeTruthy()
         })
 
         it('works on undefines', () => {
-            expect(some(repeat(undefined), (v) => v === undefined)).toBeTruthy()
+            expect(repeat(undefined).some((v) => v === undefined)).toBeTruthy()
         })
 
         it('is false if none is true', () => {
-            expect(some(take(natural(), 5), (v) => v > 5)).toBeFalsy()
+            expect(
+                natural()
+                    .take(5)
+                    .some((v) => v > 5)
+            ).toBeFalsy()
         })
     })
 
     describe('find', () => {
         it('finds', () => {
-            expect(find(natural(), (v) => v === 6)).toEqual(justOption(6))
+            expect(natural().find((v) => v === 6000)).toEqual(some(6000))
         })
 
         it('works on undefines', () => {
-            expect(find(repeat(undefined), (v) => v === undefined)).toEqual(justOption(undefined))
+            expect(repeat(undefined).find((v) => v === undefined)).toEqual(some(undefined))
         })
 
         it('returns invalid if cannot find element', () => {
-            expect(find(take(natural(), 5), (v) => v === 6)).toEqual(invalid())
+            expect(
+                natural()
+                    .take(5)
+                    .find((v) => v === 6)
+            ).toEqual(none())
+        })
+    })
+
+    describe('append', () => {
+        it('finds', () => {
+            expect(toArray(just([1, 1]).append(() => just([2, 2])))).toEqual([1, 1, 2, 2])
         })
     })
 })
