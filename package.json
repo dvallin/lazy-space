@@ -1,6 +1,6 @@
 {
     "name": "lazy-space",
-    "version": "0.1.0-SNAPSHOT",
+    "version": "0.1.1-SNAPSHOT",
     "description": "Monads and collections in typescript",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
