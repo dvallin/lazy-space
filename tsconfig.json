@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "esnext",
         "module": "commonjs",
         "lib": [
-            "es2015"
+            "es6"
         ],
         "moduleResolution": "node",
         "outDir": "lib",
@@ -19,11 +19,7 @@
         "baseUrl": ".",
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
-    },
-    "include": [
-        "src/**/*",
-        "node_modules/@types",
-        "types"
-    ]
+        "emitDecoratorMetadata": true,
+        "downlevelIteration": true
+    }
 }

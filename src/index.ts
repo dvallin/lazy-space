@@ -1,4 +1,8 @@
-export * from "./lazy"
-export * from "./option"
-export * from "./try"
-export * from "./eval"
+import * as Async from './async'
+import * as Either from './either'
+import * as List from './list'
+import * as Monad from './monad'
+import * as Option from './option'
+import * as Reader from './reader'
+import * as Try from './try'
+export { Async, Either, List, Monad, Option, Reader, Try }
