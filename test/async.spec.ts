@@ -61,7 +61,7 @@ describe('Async', () => {
         })
 
         it('unwraps rejected promises', async () => {
-            const value = await Async.resolve(1)
+            const value = await Async.empty()
                 .flatMap(() => Async.reject(error))
                 .run()
             expect(Try.isSuccess(value)).toBeFalsy()

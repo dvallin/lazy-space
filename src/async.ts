@@ -20,6 +20,10 @@ export class Async<T> implements Monad<T> {
         return Async.run(this)
     }
 
+    public static empty(): Async<void> {
+        return new Async(Promise.resolve())
+    }
+
     public static resolve<T>(value: T): Async<T> {
         return new Async(Promise.resolve(value))
     }
@@ -47,6 +51,7 @@ export class Async<T> implements Monad<T> {
     public static join<T>(val: Async<Async<T>>): Async<T> {
         return new Async(val.promise.then((i) => i.promise))
     }
+
     public static race<T>(values: Async<T>[]): Async<T> {
         return new Async(Promise.race(values.map((v) => v.promise)))
     }
