@@ -22,7 +22,11 @@ export class Either<S, T> implements Monad<S> {
         return Either.unwrap(this, f, g)
     }
 
-    public recover<U>(f: (error: T) => U): S | U {
+    public recover<U>(
+        f: (error: T) => U = (e) => {
+            throw e
+        }
+    ): S | U {
         return Either.recover(this, f)
     }
 

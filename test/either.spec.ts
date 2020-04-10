@@ -75,6 +75,9 @@ describe('either', () => {
         it('passes right into function', () => {
             expect(right(1).recover((r) => '' + r)).toEqual('1')
         })
+        it('throws right by default', () => {
+            expect(() => right(1).recover()).toThrow('1')
+        })
     })
 
     describe('or', () => {

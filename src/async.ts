@@ -20,8 +20,12 @@ export class Async<T> implements Monad<T> {
         return Async.run(this)
     }
 
-    public static just<T>(value: T): Async<T> {
+    public static resolve<T>(value: T): Async<T> {
         return new Async(Promise.resolve(value))
+    }
+
+    public static reject<T, E>(value?: E): Async<T> {
+        return new Async(Promise.reject(value))
     }
 
     public static lift<T>(value: Promise<T>): Async<T> {
@@ -55,10 +59,7 @@ export class Async<T> implements Monad<T> {
         try {
             return Try.success(await val.promise)
         } catch (error) {
-            if (error instanceof Error) {
-                return Try.failure(error)
-            }
-            throw error
+            return Try.failure(error)
         }
     }
 }
