@@ -7,11 +7,11 @@ export class Reader<C, T> implements Monad<T> {
         return Reader.map(this, f)
     }
 
-    public flatMap<U>(f: (t: T) => Reader<C, U>): Reader<C, U> {
+    public flatMap<C2, U>(f: (t: T) => Reader<C2, U>): Reader<C & C2, U> {
         return Reader.flatMap(this, f)
     }
 
-    public pipe<U>(f: (t: T) => Reader<C, U>): Reader<C, U> {
+    public pipe<C2, U>(f: (t: T) => Reader<C2, U>): Reader<C & C2, U> {
         return Reader.pipe(() => this, f)(null)
     }
 
@@ -39,15 +39,15 @@ export class Reader<C, T> implements Monad<T> {
         return new Reader((c) => f(val.read(c)))
     }
 
-    public static flatMap<C, S, T>(val: Reader<C, S>, f: (s: S) => Reader<C, T>): Reader<C, T> {
+    public static flatMap<C1, C2, S, T>(val: Reader<C1, S>, f: (s: S) => Reader<C2, T>): Reader<C1 & C2, T> {
         return new Reader((c) => f(val.read(c)).read(c))
     }
 
-    public static pipe<C, S, T, U>(left: (s: S) => Reader<C, T>, right: (t: T) => Reader<C, U>): (s: S) => Reader<C, U> {
+    public static pipe<C1, C2, S, T, U>(left: (s: S) => Reader<C1, T>, right: (t: T) => Reader<C2, U>): (s: S) => Reader<C1 & C2, U> {
         return (s) => Reader.flatMap(left(s), right)
     }
 
-    public static join<C, T>(val: Reader<C, Reader<C, T>>): Reader<C, T> {
+    public static join<C1, C2, T>(val: Reader<C1, Reader<C2, T>>): Reader<C1 & C2, T> {
         return new Reader((c) => val.read(c).read(c))
     }
 
