@@ -8,6 +8,11 @@ describe('Async', () => {
             return expect(value.promise).resolves.toEqual(1)
         })
 
+        it('maps empty', () => {
+            const value = Async.empty().map((s) => Number(s))
+            return expect(value.promise).resolves.toEqual(Number.NaN)
+        })
+
         it('does not map on reject', () => {
             const value = Async.reject('1').map((s) => Number(s))
             return expect(value.promise).rejects.toEqual('1')
@@ -15,9 +20,14 @@ describe('Async', () => {
     })
 
     describe('flatMap', () => {
-        it('binds on resolve', () => {
+        it('flatmaps on resolve', () => {
             const value = Async.resolve('1').flatMap((s) => Async.resolve(Number(s)))
             return expect(value.promise).resolves.toEqual(1)
+        })
+
+        it('flatmaps empty', () => {
+            const value = Async.empty().flatMap((s) => Async.resolve(Number(s)))
+            return expect(value.promise).resolves.toEqual(Number.NaN)
         })
 
         it('does not flatmap on reject', () => {

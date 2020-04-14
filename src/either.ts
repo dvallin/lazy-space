@@ -1,10 +1,16 @@
 import { Monad } from './monad'
 
-type Left<T> = { left: T; type: 'left' }
-type Right<T> = { right: T; type: 'right' }
+export interface Left<T> {
+    type: 'left'
+    value: T
+}
+export interface Right<T> {
+    type: 'right'
+    value: T
+}
 
 export class Either<S, T> implements Monad<S> {
-    public constructor(public readonly value: Left<S> | Right<T>) {}
+    public constructor(public readonly type: 'left' | 'right', public readonly value: S | T) {}
 
     public map<U>(f: (a: S) => U): Either<U, T> {
         return Either.map(this, f)
@@ -16,6 +22,10 @@ export class Either<S, T> implements Monad<S> {
 
     public pipe<U>(f: (s: S) => Either<U, T>): Either<U, T> {
         return Either.pipe(() => this, f)(null)
+    }
+
+    public get(): S | T {
+        return Either.get(this)
     }
 
     public unwrap<U, V>(f: (s: S) => U, g: (t: T) => V): U | V {
@@ -38,19 +48,34 @@ export class Either<S, T> implements Monad<S> {
         return Either.and(this, other)
     }
 
-    public isLeft(): boolean {
-        return this.value.type === 'left'
+    public isLeft(): this is Left<S> {
+        return this.type === 'left'
     }
+
+    public isRight(): this is Right<T> {
+        return this.type === 'right'
+    }
+
     public static left<S, T>(value: S): Either<S, T> {
-        return new Either({ left: value, type: 'left' })
+        return new Either<S, T>('left', value)
     }
 
     public static right<S, T>(value: T): Either<S, T> {
-        return new Either({ right: value, type: 'right' })
+        return new Either<S, T>('right', value)
+    }
+
+    public static get<S, T>(val: Either<S, T>): S | T {
+        return val.value
     }
 
     public static unwrap<S, T, U, V>(val: Either<S, T>, f: (s: S) => U, g: (t: T) => V): U | V {
-        return val.value.type === 'left' ? f(val.value.left) : g(val.value.right)
+        if (val.isLeft()) {
+            return f(val.value)
+        } else if (val.isRight()) {
+            return g(val.value)
+        } else {
+            throw new Error('implementation error')
+        }
     }
 
     public static map<S, T, U>(val: Either<S, T>, f: (a: S) => U): Either<U, T> {
@@ -90,10 +115,10 @@ export class Either<S, T> implements Monad<S> {
     }
 
     public static or<S, T, U>(left: Either<S, T>, right: Either<U, T>): Either<S | U, T> {
-        return left.value.type === 'left' ? left : right
+        return left.isLeft() ? left : right
     }
 
     public static and<S, T, U>(left: Either<S, T>, right: Either<S, T>): Either<S | U, T> {
-        return left.value.type === 'right' ? left : right
+        return left.isRight() ? left : right
     }
 }
