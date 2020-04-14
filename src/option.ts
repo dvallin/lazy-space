@@ -1,8 +1,12 @@
-import { Either } from './either'
+import { Either, Left, Right } from './either'
 
 export class Option<T> extends Either<T, undefined> {
-    public static isSome<T>(option: Option<T>): boolean {
+    public static isSome<T>(option: Option<T>): option is Option<T> & Left<T> {
         return option.isLeft()
+    }
+
+    public static isNone<T>(option: Option<T>): option is Option<T> & Right<undefined> {
+        return option.isRight()
     }
 
     public static none<T>(): Option<T> {

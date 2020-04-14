@@ -23,7 +23,7 @@ export class Reader<C, T> implements Monad<T> {
         })
     }
 
-    mapContext<C2>(f: (c: C2) => C): Reader<C2, T> {
+    public mapContext<C2>(f: (c: C2) => C): Reader<C2, T> {
         return new Reader((c) => this.read(f(c)))
     }
 
