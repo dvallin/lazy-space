@@ -20,6 +20,12 @@ export interface PathQuery<S, T> {
     edges(): List<Edge<T>>
 }
 
+export interface Visit {
+    type: 'tree' | 'cycle'
+    vertex: VertexId
+    path: Path
+}
+
 export interface Graph<S, T> {
     vertexCount: number
     edgeCount: number
@@ -29,5 +35,7 @@ export interface Graph<S, T> {
 
     neighbours(vertex: VertexId): List<VertexId>
 
-    queryPath(path: Path): PathQuery<S, T>
+    path(path: Path): PathQuery<S, T>
+    depthFirst(from: VertexId): List<Visit>
+    breadthFirst(from: VertexId): List<Visit>
 }
