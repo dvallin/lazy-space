@@ -82,4 +82,24 @@ describe('Async', () => {
             expect(value).toEqual(Try.failure(error))
         })
     })
+
+    describe('race', () => {
+        it('returns first resolving', () => {
+            return expect(Async.race([Async.resolve(1), Async.reject(2), Async.resolve(3)]).promise).resolves.toEqual(1)
+        })
+
+        it('returns first rejecting', () => {
+            return expect(Async.race([Async.reject(1), Async.reject(2), Async.reject(3)]).promise).rejects.toEqual(1)
+        })
+    })
+
+    describe('all', () => {
+        it('returns array of all resolving if all resolve', () => {
+            return expect(Async.all([Async.resolve(1), Async.resolve(2), Async.resolve(3)]).promise).resolves.toEqual([1, 2, 3])
+        })
+
+        it('returns first rejecting', () => {
+            return expect(Async.all([Async.resolve(1), Async.reject(2), Async.resolve(3)]).promise).rejects.toEqual(2)
+        })
+    })
 })
