@@ -1,5 +1,6 @@
 import { Option } from './option'
 import { Monad } from './monad'
+import { Either } from './either'
 
 export class List<T> implements Monad<T> {
     public constructor(public readonly head: Option<T>, public readonly tail: () => List<T>) {}
@@ -80,6 +81,10 @@ export class List<T> implements Monad<T> {
         return List.size(this)
     }
 
+    public batch(length: number, step: number = length): List<T[]> {
+        return List.batch(this, length, step)
+    }
+
     public toArray(): T[] {
         return List.toArray(this)
     }
@@ -88,8 +93,8 @@ export class List<T> implements Monad<T> {
         return new List<T>(Option.of(val), List.empty)
     }
 
-    public static of<T>(val: T[]): List<T> {
-        return new List(Option.of(val[0]), () => List.of(val.splice(1)))
+    public static of<T>(val: T[], start = 0): List<T> {
+        return new List(Option.of(val[start]), () => List.of(val, start + 1))
     }
 
     public static map<S, T>(val: List<S>, f: (a: S) => T): List<T> {
@@ -210,6 +215,14 @@ export class List<T> implements Monad<T> {
         return !Option.isSome(List.find(val, (v) => !predicate(v)))
     }
 
+    public static batch<T>(val: List<T>, length: number, step: number = length): List<T[]> {
+        const head = val.take(length).toArray()
+        if (head.length > 0) {
+            return new List(Option.some(head), () => val.drop(step).batch(length, step))
+        }
+        return List.empty()
+    }
+
     public static toArray<T>(val: List<T>): T[] {
         return val.fold([], (l: T[], r) => {
             l.push(r)
@@ -235,5 +248,9 @@ export class List<T> implements Monad<T> {
 
     public static size<T>(list: List<T>): number {
         return List.fold(list, 0, (l, _r) => l + 1)
+    }
+
+    public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
+        return new List(Either.join(list.head), () => List.flattenOptionals(list.tail()))
     }
 }

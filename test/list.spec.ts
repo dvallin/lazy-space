@@ -270,6 +270,15 @@ describe('List', () => {
         })
     })
 
+    describe('batch', () => {
+        it('batches lists according to given window', () => {
+            expect(of([1, 2, 3, 4, 5]).batch(1).toArray()).toEqual([[1], [2], [3], [4], [5]])
+            expect(of([1, 2, 3, 4, 5]).batch(2).toArray()).toEqual([[1, 2], [3, 4], [5]])
+            expect(of([1, 2, 3, 4, 5]).batch(2, 1).toArray()).toEqual([[1, 2], [2, 3], [3, 4], [4, 5], [5]])
+            expect(of([1, 2, 3, 4, 5]).batch(3, 4).toArray()).toEqual([[1, 2, 3], [5]])
+        })
+    })
+
     describe('prepend', () => {
         it('prepends single values', () => {
             expect(List.lift(1).prepend(2).prepend(3).toArray()).toEqual([3, 2, 1])

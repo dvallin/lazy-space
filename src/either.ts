@@ -24,7 +24,7 @@ export class Either<S, T> implements Monad<S> {
         return Either.pipe(() => this, f)(null)
     }
 
-    public get(): S | T {
+    public get(): S {
         return Either.get(this)
     }
 
@@ -32,11 +32,7 @@ export class Either<S, T> implements Monad<S> {
         return Either.unwrap(this, f, g)
     }
 
-    public recover<U>(
-        f: (error: T) => U = (e) => {
-            throw e
-        }
-    ): S | U {
+    public recover<U>(f: (error: T) => U): S | U {
         return Either.recover(this, f)
     }
 
@@ -64,8 +60,10 @@ export class Either<S, T> implements Monad<S> {
         return new Either<S, T>('right', value)
     }
 
-    public static get<S, T>(val: Either<S, T>): S | T {
-        return val.value
+    public static get<S, T>(val: Either<S, T>): S {
+        return val.recover<S>((e) => {
+            throw e
+        })
     }
 
     public static unwrap<S, T, U, V>(val: Either<S, T>, f: (s: S) => U, g: (t: T) => V): U | V {
