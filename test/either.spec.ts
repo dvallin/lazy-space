@@ -21,22 +21,12 @@ describe('either', () => {
         })
     })
 
-    describe('then', () => {
+    describe('pipe', () => {
         it('chains lefts', () => {
-            expect(
-                Either.pipe(
-                    (s: string) => left(s),
-                    (s) => left(Number(s))
-                )('1')
-            ).toEqual(left(1))
+            expect(left('1').pipe((s) => left(Number(s)))).toEqual(left(1))
         })
         it('does not chain rights', () => {
-            expect(
-                Either.pipe(
-                    (_s) => right(new Error()),
-                    (s) => left(Number(s))
-                )('1')
-            ).toEqual(right(new Error()))
+            expect(right(new Error()).pipe((s) => left(Number(s)))).toEqual(right(new Error()))
         })
     })
 

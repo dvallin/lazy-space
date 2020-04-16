@@ -15,7 +15,7 @@ export class Reader<C, T> implements Monad<T> {
         return Reader.pipe(() => this, f)(null)
     }
 
-    public then(f: (c: C) => void): Reader<C, T> {
+    public with(f: (c: C) => void): Reader<C, T> {
         return Reader.lift((c) => {
             const r = this.read(c)
             f(c)
@@ -24,7 +24,7 @@ export class Reader<C, T> implements Monad<T> {
     }
 
     public mapContext<C2>(f: (c: C2) => C): Reader<C2, T> {
-        return new Reader((c) => this.read(f(c)))
+        return Reader.mapContext(this, f)
     }
 
     public static lift<C, T>(read: (context: C) => T): Reader<C, T> {
@@ -45,6 +45,10 @@ export class Reader<C, T> implements Monad<T> {
 
     public static pipe<C1, C2, S, T, U>(left: (s: S) => Reader<C1, T>, right: (t: T) => Reader<C2, U>): (s: S) => Reader<C1 & C2, U> {
         return (s) => Reader.flatMap(left(s), right)
+    }
+
+    public static mapContext<C1, C2, S>(reader: Reader<C1, S>, f: (c: C2) => C1): Reader<C2, S> {
+        return new Reader((c) => reader.read(f(c)))
     }
 
     public static join<C1, C2, T>(val: Reader<C1, Reader<C2, T>>): Reader<C1 & C2, T> {

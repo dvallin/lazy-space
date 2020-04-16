@@ -24,12 +24,12 @@ export class List<T> implements Monad<T> {
         return List.drop(this, amount)
     }
 
-    public takeWhile(check: (v: T) => boolean): List<T> {
-        return List.takeWhile(this, check)
+    public takeWhile(predicate: (v: T) => boolean): List<T> {
+        return List.takeWhile(this, predicate)
     }
 
-    public dropWhile(check: (v: T) => boolean): List<T> {
-        return List.dropWhile(this, check)
+    public dropWhile(predicate: (v: T) => boolean): List<T> {
+        return List.dropWhile(this, predicate)
     }
 
     public fold<S>(initial: S, combine: (l: S, r: T) => S): S {
@@ -40,24 +40,56 @@ export class List<T> implements Monad<T> {
         return List.foldr(this, initial, combine)
     }
 
-    public append(other: () => List<T>): List<T> {
-        return List.append(this, other)
+    public append(value: T): List<T> {
+        return List.append(this, value)
     }
 
-    public find(check: (v: T) => boolean): Option<T> {
-        return List.find(this, check)
+    public prepend(value: T): List<T> {
+        return List.prepend(this, value)
     }
 
-    public some(check: (v: T) => boolean): boolean {
-        return List.some(this, check)
+    public concat(other: () => List<T>): List<T> {
+        return List.concat(this, other)
     }
 
-    public all(check: (v: T) => boolean): boolean {
-        return List.all(this, check)
+    public seek(predicate: (v: T) => boolean): List<T> {
+        return List.seek(this, predicate)
     }
 
-    public static just<T>(val: T[]): List<T> {
-        return new List(Option.of(val[0]), () => List.just(val.splice(1)))
+    public find(predicate: (v: T) => boolean): Option<T> {
+        return List.find(this, predicate)
+    }
+
+    public filter(predicate: (v: T) => boolean): List<T> {
+        return List.filter(this, predicate)
+    }
+
+    public some(predicate: (v: T) => boolean): boolean {
+        return List.some(this, predicate)
+    }
+
+    public all(predicate: (v: T) => boolean): boolean {
+        return List.all(this, predicate)
+    }
+
+    public reverse(): List<T> {
+        return List.reverse(this)
+    }
+
+    public size(): number {
+        return List.size(this)
+    }
+
+    public toArray(): T[] {
+        return List.toArray(this)
+    }
+
+    public static lift<T>(val: T): List<T> {
+        return new List<T>(Option.of(val), List.empty)
+    }
+
+    public static of<T>(val: T[]): List<T> {
+        return new List(Option.of(val[0]), () => List.of(val.splice(1)))
     }
 
     public static map<S, T>(val: List<S>, f: (a: S) => T): List<T> {
@@ -65,10 +97,18 @@ export class List<T> implements Monad<T> {
     }
 
     public static flatMap<S, T>(val: List<S>, f: (s: S) => List<T>): List<T> {
-        return val.foldr(List.empty, (t: () => List<T>, h) => f(h).append(t))
+        return val.foldr(List.empty, (t: () => List<T>, h) => f(h).concat(t))
     }
 
-    public static append<T>(left: List<T>, right: () => List<T>): List<T> {
+    public static prepend<T>(list: List<T>, value: T): List<T> {
+        return new List(Option.some(value), () => list)
+    }
+
+    public static append<T>(list: List<T>, value: T): List<T> {
+        return list.concat(() => List.lift(value))
+    }
+
+    public static concat<T>(left: List<T>, right: () => List<T>): List<T> {
         return left.foldr(right, (t, h) => new List(Option.some(h), t))
     }
 
@@ -88,16 +128,16 @@ export class List<T> implements Monad<T> {
         return val.tail()
     }
 
-    public static takeWhile<T>(val: List<T>, check: (v: T) => boolean): List<T> {
+    public static takeWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
         return val.head.unwrap(
-            (h) => new List(val.head, () => (check(h) ? List.empty() : val.tail().takeWhile(check))),
+            (h) => (predicate(h) ? new List(val.head, () => val.tail().takeWhile(predicate)) : List.empty()),
             () => List.empty()
         )
     }
 
-    public static dropWhile<T>(val: List<T>, check: (v: T) => boolean): List<T> {
+    public static dropWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
         return val.head.unwrap(
-            (h) => (check(h) ? val.tail().dropWhile(check) : val),
+            (h) => (predicate(h) ? val.tail().dropWhile(predicate) : val),
             () => List.empty()
         )
     }
@@ -121,8 +161,7 @@ export class List<T> implements Monad<T> {
         let current = val
         while (true) {
             if (Option.isSome(current.head)) {
-                const head = current.head.recover(() => undefined) as S
-                aggregate = combine(aggregate, head)
+                aggregate = combine(aggregate, current.head.value)
                 current = current.tail()
             } else {
                 break
@@ -138,28 +177,37 @@ export class List<T> implements Monad<T> {
         )
     }
 
-    public static find<T>(val: List<T>, check: (v: T) => boolean): Option<T> {
+    public static seek<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
         let current = val
         while (true) {
             if (Option.isSome(current.head)) {
-                const head = current.head.recover(() => undefined) as T
-                if (check(head)) {
-                    return current.head
+                const head = current.head.value
+                if (predicate(head)) {
+                    return current
                 }
                 current = current.tail()
             } else {
                 break
             }
         }
-        return Option.none()
+        return List.empty()
     }
 
-    public static some<T>(val: List<T>, check: (v: T) => boolean): boolean {
-        return Option.isSome(List.find(val, check))
+    public static find<T>(val: List<T>, predicate: (v: T) => boolean): Option<T> {
+        return val.seek(predicate).head
     }
 
-    public static all<T>(val: List<T>, check: (v: T) => boolean): boolean {
-        return !Option.isSome(List.find(val, (v) => !check(v)))
+    public static filter<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
+        const found = val.seek(predicate)
+        return new List(found.head, () => found.tail().filter(predicate))
+    }
+
+    public static some<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
+        return Option.isSome(List.find(val, predicate))
+    }
+
+    public static all<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
+        return !Option.isSome(List.find(val, (v) => !predicate(v)))
     }
 
     public static toArray<T>(val: List<T>): T[] {
@@ -174,10 +222,18 @@ export class List<T> implements Monad<T> {
     }
 
     public static empty<T>(): List<T> {
-        return List.just([])
+        return new List<T>(Option.none(), List.empty)
     }
 
     public static natural(start = 1): List<number> {
         return new List(Option.some(start), () => List.natural(start + 1))
+    }
+
+    public static reverse<T>(list: List<T>): List<T> {
+        return List.fold(list, List.empty(), (l, r) => new List(Option.of(r), () => l))
+    }
+
+    public static size<T>(list: List<T>): number {
+        return List.fold(list, 0, (l, _r) => l + 1)
     }
 }

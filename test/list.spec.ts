@@ -1,38 +1,27 @@
 import { List, Option } from '../src'
-const { pipe, just, take, natural, join, repeat, drop } = List
+const { pipe, of, take, natural, join, repeat, drop } = List
 
 describe('List', () => {
     describe('map', () => {
         it('works on infinite lists', () => {
-            // when
             const nx2 = natural().map((v) => v * 2)
-
-            // then
             expect(List.toArray(take(nx2, 3))).toEqual([2, 4, 6])
         })
 
         it('can take very long lists', () => {
-            // when
             const nx2 = natural().map((v) => v * 2)
-
-            // then
             expect(List.toArray(take(nx2, 6000))).toHaveLength(6000)
         })
     })
 
     describe('bind', () => {
         it('works on finite lists', () => {
-            const list = just([3, 3]).flatMap((s) => just([2 * s, 2 * s]))
-
-            // then
+            const list = of([3, 3]).flatMap((s) => of([2 * s, 2 * s]))
             expect(List.toArray(list)).toEqual([6, 6, 6, 6])
         })
 
         it('works on infinite lists', () => {
-            // when
             const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
-
-            // then
             expect(List.toArray(take(nxn, 3))).toEqual([
                 { x: 1, y: 1 },
                 { x: 1, y: 2 },
@@ -41,36 +30,26 @@ describe('List', () => {
         })
 
         it('can take very long lists', () => {
-            // when
             const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
-
-            // then
             expect(List.toArray(take(nxn, 6000))).toHaveLength(6000)
         })
     })
 
     describe('then', () => {
         it('works on finite lists', () => {
-            const list = pipe(
-                (s: number) => just([s, s]),
-                (s) => just([2 * s, 2 * s])
-            )
-
-            // then
-            expect(List.toArray(take(list(3), 5))).toEqual([6, 6, 6, 6])
+            const list = of([3, 3]).pipe((s) => of([2 * s, 2 * s]))
+            expect(List.toArray(take(list, 5))).toEqual([6, 6, 6, 6])
         })
 
         it('works on infinite lists', () => {
             const n = pipe(natural, natural)
-
-            // then
             expect(List.toArray(take(n(0), 3))).toEqual([0, 1, 2])
         })
     })
 
     describe('join', () => {
         it('flattens lists', () => {
-            const listOfLists: List<List<number>> = just([just([2, 2]), just([2, 2])])
+            const listOfLists: List<List<number>> = of([of([2, 2]), of([2, 2])])
             const list = join(listOfLists)
 
             // then
@@ -78,7 +57,7 @@ describe('List', () => {
         })
 
         it('works on infinite lists', () => {
-            const doubles = join(natural().map((n) => just([n, n])))
+            const doubles = join(natural().map((n) => of([n, n])))
 
             // then
             expect(List.toArray(take(doubles, 5))).toEqual([1, 1, 2, 2, 3])
@@ -86,7 +65,7 @@ describe('List', () => {
 
         it('can join very long lists', () => {
             // when
-            const doubles = join(natural().map((n) => just([n, n])))
+            const doubles = join(natural().map((n) => of([n, n])))
 
             // then
             expect(List.toArray(take(doubles, 6000))).toHaveLength(6000)
@@ -95,6 +74,7 @@ describe('List', () => {
 
     describe('head', () => {
         it('takes first', () => {
+            expect(List.head(natural())).toEqual(Option.some(1))
             expect(natural().head).toEqual(Option.some(1))
         })
 
@@ -112,13 +92,18 @@ describe('List', () => {
 
     describe('tail', () => {
         it('takes tail', () => {
+            expect(List.tail(natural()).head).toEqual(Option.some(2))
             expect(natural().tail().head).toEqual(Option.some(2))
         })
     })
 
     describe('takeWhile', () => {
-        it('takes', () => {
+        it('takes on infinite lists', () => {
             expect(List.toArray(natural().takeWhile((n) => n < 2))).toEqual([1])
+        })
+
+        it('takes full lists', () => {
+            expect(List.toArray(of([1, 2, 3]).takeWhile((n) => n < 100))).toEqual([1, 2, 3])
         })
     })
 
@@ -132,6 +117,14 @@ describe('List', () => {
                 )
             ).toEqual([2])
         })
+
+        it('drops full lists', () => {
+            expect(List.toArray(of([1, 2, 3]).dropWhile((n) => n < 100))).toEqual([])
+        })
+
+        it('drops finite lists', () => {
+            expect(List.toArray(of([1, 2, 3]).dropWhile((n) => n < 2))).toEqual([2, 3])
+        })
     })
 
     describe('take', () => {
@@ -139,12 +132,20 @@ describe('List', () => {
             expect(List.toArray(natural().take(1))).toEqual([1])
             expect(List.toArray(take(natural()))).toEqual([1])
         })
+
+        it('takes empty', () => {
+            expect(List.empty().take().head).toEqual(Option.none())
+        })
     })
 
     describe('drop', () => {
         it('drops', () => {
             expect(List.toArray(natural().drop().take(1))).toEqual([2])
             expect(List.toArray(drop(natural()).take(1))).toEqual([2])
+        })
+
+        it('drops empty', () => {
+            expect(List.empty().drop().head).toEqual(Option.none())
         })
     })
 
@@ -224,9 +225,66 @@ describe('List', () => {
         })
     })
 
+    describe('filter', () => {
+        it('filters', () => {
+            expect(
+                natural()
+                    .filter((v) => v % 2 === 0)
+                    .take(3)
+                    .toArray()
+            ).toEqual([2, 4, 6])
+        })
+
+        it('works on undefines', () => {
+            expect(
+                repeat(undefined)
+                    .filter((v) => v === undefined)
+                    .take(2)
+                    .toArray()
+            ).toEqual([undefined, undefined])
+        })
+
+        it('filters to empty list (on finite lists)', () => {
+            expect(
+                natural()
+                    .take(5)
+                    .filter((v) => v === 6)
+                    .size()
+            ).toEqual(0)
+        })
+    })
+
+    describe('concat', () => {
+        it('concats whole lists', () => {
+            expect(
+                of([1, 2])
+                    .concat(() => of([3, 4]))
+                    .toArray()
+            ).toEqual([1, 2, 3, 4])
+        })
+    })
+
     describe('append', () => {
-        it('finds', () => {
-            expect(List.toArray(just([1, 1]).append(() => just([2, 2])))).toEqual([1, 1, 2, 2])
+        it('appends single values', () => {
+            expect(List.lift(1).append(2).append(3).toArray()).toEqual([1, 2, 3])
+        })
+    })
+
+    describe('prepend', () => {
+        it('prepends single values', () => {
+            expect(List.lift(1).prepend(2).prepend(3).toArray()).toEqual([3, 2, 1])
+        })
+    })
+
+    describe('size', () => {
+        it('takes size', () => {
+            expect(of([1, 1]).size()).toEqual(2)
+        })
+    })
+
+    describe('reverses', () => {
+        it('takes size', () => {
+            expect(List.toArray(of([1, 2, 3]).reverse())).toEqual([3, 2, 1])
         })
     })
 })

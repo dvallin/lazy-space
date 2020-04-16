@@ -71,10 +71,8 @@ export class Either<S, T> implements Monad<S> {
     public static unwrap<S, T, U, V>(val: Either<S, T>, f: (s: S) => U, g: (t: T) => V): U | V {
         if (val.isLeft()) {
             return f(val.value)
-        } else if (val.isRight()) {
-            return g(val.value)
         } else {
-            throw new Error('implementation error')
+            return g(val.value as T)
         }
     }
 

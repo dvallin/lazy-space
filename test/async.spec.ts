@@ -38,19 +38,13 @@ describe('Async', () => {
 
     describe('pipe', () => {
         it('chains on resolve', () => {
-            const value = Async.pipe(
-                (a: string) => Async.resolve(a),
-                (b) => Async.resolve(Number('2' + b))
-            )
-            return expect(value('1').promise).resolves.toEqual(21)
+            const value = Async.resolve('1').pipe((b) => Async.resolve(Number('2' + b)))
+            return expect(value.promise).resolves.toEqual(21)
         })
 
         it('does not chain on reject', () => {
-            const value = Async.pipe(
-                (a: string) => Async.lift(Promise.reject(a)),
-                (b) => Async.resolve(Number('2' + b))
-            )
-            return expect(value('1').promise).rejects.toEqual('1')
+            const value = Async.lift(Promise.reject('1')).pipe((b) => Async.resolve(Number('2' + b)))
+            return expect(value.promise).rejects.toEqual('1')
         })
     })
 
@@ -74,7 +68,7 @@ describe('Async', () => {
             const value = await Async.empty()
                 .flatMap(() => Async.reject(error))
                 .run()
-            expect(Try.isSuccess(value)).toBeFalsy()
+            expect(Try.isFailure(value)).toBeTruthy()
             expect(value).toEqual(Try.failure(error))
         })
 

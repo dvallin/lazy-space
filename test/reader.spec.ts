@@ -10,7 +10,7 @@ function readKey(key: string): Reader<Context, Option<string>> {
 }
 function unwrapKey(key: Option<string>): Reader<Context, string> {
     return Reader.lift((c) => {
-        if (!Option.isSome(key)) {
+        if (Option.isNone(key)) {
             c.errors.push('could not find key')
         }
         return Option.recover(key, () => 'missing')
@@ -46,10 +46,17 @@ describe('Reader', () => {
 
     describe('pipe', () => {
         it('concatenates pipeline steps', () => {
-            const pipeline = Reader.pipe(readKey, unwrapKey)
-            const result = pipeline('env2').read(context)
+            const result = readKey('env2').pipe(unwrapKey).read(context)
             expect(result).toEqual('missing')
             expect(context.errors).toHaveLength(1)
+        })
+    })
+
+    describe('with', () => {
+        it('makes side effects', () => {
+            const fn = jest.fn()
+            readKey('env2').with(fn).read(context)
+            expect(fn).toHaveBeenCalledWith(context)
         })
     })
 
@@ -62,10 +69,28 @@ describe('Reader', () => {
         })
     })
 
+    describe('mapContext', () => {
+        it('maps a pipeline step onto a reader', () => {
+            expect(
+                readKey('env2')
+                    .mapContext(() => ({ env: { env2: '2' }, errors: [] }))
+                    .read(null)
+                    .get()
+            ).toEqual('2')
+        })
+    })
+
     describe('just', () => {
         it('only returns value without context', () => {
             const result = Reader.just('env2').read(context)
             expect(result).toEqual('env2')
+        })
+    })
+
+    describe('empty', () => {
+        it('does nothing', () => {
+            const result = Reader.empty().read(context)
+            expect(result).toEqual(undefined)
         })
     })
 })
