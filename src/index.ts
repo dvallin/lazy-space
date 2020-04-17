@@ -1,5 +1,6 @@
 export * from './async'
 export * from './either'
+export * from './graph'
 export * from './list'
 export * from './monad'
 export * from './option'

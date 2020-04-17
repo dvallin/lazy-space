@@ -15,6 +15,15 @@ export class Reader<C, T> implements Monad<T> {
         return Reader.pipe(() => this, f)(null)
     }
 
+    public lift<U>(read: U): Reader<C, U> {
+        // REALLY?
+        return Reader.just(read)
+    }
+
+    public join<C1, C2, U>(val: Reader<C1, Reader<C2, U>>): Reader<C1 & C2, U> {
+        return Reader.join(val)
+    }
+
     public with(f: (c: C) => void): Reader<C, T> {
         return Reader.lift((c) => {
             const r = this.read(c)

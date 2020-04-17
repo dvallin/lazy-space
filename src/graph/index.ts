@@ -20,10 +20,9 @@ export interface PathQuery<S, T> {
     edges(): List<Edge<T>>
 }
 
-export interface Visit {
-    type: 'tree' | 'cycle'
-    vertex: VertexId
-    path: Path
+export interface AdjacencyInformation {
+    to: string
+    edge: string
 }
 
 export interface Graph<S, T> {
@@ -32,10 +31,11 @@ export interface Graph<S, T> {
 
     getVertex(id: VertexId): Option<Vertex<S>>
     getEdge(id: EdgeId): Option<Edge<T>>
+    getEdgeId(from: VertexId, to: VertexId): Option<EdgeId>
 
     neighbours(vertex: VertexId): List<VertexId>
-
-    path(path: Path): PathQuery<S, T>
-    depthFirst(from: VertexId): List<Visit>
-    breadthFirst(from: VertexId): List<Visit>
 }
+
+export * from './graph-builder'
+export * from './graph-queries'
+export * from './adjacency-graph'

@@ -16,6 +16,15 @@ export class Async<T> implements Monad<T> {
         return Async.pipe(() => this, f)(null)
     }
 
+    public join<U>(value: Async<Async<U>>): Async<U> {
+        return Async.join(value)
+    }
+
+    public lift<U>(value: U): Async<U> {
+        // TODO: REALLY?
+        return Async.resolve(value)
+    }
+
     public run(): Promise<Try<T>> {
         return Async.run(this)
     }

@@ -1,6 +1,4 @@
-import { GraphBuilder } from '../../src/graph/graph-builder'
-import { List } from '../../src/'
-import { Visit } from '../../src/graph'
+import { GraphBuilder } from '../../src'
 
 describe('AdjacencyGraph', () => {
     const graph = new GraphBuilder<string, string>()
@@ -27,83 +25,4 @@ describe('AdjacencyGraph', () => {
             expect(graph.neighbours('R').toArray()).toEqual([])
         })
     })
-
-    describe('pathQuery', () => {
-        describe('exists', () => {
-            it('finds a path', () => {
-                const path = graph.path(List.of(['A', 'B', 'C']))
-                expect(path.exists()).toBeTruthy()
-            })
-
-            it('detects if a path does not exist', () => {
-                const path = graph.path(List.of(['A', 'B', 'D']))
-                expect(path.exists()).toBeFalsy()
-            })
-
-            it('detects if an infinite path does not exist', () => {
-                const path = graph.path(List.natural().map((i) => ['A', 'B', 'D'][i - 1]))
-                expect(path.exists()).toBeFalsy()
-            })
-        })
-        describe('vertices', () => {
-            it('finds a path', () => {
-                const path = graph.path(List.of(['A', 'B', 'C']))
-                expect(
-                    path
-                        .vertices()
-                        .map((v) => v.value)
-                        .toArray()
-                ).toEqual(['vertex1', 'vertex2', 'vertex3'])
-            })
-        })
-        describe('edges', () => {
-            it('finds a path', () => {
-                const path = graph.path(List.of(['A', 'B', 'C']))
-                expect(
-                    path
-                        .edges()
-                        .map((e) => e.value)
-                        .toArray()
-                ).toEqual(['edge1', 'edge2'])
-            })
-        })
-    })
-
-    describe('dfsQuery', () => {
-        it('extracts tree', () => {
-            const query = graph.depthFirst('A')
-            expect(getTree(query)).toEqual(['A', 'B', 'C', 'D'])
-        })
-
-        it('extracts cycles', () => {
-            const query = graph.depthFirst('A')
-            expect(getCycles(query)).toEqual([['A', 'B', 'A']])
-        })
-    })
-
-    describe('bfsQuery', () => {
-        it('extracts tree', () => {
-            const query = graph.breadthFirst('A')
-            expect(getTree(query)).toEqual(['A', 'B', 'D', 'C'])
-        })
-
-        it('extracts cycles', () => {
-            const query = graph.breadthFirst('A')
-            expect(getCycles(query)).toEqual([['A', 'B', 'A']])
-        })
-    })
-
-    function getTree(query: List<Visit>): string[] {
-        return query
-            .filter((v) => v.type === 'tree')
-            .map((v) => v.vertex)
-            .toArray()
-    }
-
-    function getCycles(query: List<Visit>): string[][] {
-        return query
-            .filter((v) => v.type === 'cycle')
-            .map((v) => v.path.append(v.vertex).toArray())
-            .toArray()
-    }
 })

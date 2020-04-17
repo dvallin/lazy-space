@@ -1,4 +1,5 @@
-import { Either } from '../src/either'
+import { Either } from '../src'
+
 const right = Either.right
 const left = Either.left
 

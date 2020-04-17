@@ -1,4 +1,4 @@
-import { GraphBuilder } from '../../src/graph/graph-builder'
+import { GraphBuilder } from '../../src'
 
 describe('GraphBuilder', () => {
     let builder: GraphBuilder<void, void>

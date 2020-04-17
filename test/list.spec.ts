@@ -1,4 +1,5 @@
 import { List, Option } from '../src'
+
 const { pipe, of, take, natural, join, repeat, drop } = List
 
 describe('List', () => {
@@ -251,6 +252,18 @@ describe('List', () => {
                     .filter((v) => v === 6)
                     .size()
             ).toEqual(0)
+        })
+    })
+
+    describe('filterType', () => {
+        it('filters', () => {
+            expect(
+                natural()
+                    .map((i) => (i % 2 === 0 ? i : 'this is not an even number'))
+                    .filterType((v): v is number => typeof v === 'number')
+                    .take(3)
+                    .toArray()
+            ).toEqual([2, 4, 6])
         })
     })
 

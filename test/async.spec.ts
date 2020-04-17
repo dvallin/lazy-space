@@ -1,5 +1,4 @@
-import { Async } from '../src/async'
-import { Try } from '../src/try'
+import { Async, Try } from '../src'
 
 describe('Async', () => {
     describe('map', () => {

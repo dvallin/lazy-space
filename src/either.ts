@@ -24,6 +24,14 @@ export class Either<S, T> implements Monad<S> {
         return Either.pipe(() => this, f)(null)
     }
 
+    public lift<U>(v: U): Either<U, T> {
+        return Either.lift(v)
+    }
+
+    public join<U>(v: Either<Either<U, T>, T>): Either<U, T> {
+        return Either.join(v)
+    }
+
     public get(): S {
         return Either.get(this)
     }
@@ -50,6 +58,10 @@ export class Either<S, T> implements Monad<S> {
 
     public isRight(): this is Right<T> {
         return this.type === 'right'
+    }
+
+    public static lift<S, T>(value: S): Either<S, T> {
+        return Either.left(value)
     }
 
     public static left<S, T>(value: S): Either<S, T> {
@@ -116,5 +128,35 @@ export class Either<S, T> implements Monad<S> {
 
     public static and<S, T, U>(left: Either<S, T>, right: Either<S, T>): Either<S | U, T> {
         return left.isRight() ? left : right
+    }
+}
+
+export class EitherT<S, T> {
+    public constructor(public readonly value: Monad<Either<S, T>>) {}
+
+    public map<U>(f: (a: S) => U): EitherT<U, T> {
+        return new EitherT(this.value.map((a) => a.map(f)))
+    }
+
+    public flatMap<U>(f: (a: S) => EitherT<U, T>): EitherT<U, T> {
+        return new EitherT(
+            this.value.flatMap((e) =>
+                e.unwrap(
+                    (some) => f(some).value,
+                    (none) => this.value.lift(Either.right<U, T>(none))
+                )
+            )
+        )
+    }
+
+    public pipe<U>(f: (a: S) => EitherT<U, T>): EitherT<U, T> {
+        return new EitherT(
+            this.value.pipe((e) =>
+                e.unwrap(
+                    (some) => f(some).value,
+                    (none) => this.value.lift(Either.right<U, T>(none))
+                )
+            )
+        )
     }
 }

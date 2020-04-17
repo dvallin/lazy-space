@@ -1,6 +1,5 @@
 import { Option } from './option'
 import { Monad } from './monad'
-import { Either } from './either'
 
 export class List<T> implements Monad<T> {
     public constructor(public readonly head: Option<T>, public readonly tail: () => List<T>) {}
@@ -15,6 +14,14 @@ export class List<T> implements Monad<T> {
 
     public pipe<U>(f: (a: T) => List<U>): List<U> {
         return List.pipe(() => this, f)(null)
+    }
+
+    public lift<U>(value: U): List<U> {
+        return List.lift(value)
+    }
+
+    public join<U>(value: List<List<U>>): List<U> {
+        return List.join(value)
     }
 
     public take(amount = 1): List<T> {
@@ -61,8 +68,12 @@ export class List<T> implements Monad<T> {
         return List.find(this, predicate)
     }
 
-    public filter(predicate: (v: T) => boolean): List<T> {
+    public filterType<U extends T = T>(predicate: (v: T) => v is U): List<U> {
         return List.filter(this, predicate)
+    }
+
+    public filter(predicate: (v: T) => boolean): List<U> {
+        return List.filter(this, (v): v is T => predicate(v))
     }
 
     public some(predicate: (v: T) => boolean): boolean {
@@ -202,9 +213,9 @@ export class List<T> implements Monad<T> {
         return val.seek(predicate).head
     }
 
-    public static filter<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
+    public static filter<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
         const found = val.seek(predicate)
-        return new List(found.head, () => found.tail().filter(predicate))
+        return new List(found.head as Option<U>, () => found.tail().filter(predicate))
     }
 
     public static some<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
@@ -251,6 +262,6 @@ export class List<T> implements Monad<T> {
     }
 
     public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
-        return new List(Either.join(list.head), () => List.flattenOptionals(list.tail()))
+        return new List(Option.join(list.head), () => List.flattenOptionals(list.tail()))
     }
 }
