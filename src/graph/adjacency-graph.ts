@@ -1,5 +1,5 @@
 import { Option } from '../option'
-import { List } from '../List'
+import { List } from '../list'
 import { Vertex, Edge, Graph, VertexId, EdgeId, AdjacencyInformation } from '.'
 
 export interface AdjacencyList {
