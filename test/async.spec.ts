@@ -1,6 +1,9 @@
 import { Async, Try } from '../src'
+import { testMonad } from './monad.tests'
 
 describe('Async', () => {
+    testMonad(Async.empty(), async (a, b) => expect(await a.promise).toEqual(await b.promise))
+
     describe('map', () => {
         it('maps on resolve', () => {
             const value = Async.resolve('1').map((s) => Number(s))

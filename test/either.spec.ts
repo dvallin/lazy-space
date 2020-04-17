@@ -1,9 +1,12 @@
-import { Either } from '../src'
+import { Either, EitherT, List, Option, Monad } from '../src'
+import { testMonad } from './monad.tests'
 
 const right = Either.right
 const left = Either.left
 
 describe('either', () => {
+    testMonad(Either.lift(''), async (a, b) => expect(a.value).toEqual(b.value))
+
     describe('map', () => {
         it('maps left value', () => {
             expect(left('1').map(Number)).toEqual(left(1))
@@ -95,5 +98,13 @@ describe('either', () => {
         it('gets last left', () => {
             expect(left(1).and(left(2))).toEqual(left(2))
         })
+    })
+})
+
+describe('eitherT', () => {
+    it('maps', () => {
+        const monad: Monad<Option<string>> = List.lift(Option.some('2'))
+        const result = new EitherT(monad).map((a) => Number.parseInt(a)).value as List<Option<number>>
+        expect(List.flattenOptionals(result).toArray()).toEqual([2])
     })
 })

@@ -72,7 +72,7 @@ export class List<T> implements Monad<T> {
         return List.filter(this, predicate)
     }
 
-    public filter(predicate: (v: T) => boolean): List<U> {
+    public filter(predicate: (v: T) => boolean): List<T> {
         return List.filter(this, (v): v is T => predicate(v))
     }
 
@@ -215,7 +215,7 @@ export class List<T> implements Monad<T> {
 
     public static filter<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
         const found = val.seek(predicate)
-        return new List(found.head as Option<U>, () => found.tail().filter(predicate))
+        return new List(found.head as Option<U>, () => found.tail().filterType(predicate))
     }
 
     public static some<T>(val: List<T>, predicate: (v: T) => boolean): boolean {

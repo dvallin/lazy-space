@@ -1,5 +1,5 @@
-import { Vertex, Edge } from '.'
-import { AdjacencyGraph, AdjacencyVertex, AdjacencyInformation } from './adjacency-graph'
+import { Vertex, Edge, AdjacencyInformation } from '.'
+import { AdjacencyGraph, AdjacencyVertex } from './adjacency-graph'
 import { List } from '../list'
 
 export type EdgeKeyGenerator = (from: string, to: string) => string

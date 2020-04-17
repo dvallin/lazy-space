@@ -1,4 +1,5 @@
 import { Reader, Option } from '../src'
+import { testMonad } from './monad.tests'
 
 interface Context {
     env: { readonly [key: string]: string }
@@ -18,6 +19,8 @@ function unwrapKey(key: Option<string>): Reader<Context, string> {
 }
 
 describe('Reader', () => {
+    testMonad(Reader.empty(), async (a, b) => expect(a.read({})).toEqual(b.read({})))
+
     let context: Context
     beforeEach(() => {
         context = {

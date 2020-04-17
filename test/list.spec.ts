@@ -1,8 +1,11 @@
 import { List, Option } from '../src'
+import { testMonad } from './monad.tests'
 
 const { pipe, of, take, natural, join, repeat, drop } = List
 
 describe('List', () => {
+    testMonad(List.empty(), async (a, b) => expect(a.toArray()).toEqual(b.toArray()))
+
     describe('map', () => {
         it('works on infinite lists', () => {
             const nx2 = natural().map((v) => v * 2)

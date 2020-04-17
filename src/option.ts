@@ -17,7 +17,7 @@ export class Option<T> extends Either<T, undefined> {
         return Either.left(value)
     }
 
-    public static of<T>(value: T | undefined): Option<T> {
-        return value !== undefined ? Either.left(value) : Either.right(undefined)
+    public static of<T>(value: T | undefined | null): Option<T> {
+        return value !== undefined && value !== null ? Either.left(value) : Either.right(undefined)
     }
 }
