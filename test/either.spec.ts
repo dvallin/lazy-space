@@ -1,4 +1,4 @@
-import { Either, EitherT, List, Option, Monad } from '../src'
+import { Either } from '../src'
 import { testMonad } from './monad.tests'
 
 const right = Either.right
@@ -98,13 +98,5 @@ describe('either', () => {
         it('gets last left', () => {
             expect(left(1).and(left(2))).toEqual(left(2))
         })
-    })
-})
-
-describe('eitherT', () => {
-    it('maps', () => {
-        const monad: Monad<Option<string>> = List.lift(Option.some('2'))
-        const result = new EitherT(monad).map((a) => Number.parseInt(a)).value as List<Option<number>>
-        expect(List.flattenOptionals(result).toArray()).toEqual([2])
     })
 })

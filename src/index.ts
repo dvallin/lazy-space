@@ -1,4 +1,5 @@
 export * from './async'
+export * from './lazy'
 export * from './either'
 export * from './graph'
 export * from './list'

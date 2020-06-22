@@ -1,6 +1,6 @@
 {
     "name": "lazy-space",
-    "version": "0.1.12-SNAPSHOT",
+    "version": "0.1.12",
     "description": "Monads and collections in typescript",
     "main": "lib/src/index.js",
     "types": "lib/src/index.d.ts",
@@ -8,11 +8,12 @@
     "repository": "github:dvallin/lazyspace",
     "license": "MIT",
     "scripts": {
-        "build": "tsc",
+        "build": "npm run clean-lib && tsc",
         "test": "jest --coverage",
         "test:watch": "jest --watch --coverage",
         "format": "eslint --fix '{src,test}/**/*.{ts,tsx,json,yaml}'",
-        "lint": "eslint '{src,test}/**/*.{ts,tsx,json,yaml}'"
+        "lint": "eslint '{src,test}/**/*.{ts,tsx,json,yaml}'",
+        "clean-lib": "rm -f -r -d lib"
     },
     "dependencies": {},
     "devDependencies": {

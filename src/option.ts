@@ -1,5 +1,6 @@
 import { Either, Left, Right } from './either'
 
+export type option<T> = T | undefined
 export class Option<T> extends Either<T, undefined> {
     public static isSome<T>(option: Option<T>): option is Option<T> & Left<T> {
         return option.isLeft()

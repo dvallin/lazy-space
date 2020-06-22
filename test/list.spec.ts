@@ -307,6 +307,18 @@ describe('List', () => {
         })
     })
 
+    describe('isEmpty', () => {
+        it('true on empty', () => {
+            expect(of([]).isEmpty()).toBeTruthy()
+        })
+        it('false on finite', () => {
+            expect(of([1, 1]).isEmpty()).toBeFalsy()
+        })
+        it('false on infinite', () => {
+            expect(repeat(1).isEmpty()).toBeFalsy()
+        })
+    })
+
     describe('reverses', () => {
         it('takes size', () => {
             expect(List.toArray(of([1, 2, 3]).reverse())).toEqual([3, 2, 1])

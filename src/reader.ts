@@ -1,7 +1,8 @@
 import { Monad } from './monad'
 
+export type reader<C, T> = (context: C) => T
 export class Reader<C, T> implements Monad<T> {
-    public constructor(public readonly read: (context: C) => T) {}
+    public constructor(public readonly read: reader<C, T>) {}
 
     public map<U>(f: (t: T) => U): Reader<C, U> {
         return Reader.map(this, f)

@@ -14,6 +14,7 @@ module.exports = {
     },
     rules: {
         semi: 'off',
+        '@typescript-eslint/no-namespace': 0,
         '@typescript-eslint/semi': 0,
         '@typescript-eslint/member-delimiter-style': 0,
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

@@ -1,8 +1,10 @@
 import { Try } from './try'
 import { Monad } from './monad'
 
+export type async<T> = Promise<T>
+
 export class Async<T> implements Monad<T> {
-    public constructor(public readonly promise: Promise<T>) {}
+    public constructor(public readonly promise: async<T>) {}
 
     public map<U>(f: (a: T) => U): Async<U> {
         return Async.map(this, f)

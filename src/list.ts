@@ -1,8 +1,9 @@
 import { Option } from './option'
 import { Monad } from './monad'
+import { Lazy, lazy } from './lazy'
 
 export class List<T> implements Monad<T> {
-    public constructor(public readonly head: Option<T>, public readonly tail: () => List<T>) {}
+    public constructor(public readonly head: Option<T>, public readonly tail: lazy<List<T>>) {}
 
     public map<U>(f: (a: T) => U): List<U> {
         return List.map(this, f)
@@ -92,6 +93,10 @@ export class List<T> implements Monad<T> {
         return List.size(this)
     }
 
+    public isEmpty(): boolean {
+        return List.isEmpty(this)
+    }
+
     public batch(length: number, step: number = length): List<T[]> {
         return List.batch(this, length, step)
     }
@@ -106,6 +111,13 @@ export class List<T> implements Monad<T> {
 
     public static of<T>(val: T[], start = 0): List<T> {
         return new List(Option.of(val[start]), () => List.of(val, start + 1))
+    }
+
+    public static ofLazies<T>(val: Lazy<T>[], start = 0): List<T> {
+        return new List(
+            Option.of(val[start]).map((v) => v.eval()),
+            () => List.ofLazies(val, start + 1)
+        )
     }
 
     public static map<S, T>(val: List<S>, f: (a: S) => T): List<T> {
@@ -259,6 +271,10 @@ export class List<T> implements Monad<T> {
 
     public static size<T>(list: List<T>): number {
         return List.fold(list, 0, (l, _r) => l + 1)
+    }
+
+    public static isEmpty<T>(list: List<T>): boolean {
+        return list.head.isRight()
     }
 
     public static flattenOptionals<T>(list: List<Option<T>>): List<T> {

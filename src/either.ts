@@ -9,8 +9,10 @@ export interface Right<T> {
     value: T
 }
 
+export type either<S, T> = S | T
+
 export class Either<S, T> implements Monad<S> {
-    public constructor(public readonly type: 'left' | 'right', public readonly value: S | T) {}
+    public constructor(public readonly type: 'left' | 'right', public readonly value: either<S, T>) {}
 
     public map<U>(f: (a: S) => U): Either<U, T> {
         return Either.map(this, f)
@@ -128,35 +130,5 @@ export class Either<S, T> implements Monad<S> {
 
     public static and<S, T, U>(left: Either<S, T>, right: Either<S, T>): Either<S | U, T> {
         return left.isRight() ? left : right
-    }
-}
-
-export class EitherT<S, T> {
-    public constructor(public readonly value: Monad<Either<S, T>>) {}
-
-    public map<U>(f: (a: S) => U): EitherT<U, T> {
-        return new EitherT(this.value.map((a) => a.map(f)))
-    }
-
-    public flatMap<U>(f: (a: S) => EitherT<U, T>): EitherT<U, T> {
-        return new EitherT(
-            this.value.flatMap((e) =>
-                e.unwrap(
-                    (some) => f(some).value,
-                    (none) => this.value.lift(Either.right<U, T>(none))
-                )
-            )
-        )
-    }
-
-    public pipe<U>(f: (a: S) => EitherT<U, T>): EitherT<U, T> {
-        return new EitherT(
-            this.value.pipe((e) =>
-                e.unwrap(
-                    (some) => f(some).value,
-                    (none) => this.value.lift(Either.right<U, T>(none))
-                )
-            )
-        )
     }
 }
