@@ -1,4 +1,4 @@
-import { List, Option, Identity, ReaderT, Async, Monad, Reader } from '../src'
+import { List, Option } from '../src'
 import { testMonad } from './monad.tests'
 
 const { of, take, natural, join, repeat, drop } = List

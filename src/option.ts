@@ -1,5 +1,4 @@
 import { Either, Left, Right, EitherT } from './either'
-import { Monad } from './monad'
 
 export type option<T> = T | undefined
 export class Option<T> extends Either<T, undefined> {
@@ -32,4 +31,4 @@ export class Option<T> extends Either<T, undefined> {
   }
 }
 
-export class OptionT<T, M extends Monad<Option<T>>> extends EitherT<T, undefined, M> {}
+export class OptionT<T> extends EitherT<T, undefined> {}

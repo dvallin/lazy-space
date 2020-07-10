@@ -39,6 +39,10 @@ export class Tree<T> implements Monad<T> {
     return new Tree(Either.right({ children }))
   }
 
+  public traverse(): List<T> {
+    return Tree.traverse(this)
+  }
+
   public static map<T, U>(value: Tree<T>, f: (a: T) => U): Tree<U> {
     return value.tree.unwrap(
       (leaf) => Tree.lift(f(leaf.value)),
@@ -55,5 +59,12 @@ export class Tree<T> implements Monad<T> {
 
   public static join<U>(v: Tree<Tree<U>>): Tree<U> {
     return v.flatMap((t) => t)
+  }
+
+  public static traverse<U>(tree: Tree<U>): List<U> {
+    return tree.tree.unwrap(
+      (leaf) => List.lift(leaf.value),
+      (node) => node.children.flatMap((t) => t.traverse())
+    )
   }
 }

@@ -126,38 +126,30 @@ export class Either<S, T> implements Monad<S> {
   }
 }
 
-export class EitherT<S, T, M extends Monad<Either<S, T>>> implements Monad<S> {
-  public constructor(public readonly value: M) {}
+export class EitherT<S, T> implements Monad<S> {
+  public constructor(public readonly value: Monad<Either<S, T>>) {}
 
-  public map<U, N extends Monad<Either<U, T>>>(f: (a: S) => U): EitherT<U, T, N> {
+  public map<U>(f: (a: S) => U): EitherT<U, T> {
     return EitherT.map(this, f)
   }
 
-  public flatMap<U, N extends Monad<Either<U, T>>>(f: (a: S) => EitherT<U, T, N>): EitherT<U, T, N> {
+  public flatMap<U>(f: (a: S) => EitherT<U, T>): EitherT<U, T> {
     return EitherT.flatMap(this, f)
   }
 
-  public lift<U>(v: U): EitherT<U, T, Identity<Either<U, T>>> {
+  public lift<U>(v: U): EitherT<U, T> {
     return EitherT.lift(v)
   }
 
-  public join<U, N extends Monad<Either<EitherT<U, T, M>, T>>, M extends Monad<Either<U, T>>>(
-    v: EitherT<EitherT<U, T, M>, T, N>
-  ): EitherT<U, T, M> {
+  public join<U>(v: EitherT<EitherT<U, T>, T>): EitherT<U, T> {
     return EitherT.join(v)
   }
 
-  public static map<S, T, U, M extends Monad<Either<S, T>>, N extends Monad<Either<U, T>>>(
-    t: EitherT<S, T, M>,
-    f: (a: S) => U
-  ): EitherT<U, T, N> {
-    return new EitherT(t.value.map((m) => m.map(f))) as EitherT<U, T, N>
+  public static map<S, T, U>(t: EitherT<S, T>, f: (a: S) => U): EitherT<U, T> {
+    return new EitherT(t.value.map((m) => m.map(f))) as EitherT<U, T>
   }
 
-  public static flatMap<S, T, U, M extends Monad<Either<S, T>>, N extends Monad<Either<U, T>>>(
-    t: EitherT<S, T, M>,
-    f: (a: S) => EitherT<U, T, N>
-  ): EitherT<U, T, N> {
+  public static flatMap<S, T, U>(t: EitherT<S, T>, f: (a: S) => EitherT<U, T>): EitherT<U, T> {
     return new EitherT(
       t.value.flatMap(
         (either) =>
@@ -166,16 +158,14 @@ export class EitherT<S, T, M extends Monad<Either<S, T>>> implements Monad<S> {
             (right) => t.value.lift(right)
           ) as Monad<Either<U, T>>
       )
-    ) as EitherT<U, T, N>
+    )
   }
 
-  public static lift<T, U>(v: U): EitherT<U, T, Identity<Either<U, T>>> {
+  public static lift<T, U>(v: U): EitherT<U, T> {
     return new EitherT(Identity.lift(Either.lift(v)))
   }
 
-  public static join<T, U, N extends Monad<Either<EitherT<U, T, M>, T>>, M extends Monad<Either<U, T>>>(
-    v: EitherT<EitherT<U, T, M>, T, N>
-  ): EitherT<U, T, M> {
+  public static join<T, U>(v: EitherT<EitherT<U, T>, T>): EitherT<U, T> {
     return v.flatMap((i) => i)
   }
 }

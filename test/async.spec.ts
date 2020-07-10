@@ -1,4 +1,4 @@
-import { Async, Try, AsyncT, List } from '../src'
+import { Async, Try, AsyncT } from '../src'
 import { testMonad } from './monad.tests'
 
 describe('Async', () => {

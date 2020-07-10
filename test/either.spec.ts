@@ -1,4 +1,4 @@
-import { Either, EitherT, OptionT, TryT } from '../src'
+import { Either, EitherT } from '../src'
 import { testMonad } from './monad.tests'
 
 const right = Either.right

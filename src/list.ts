@@ -1,7 +1,6 @@
 import { Option } from './option'
 import { Monad } from './monad'
 import { Lazy, lazy } from './lazy'
-import { Identity } from './identity'
 
 export class List<T> implements Monad<T> {
   public constructor(public readonly head: Option<T>, public readonly tail: lazy<List<T>>) {}

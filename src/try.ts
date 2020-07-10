@@ -1,5 +1,4 @@
 import { Either, Right, Left, EitherT } from './either'
-import { Monad } from './monad'
 
 export class Try<S> extends Either<S, Error> {
   public static isSuccess<T>(value: Try<T>): value is Either<T, Error> & Left<T> {
@@ -19,4 +18,4 @@ export class Try<S> extends Either<S, Error> {
   }
 }
 
-export class TryT<T, M extends Monad<Try<T>>> extends EitherT<T, Error, M> {}
+export class TryT<T> extends EitherT<T, Error> {}

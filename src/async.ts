@@ -92,56 +92,56 @@ export class Async<T> implements Monad<T> {
   }
 }
 
-export class AsyncT<T, M extends Monad<T>> implements Monad<T> {
-  public constructor(public readonly value: Async<M>) {}
+export class AsyncT<T> implements Monad<T> {
+  public constructor(public readonly value: Async<Monad<T>>) {}
 
-  public map<U, N extends Monad<U>>(f: (a: T) => U): AsyncT<U, N> {
+  public map<U>(f: (a: T) => U): AsyncT<U> {
     return AsyncT.map(this, f)
   }
 
-  public flatMap<U, N extends Monad<U>>(f: (a: T) => AsyncT<U, N>): AsyncT<U, N> {
+  public flatMap<U>(f: (a: T) => AsyncT<U>): AsyncT<U> {
     return AsyncT.flatMap(this, f)
   }
 
-  public of(m: M): AsyncT<T, M> {
+  public of(m: Monad<T>): AsyncT<T> {
     return AsyncT.of(m)
   }
 
-  public lift<U>(v: U): AsyncT<U, Identity<U>> {
+  public lift<U>(v: U): AsyncT<U> {
     return AsyncT.lift(v)
   }
 
-  public getValue(): Async<M> {
+  public getValue(): Async<Monad<T>> {
     return this.value
   }
 
-  public join<U, M extends Monad<AsyncT<U, N>>, N extends Monad<U>>(v: AsyncT<AsyncT<U, N>, M>): AsyncT<U, N> {
+  public join<U>(v: AsyncT<AsyncT<U>>): AsyncT<U> {
     return AsyncT.join(v)
   }
 
-  public static map<T, U, M extends Monad<T>, N extends Monad<U>>(t: AsyncT<T, M>, f: (a: T) => U): AsyncT<U, N> {
-    return new AsyncT(t.value.map((m) => m.map(f))) as AsyncT<U, N>
+  public static map<T, U>(t: AsyncT<T>, f: (a: T) => U): AsyncT<U> {
+    return new AsyncT(t.value.map((m) => m.map(f))) as AsyncT<U>
   }
 
-  public static flatMap<T, U, M extends Monad<T>, N extends Monad<U>>(t: AsyncT<T, M>, f: (a: T) => AsyncT<U, N>): AsyncT<U, N> {
+  public static flatMap<T, U>(t: AsyncT<T>, f: (a: T) => AsyncT<U>): AsyncT<U> {
     return new AsyncT(
       Async.of(
         new Promise<Monad<U>>((resolve, reject) => {
           t.value.map((m) => m.map((a) => f(a).value.promise.then(resolve).catch(reject)))
         })
       )
-    ) as AsyncT<U, N>
+    )
   }
 
-  public static of<U, N extends Monad<U>>(v: N): AsyncT<U, N> {
+  public static of<U>(v: Monad<U>): AsyncT<U> {
     return new AsyncT(Async.lift(v))
   }
 
-  public static lift<U>(v: U): AsyncT<U, Identity<U>> {
+  public static lift<U>(v: U): AsyncT<U> {
     return new AsyncT(Async.lift(Identity.lift(v)))
   }
 
-  public static join<U, M extends Monad<AsyncT<U, N>>, N extends Monad<U>>(v: AsyncT<AsyncT<U, N>, M>): AsyncT<U, N> {
+  public static join<U>(v: AsyncT<AsyncT<U>>): AsyncT<U> {
     return v.flatMap((i) => i)
   }
 }

@@ -65,41 +65,38 @@ export class Reader<C, T> implements Monad<T> {
   }
 }
 
-export class ReaderT<C, T, M extends Monad<T>> implements Monad<T> {
-  public constructor(public readonly value: Reader<C, M>) {}
+export class ReaderT<C, T> implements Monad<T> {
+  public constructor(public readonly value: Reader<C, Monad<T>>) {}
 
-  public map<U, N extends Monad<U>>(f: (a: T) => U): ReaderT<C, U, N> {
+  public map<U>(f: (a: T) => U): ReaderT<C, U> {
     return ReaderT.map(this, f)
   }
 
-  public flatMap<U, N extends Monad<U>>(f: (a: T) => ReaderT<C, U, N>): ReaderT<C, U, N> {
+  public flatMap<U>(f: (a: T) => ReaderT<C, U>): ReaderT<C, U> {
     return ReaderT.flatMap(this, f)
   }
 
-  public lift<U>(v: U): ReaderT<C, U, Identity<U>> {
+  public lift<U>(v: U): ReaderT<C, U> {
     return ReaderT.lift(v)
   }
 
-  public join<U, M extends Monad<ReaderT<C, U, N>>, N extends Monad<U>>(v: ReaderT<C, ReaderT<C, U, N>, M>): ReaderT<C, U, N> {
+  public join<U>(v: ReaderT<C, ReaderT<C, U>>): ReaderT<C, U> {
     return ReaderT.join(v)
   }
 
-  public static map<C, T, U, M extends Monad<T>, N extends Monad<U>>(t: ReaderT<C, T, M>, f: (a: T) => U): ReaderT<C, U, N> {
-    return new ReaderT(t.value.map((m) => m.map(f))) as ReaderT<C, U, N>
+  public static map<C, T, U>(t: ReaderT<C, T>, f: (a: T) => U): ReaderT<C, U> {
+    return new ReaderT(t.value.map((m) => m.map(f))) as ReaderT<C, U>
   }
 
-  public static flatMap<C, T, U, M extends Monad<T>, N extends Monad<U>>(
-    t: ReaderT<C, T, M>,
-    f: (a: T) => ReaderT<C, U, N>
-  ): ReaderT<C, U, N> {
-    return new ReaderT(Reader.lift((c) => t.value.read(c).flatMap((a) => f(a).value.read(c)))) as ReaderT<C, U, N>
+  public static flatMap<C, T, U>(t: ReaderT<C, T>, f: (a: T) => ReaderT<C, U>): ReaderT<C, U> {
+    return new ReaderT(Reader.lift((c) => t.value.read(c).flatMap((a) => f(a).value.read(c)))) as ReaderT<C, U>
   }
 
-  public static lift<C, U>(v: U): ReaderT<C, U, Identity<U>> {
+  public static lift<C, U>(v: U): ReaderT<C, U> {
     return new ReaderT(Reader.lift(() => Identity.lift(v)))
   }
 
-  public static join<C, U, M extends Monad<ReaderT<C, U, N>>, N extends Monad<U>>(v: ReaderT<C, ReaderT<C, U, N>, M>): ReaderT<C, U, N> {
+  public static join<C, U>(v: ReaderT<C, ReaderT<C, U>>): ReaderT<C, U> {
     return v.flatMap((i) => i)
   }
 }

@@ -28,6 +28,10 @@ export class FullTree<T> implements Applicative<T> {
     return new FullTree(Either.left({ value }))
   }
 
+  public traverse(): List<T> {
+    return FullTree.traverse(this)
+  }
+
   public static node<T>(value: T, children: List<FullTree<T>>): FullTree<T> {
     return new FullTree(Either.right({ children, value }))
   }
@@ -40,6 +44,13 @@ export class FullTree<T> implements Applicative<T> {
           f(node.value),
           node.children.map((t) => t.map(f))
         )
+    )
+  }
+
+  public static traverse<U>(tree: FullTree<U>): List<U> {
+    return tree.tree.unwrap(
+      (leaf) => List.lift(leaf.value),
+      (node) => List.lift(node.value).concat(() => node.children.flatMap((t) => t.traverse()))
     )
   }
 }
