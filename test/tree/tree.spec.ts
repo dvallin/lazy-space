@@ -22,4 +22,12 @@ describe('Tree', () => {
     const numbers = numberTree.traverse().toArray()
     expect(parsedStrings).toEqual(numbers)
   })
+
+  it('flatmaps', () => {
+    const parsedStrings = stringTree
+      .flatMap((label) => (label.endsWith('1') ? Tree.node(List.of([Tree.lift(label + '1'), Tree.lift(label + '2')])) : Tree.lift(label)))
+      .traverse()
+      .toArray()
+    expect(parsedStrings).toEqual(['111', '112', '211', '212', '22'])
+  })
 })

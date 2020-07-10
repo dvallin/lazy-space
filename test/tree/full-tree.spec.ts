@@ -19,4 +19,8 @@ describe('FullTree', () => {
     const numbers = numberTree.traverse().toArray()
     expect(parsedStrings).toEqual(numbers)
   })
+
+  it('lifts', () => {
+    expect(stringTree.lift(1).traverse().toArray()).toEqual([1])
+  })
 })

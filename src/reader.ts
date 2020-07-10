@@ -85,11 +85,11 @@ export class ReaderT<C, T> implements Monad<T> {
   }
 
   public static map<C, T, U>(t: ReaderT<C, T>, f: (a: T) => U): ReaderT<C, U> {
-    return new ReaderT(t.value.map((m) => m.map(f))) as ReaderT<C, U>
+    return new ReaderT(t.value.map((m) => m.map(f)))
   }
 
   public static flatMap<C, T, U>(t: ReaderT<C, T>, f: (a: T) => ReaderT<C, U>): ReaderT<C, U> {
-    return new ReaderT(Reader.lift((c) => t.value.read(c).flatMap((a) => f(a).value.read(c)))) as ReaderT<C, U>
+    return new ReaderT(Reader.lift((c) => t.value.read(c).flatMap((a) => f(a).value.read(c))))
   }
 
   public static lift<C, U>(v: U): ReaderT<C, U> {

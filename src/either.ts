@@ -24,7 +24,11 @@ export class Either<S, T> implements Monad<S> {
   }
 
   public lift<U>(v: U): Either<U, T> {
-    return Either.lift(v)
+    return Either.left(v)
+  }
+
+  public liftRight<U>(v: T): Either<U, T> {
+    return Either.right(v)
   }
 
   public join<U>(v: Either<Either<U, T>, T>): Either<U, T> {
@@ -155,7 +159,7 @@ export class EitherT<S, T> implements Monad<S> {
         (either) =>
           either.unwrap(
             (s) => f(s).value,
-            (right) => t.value.lift(right)
+            (right) => t.value.lift(either.liftRight(right))
           ) as Monad<Either<U, T>>
       )
     )

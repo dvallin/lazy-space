@@ -1,6 +1,5 @@
 import { Try } from './try'
 import { Monad } from './monad'
-import { Identity } from './identity'
 
 export type async<T> = Promise<T>
 
@@ -89,59 +88,5 @@ export class Async<T> implements Monad<T> {
     } catch (error) {
       return Try.failure(error)
     }
-  }
-}
-
-export class AsyncT<T> implements Monad<T> {
-  public constructor(public readonly value: Async<Monad<T>>) {}
-
-  public map<U>(f: (a: T) => U): AsyncT<U> {
-    return AsyncT.map(this, f)
-  }
-
-  public flatMap<U>(f: (a: T) => AsyncT<U>): AsyncT<U> {
-    return AsyncT.flatMap(this, f)
-  }
-
-  public of(m: Monad<T>): AsyncT<T> {
-    return AsyncT.of(m)
-  }
-
-  public lift<U>(v: U): AsyncT<U> {
-    return AsyncT.lift(v)
-  }
-
-  public getValue(): Async<Monad<T>> {
-    return this.value
-  }
-
-  public join<U>(v: AsyncT<AsyncT<U>>): AsyncT<U> {
-    return AsyncT.join(v)
-  }
-
-  public static map<T, U>(t: AsyncT<T>, f: (a: T) => U): AsyncT<U> {
-    return new AsyncT(t.value.map((m) => m.map(f))) as AsyncT<U>
-  }
-
-  public static flatMap<T, U>(t: AsyncT<T>, f: (a: T) => AsyncT<U>): AsyncT<U> {
-    return new AsyncT(
-      Async.of(
-        new Promise<Monad<U>>((resolve, reject) => {
-          t.value.map((m) => m.map((a) => f(a).value.promise.then(resolve).catch(reject)))
-        })
-      )
-    )
-  }
-
-  public static of<U>(v: Monad<U>): AsyncT<U> {
-    return new AsyncT(Async.lift(v))
-  }
-
-  public static lift<U>(v: U): AsyncT<U> {
-    return new AsyncT(Async.lift(Identity.lift(v)))
-  }
-
-  public static join<U>(v: AsyncT<AsyncT<U>>): AsyncT<U> {
-    return v.flatMap((i) => i)
   }
 }

@@ -1,4 +1,4 @@
-import { Reader, Option, ReaderT } from '../src'
+import { Reader, Option, ReaderT, List } from '../src'
 import { testMonad } from './monad.tests'
 
 interface Context {
@@ -92,4 +92,15 @@ describe('Reader', () => {
 
 describe('ReaderT', () => {
   testMonad(ReaderT.lift(0), async (a, b) => expect(a.value.read({})).toEqual(b.value.read({})))
+
+  const list = new ReaderT(Reader.lift((context: string) => List.repeat('1' + context)))
+  it('maps', () => {
+    const c = list.map((s) => Number.parseInt(s))
+    expect((c.value.read('2') as List<number>).take(5).toArray()).toEqual([12, 12, 12, 12, 12])
+  })
+
+  it('flatmaps', () => {
+    const c = list.flatMap((s) => new ReaderT(Reader.lift((context: string) => List.of([s, context])))).map((s) => Number.parseInt(s))
+    expect((c.value.read('2') as List<number>).take(5).toArray()).toEqual([12, 2, 12, 2, 12])
+  })
 })

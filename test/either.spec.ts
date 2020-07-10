@@ -1,4 +1,4 @@
-import { Either, EitherT } from '../src'
+import { Either, EitherT, List } from '../src'
 import { testMonad } from './monad.tests'
 
 const right = Either.right
@@ -22,6 +22,9 @@ describe('either', () => {
     })
     it('binds to the right value', () => {
       expect(left('1').flatMap((s) => right(new Error(s)))).toEqual(right(new Error('1')))
+    })
+    it('works on right value', () => {
+      expect(right<number, string>('1').flatMap((s) => left(Number(s)))).toEqual(right('1'))
     })
   })
 
@@ -94,4 +97,15 @@ describe('either', () => {
 
 describe('EitherT', () => {
   testMonad(EitherT.lift(1), async (a, b) => expect(a.value).toEqual(b.value))
+
+  const list = new EitherT(List.of([right<number, string>('1'), left<number, string>(2)]))
+  it('maps', () => {
+    const c = list.map((s) => s + 1)
+    expect((c.value as List<Either<number, string>>).toArray()).toEqual([right('1'), left(3)])
+  })
+
+  it('flatmaps', () => {
+    const c = list.flatMap((s) => new EitherT(List.of([left(s + 1)])))
+    expect((c.value as List<Either<number, string>>).toArray()).toEqual([right('1'), left(3)])
+  })
 })

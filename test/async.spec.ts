@@ -1,4 +1,4 @@
-import { Async, Try, AsyncT } from '../src'
+import { Async, Try } from '../src'
 import { testMonad } from './monad.tests'
 
 describe('Async', () => {
@@ -115,8 +115,4 @@ describe('Async', () => {
       return expect(Async.all([Async.resolve(1), Async.reject(2), Async.resolve(3)]).promise).rejects.toEqual(2)
     })
   })
-})
-
-describe('AsyncT', () => {
-  testMonad(AsyncT.lift(0), async (a, b) => expect(a).toEqual(b))
 })
