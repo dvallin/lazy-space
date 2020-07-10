@@ -2,19 +2,19 @@ import { List } from '../list'
 import { Either } from '../either'
 import { Applicative } from '../applicative'
 
-export interface Node<T> {
+export interface FullTreeNode<T> {
   value: T
   children: List<FullTree<T>>
 }
 
-export interface Leaf<T> {
+export interface FullTreeLeaf<T> {
   value: T
 }
 
-export type tree<T> = Either<Leaf<T>, Node<T>>
+export type fullTree<T> = Either<FullTreeLeaf<T>, FullTreeNode<T>>
 
 export class FullTree<T> implements Applicative<T> {
-  public constructor(public readonly tree: tree<T>) {}
+  public constructor(public readonly tree: fullTree<T>) {}
 
   public lift<U>(value: U): FullTree<U> {
     return FullTree.lift(value)
