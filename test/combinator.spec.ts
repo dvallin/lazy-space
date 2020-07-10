@@ -192,7 +192,7 @@ describe('parser', () => {
     return List.ofLazies(lazies.map((a) => new Lazy(a)))
   }
 
-  function simplify(results: List<Result>): object[] {
+  function simplify(results: List<Result>): unknown[] {
     return results
       .map((a) => ({
         type: a.type,
