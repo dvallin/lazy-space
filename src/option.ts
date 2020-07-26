@@ -11,15 +11,23 @@ export class Option<T> extends Either<T, undefined> {
   }
 
   public static none<T>(): Option<T> {
-    return Either.right(undefined)
+    return new Option<T>('right', undefined)
   }
 
   public static some<T>(value: T): Option<T> {
-    return Either.left(value)
+    return new Option<T>('left', value)
   }
 
   public static of<T>(value: T | undefined | null): Option<T> {
-    return value !== undefined && value !== null ? Either.left(value) : Either.right(undefined)
+    return value !== undefined && value !== null ? Option.some(value) : Option.none()
+  }
+
+  public static filter<T>(val: Option<T>, f: (a: T) => boolean): Option<T> {
+    return Either.unwrap(
+      val,
+      (u) => (f(u) ? val : Option.none()),
+      () => Option.none()
+    )
   }
 
   public static ofMap<T, U>(val: Option<T>, f: (a: T) => option<U>): Option<U> {

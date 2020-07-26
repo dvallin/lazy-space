@@ -39,6 +39,10 @@ export class Either<S, T> implements Monad<S> {
     return Either.get(this)
   }
 
+  public getOrElse<U>(value: U): S | U {
+    return Either.getOrElse(this, value)
+  }
+
   public unwrap<U, V>(f: (s: S) => U, g: (t: T) => V): U | V {
     return Either.unwrap(this, f, g)
   }
@@ -53,6 +57,10 @@ export class Either<S, T> implements Monad<S> {
 
   public and(other: Either<S, T>): Either<S, T> {
     return Either.and(this, other)
+  }
+
+  public equals(other: Either<S, T>): boolean {
+    return Either.equals(this, other)
   }
 
   public isLeft(): this is Left<S> {
@@ -76,9 +84,13 @@ export class Either<S, T> implements Monad<S> {
   }
 
   public static get<S, T>(val: Either<S, T>): S {
-    return val.recover<S>((e) => {
+    return val.recover((e) => {
       throw e
     })
+  }
+
+  public static getOrElse<S, T, U>(val: Either<S, T>, value: U): S | U {
+    return val.recover(() => value)
   }
 
   public static unwrap<S, T, U, V>(val: Either<S, T>, f: (s: S) => U, g: (t: T) => V): U | V {
@@ -127,6 +139,10 @@ export class Either<S, T> implements Monad<S> {
 
   public static and<S, T, U>(left: Either<S, T>, right: Either<S, T>): Either<S | U, T> {
     return left.isRight() ? left : right
+  }
+
+  public static equals<S, T>(left: Either<S, T>, right: Either<S, T>): boolean {
+    return left.type === right.type && left.value === right.value
   }
 }
 

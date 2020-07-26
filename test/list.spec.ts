@@ -16,6 +16,13 @@ describe('List', () => {
       const nx2 = natural().map((v) => v * 2)
       expect(List.toArray(take(nx2, 6000))).toHaveLength(6000)
     })
+
+    it('is lazy', () => {
+      const visited: string[] = []
+      const all: string[] = ['1', '2', '3']
+      List.of(all).map((a) => visited.push(a))
+      expect(visited).toEqual([])
+    })
   })
 
   describe('bind', () => {
@@ -67,25 +74,34 @@ describe('List', () => {
   describe('head', () => {
     it('takes first', () => {
       expect(List.head(natural())).toEqual(Option.some(1))
-      expect(natural().head).toEqual(Option.some(1))
+      expect(natural().head.eval()).toEqual(Option.some(1))
     })
 
     it('takes first twice', () => {
       const n = natural()
-      expect(n.head).toEqual(Option.some(1))
-      expect(n.head).toEqual(Option.some(1))
-      expect(n.tail().head).toEqual(Option.some(2))
+      expect(n.head.eval()).toEqual(Option.some(1))
+      expect(n.head.eval()).toEqual(Option.some(1))
+      expect(n.tail().head.eval()).toEqual(Option.some(2))
     })
 
     it('is invalid on empty lists', () => {
-      expect(List.empty().head).toEqual(Option.none())
+      expect(List.empty().head.eval()).toEqual(Option.none())
     })
   })
 
   describe('tail', () => {
     it('takes tail', () => {
-      expect(List.tail(natural()).head).toEqual(Option.some(2))
-      expect(natural().tail().head).toEqual(Option.some(2))
+      expect(List.tail(natural()).head.eval()).toEqual(Option.some(2))
+      expect(natural().tail().head.eval()).toEqual(Option.some(2))
+    })
+  })
+
+  describe('forEach', () => {
+    it('consumes all elements', () => {
+      const visited: string[] = []
+      const all: string[] = ['1', '2', '3']
+      List.of(all).forEach((a) => visited.push(a))
+      expect(visited).toEqual(all)
     })
   })
 
@@ -126,7 +142,7 @@ describe('List', () => {
     })
 
     it('takes empty', () => {
-      expect(List.empty().take().head).toEqual(Option.none())
+      expect(List.empty().take().head.eval()).toEqual(Option.none())
     })
   })
 
@@ -137,7 +153,7 @@ describe('List', () => {
     })
 
     it('drops empty', () => {
-      expect(List.empty().drop().head).toEqual(Option.none())
+      expect(List.empty().drop().head.eval()).toEqual(Option.none())
     })
   })
 
@@ -276,7 +292,7 @@ describe('List', () => {
 
   describe('batch', () => {
     it('batches lists according to given window', () => {
-      expect(of([1, 2, 3, 4, 5]).batch(1).toArray()).toEqual([[1], [2], [3], [4], [5]])
+      expect(List.batch(of([1, 2, 3, 4, 5]), 1).toArray()).toEqual([[1], [2], [3], [4], [5]])
       expect(of([1, 2, 3, 4, 5]).batch(2).toArray()).toEqual([[1, 2], [3, 4], [5]])
       expect(of([1, 2, 3, 4, 5]).batch(2, 1).toArray()).toEqual([[1, 2], [2, 3], [3, 4], [4, 5], [5]])
       expect(of([1, 2, 3, 4, 5]).batch(3, 4).toArray()).toEqual([[1, 2, 3], [5]])

@@ -3,7 +3,8 @@ import { Monad } from './monad'
 export type lazy<T> = () => T
 
 export class Lazy<T> implements Monad<T> {
-  public constructor(private readonly value: lazy<T>) {}
+  private memory: T | undefined = undefined
+  public constructor(private readonly value: lazy<T>, private readonly memoized: boolean = false) {}
 
   public map<U>(f: (a: T) => U): Lazy<U> {
     return Lazy.map(this, f)
@@ -19,6 +20,10 @@ export class Lazy<T> implements Monad<T> {
   }
 
   public eval(): T {
+    if (this.memoized) {
+      this.memory = this.memory === undefined ? this.value() : this.memory
+      return this.memory
+    }
     return this.value()
   }
 

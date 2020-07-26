@@ -1,6 +1,7 @@
 import { List } from '../list'
 import { Path, Graph, PathQuery, VertexId, AdjacencyInformation } from '.'
 import { Option } from '../option'
+import { Lazy } from '../lazy'
 
 export interface Visit {
   type: 'tree' | 'cycle'
@@ -20,32 +21,32 @@ export class GraphQueries<S, T> {
         List.flattenOptionals(
           traversal
             .map((t) => t.flatMap((info) => this.graph.getVertex(info.to)))
-            .prepend(path.head.flatMap((v) => this.graph.getVertex(v)))
+            .prepend(path.head.eval().flatMap((v) => this.graph.getVertex(v)))
         ),
     }
   }
 
   public depthFirst(vertex: VertexId): List<Visit> {
     const visit: Visit = { type: 'tree', vertex, path: List.empty() }
-    return new List(Option.some(visit), () => this.dfs(visit, new Set()))
+    return new List(Lazy.lift(Option.some(visit)), () => this.dfs(visit, new Set()))
   }
 
   public breadthFirst(vertex: VertexId): List<Visit> {
     const visit: Visit = { type: 'tree', vertex, path: List.empty() }
-    return new List(Option.some(visit), () => this.bfs(visit, new Set()))
+    return new List(Lazy.lift(Option.some(visit)), () => this.bfs(visit, new Set()))
   }
 
   private dfs(visit: Visit, visited: Set<VertexId>): List<Visit> {
     const path = visit.path.append(visit.vertex)
     visited.add(visit.vertex)
-    return this.graph.neighbours(visit.vertex).flatMap((a) => {
-      const type = this.updateVisited(visited, a)
-      const currentVisit: Visit = { type, vertex: a, path }
+    return this.graph.neighbours(visit.vertex).flatMap((vertex) => {
+      const type = this.updateVisited(visited, vertex)
+      const currentVisit: Visit = { type, vertex, path }
       switch (type) {
         case 'cycle':
           return List.lift(currentVisit)
         case 'tree':
-          return new List(Option.some(currentVisit), () => this.dfs(currentVisit, visited))
+          return new List(Lazy.lift(Option.some(currentVisit)), () => this.dfs(currentVisit, visited))
       }
     })
   }
@@ -53,7 +54,7 @@ export class GraphQueries<S, T> {
   private bfs(visit: Visit, visited: Set<VertexId>): List<Visit> {
     visited.add(visit.vertex)
     const path = visit.path.append(visit.vertex)
-    const layer: List<Visit> = this.graph.neighbours(visit.vertex).map((a) => ({ type: this.updateVisited(visited, a), vertex: a, path }))
+    const layer = this.graph.neighbours(visit.vertex).map((vertex) => ({ type: this.updateVisited(visited, vertex), vertex, path }))
     return layer.concat(() => layer.filter((v) => v.type === 'tree').flatMap((current) => this.bfs(current, visited)))
   }
 

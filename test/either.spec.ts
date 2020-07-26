@@ -74,6 +74,15 @@ describe('either', () => {
     })
   })
 
+  describe('getOrElse', () => {
+    it('returns left', () => {
+      expect(left(1).getOrElse(2)).toEqual(1)
+    })
+    it('returns value', () => {
+      expect(right('error').getOrElse(2)).toEqual(2)
+    })
+  })
+
   describe('or', () => {
     it('gets first left', () => {
       expect(left(1).or(left(2))).toEqual(left(1))
@@ -91,6 +100,19 @@ describe('either', () => {
     })
     it('gets last left', () => {
       expect(left(1).and(left(2))).toEqual(left(2))
+    })
+  })
+
+  describe('equals', () => {
+    it('returns true if equal', () => {
+      expect(left(1).equals(left(1))).toBeTruthy()
+      expect(right(1).equals(right(1))).toBeTruthy()
+    })
+    it('returns false if not equal', () => {
+      expect(left(1).equals(left(2))).toBeFalsy()
+      expect(left(1).equals(right(1))).toBeFalsy()
+      expect(right(1).equals(right(2))).toBeFalsy()
+      expect(right(1).equals(left(1))).toBeFalsy()
     })
   })
 })
