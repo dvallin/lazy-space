@@ -154,9 +154,8 @@ export class List<T> implements Monad<T> {
   }
 
   public static takeWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
-    return val.head.eval().unwrap(
-      (h) => (predicate(h) ? new List(val.head, () => val.tail().takeWhile(predicate)) : List.empty()),
-      () => List.empty()
+    return new List(new Lazy(() => val.head.eval().flatMap((h) => (predicate(h) ? Option.some(h) : Option.none()))), () =>
+      val.tail().takeWhile(predicate)
     )
   }
 
@@ -176,13 +175,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static drop<T>(val: List<T>, amount = 1): List<T> {
-    if (amount > 0) {
-      return val.head.eval().unwrap(
-        () => val.tail().drop(amount - 1),
-        () => List.empty()
-      )
-    }
-    return val
+    return amount > 0 ? val.tail().drop(amount - 1) : val
   }
 
   public static fold<S, T>(val: List<S>, initial: T, combine: (l: T, r: S) => T): T {
@@ -241,11 +234,13 @@ export class List<T> implements Monad<T> {
   }
 
   public static batch<T>(val: List<T>, length: number, step: number = length): List<T[]> {
-    const head = val.take(length).toArray()
-    if (head.length > 0) {
-      return new List(Lazy.lift(Option.some(head)), () => val.drop(step).batch(length, step))
-    }
-    return List.empty()
+    return new List(
+      new Lazy(() => {
+        const head = val.take(length).toArray()
+        return head.length > 0 ? Option.some(head) : Option.none()
+      }, true),
+      () => val.drop(step).batch(length, step)
+    )
   }
 
   public static toArray<T>(val: List<T>): T[] {

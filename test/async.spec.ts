@@ -37,6 +37,32 @@ describe('Async', () => {
     })
   })
 
+  describe('finally', () => {
+    it('all finallies are invoked', async () => {
+      const fn1 = jest.fn()
+      const fn2 = jest.fn()
+      await Async.resolve('1')
+        .finally(fn1)
+        .map((s) => Number(s))
+        .finally(fn2)
+        .run()
+      expect(fn1).toHaveBeenCalled()
+      expect(fn2).toHaveBeenCalled()
+    })
+
+    it('all finallies are invoked even on rejection', async () => {
+      const fn1 = jest.fn()
+      const fn2 = jest.fn()
+      await Async.reject('1')
+        .finally(fn1)
+        .map((s) => Number(s))
+        .finally(fn2)
+        .run()
+      expect(fn1).toHaveBeenCalled()
+      expect(fn2).toHaveBeenCalled()
+    })
+  })
+
   describe('flatMap', () => {
     it('flatmaps on resolve', () => {
       const value = Async.resolve('1').flatMap((s) => Async.resolve(Number(s)))

@@ -14,6 +14,10 @@ export class Async<T> implements Monad<T> {
     return Async.recover(this, f)
   }
 
+  public finally(f: () => void): Async<T> {
+    return Async.finally(this, f)
+  }
+
   public flatMap<U>(f: (a: T) => Async<U>): Async<U> {
     return Async.flatMap(this, f)
   }
@@ -60,6 +64,10 @@ export class Async<T> implements Monad<T> {
 
   public static recover<S>(val: Async<S>, f: () => S): Async<S> {
     return new Async(val.promise.catch(f))
+  }
+
+  public static finally<S>(val: Async<S>, f: () => void): Async<S> {
+    return new Async(val.promise.finally(f))
   }
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {

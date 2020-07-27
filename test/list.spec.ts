@@ -1,4 +1,4 @@
-import { List, Option } from '../src'
+import { List, Option, Lazy } from '../src'
 import { testMonad } from './monad.tests'
 
 const { of, take, natural, join, repeat, drop } = List
@@ -113,6 +113,8 @@ describe('List', () => {
     it('takes full lists', () => {
       expect(List.toArray(of([1, 2, 3]).takeWhile((n) => n < 100))).toEqual([1, 2, 3])
     })
+
+    testLazyOperation((l) => l.takeWhile((v) => v))
   })
 
   describe('dropWhile', () => {
@@ -144,6 +146,8 @@ describe('List', () => {
     it('takes empty', () => {
       expect(List.empty().take().head.eval()).toEqual(Option.none())
     })
+
+    testLazyOperation((l) => l.take(3))
   })
 
   describe('drop', () => {
@@ -155,6 +159,8 @@ describe('List', () => {
     it('drops empty', () => {
       expect(List.empty().drop().head.eval()).toEqual(Option.none())
     })
+
+    testLazyOperation((l) => l.drop(3))
   })
 
   describe('fold', () => {
@@ -329,3 +335,19 @@ describe('List', () => {
     })
   })
 })
+
+function testLazyOperation(op: (l: List<boolean>) => void): void {
+  it('is lazy', () => {
+    let lazy = true
+    op(
+      new List(
+        new Lazy(() => {
+          lazy = false
+          return Option.some(lazy)
+        }),
+        () => List.empty()
+      )
+    )
+    expect(lazy).toBeTruthy()
+  })
+}
