@@ -1,7 +1,6 @@
 import { List } from '../list'
 import { Path, Graph, PathQuery, VertexId, AdjacencyInformation } from '.'
 import { Option } from '../option'
-import { Lazy } from '../lazy'
 
 export interface Visit {
   type: 'tree' | 'cycle'
@@ -21,19 +20,19 @@ export class GraphQueries<S, T> {
         List.flattenOptionals(
           traversal
             .map((t) => t.flatMap((info) => this.graph.getVertex(info.to)))
-            .prepend(path.head.eval().flatMap((v) => this.graph.getVertex(v)))
+            .prepend(path._head.flatMap((v) => this.graph.getVertex(v.eval())))
         ),
     }
   }
 
   public depthFirst(vertex: VertexId): List<Visit> {
     const visit: Visit = { type: 'tree', vertex, path: List.empty() }
-    return new List(Lazy.lift(Option.some(visit)), () => this.dfs(visit, new Set()))
+    return List.lift(visit, () => this.dfs(visit, new Set()))
   }
 
   public breadthFirst(vertex: VertexId): List<Visit> {
     const visit: Visit = { type: 'tree', vertex, path: List.empty() }
-    return new List(Lazy.lift(Option.some(visit)), () => this.bfs(visit, new Set()))
+    return List.lift(visit, () => this.bfs(visit, new Set()))
   }
 
   private dfs(visit: Visit, visited: Set<VertexId>): List<Visit> {
@@ -46,7 +45,7 @@ export class GraphQueries<S, T> {
         case 'cycle':
           return List.lift(currentVisit)
         case 'tree':
-          return new List(Lazy.lift(Option.some(currentVisit)), () => this.dfs(currentVisit, visited))
+          return List.lift(currentVisit, () => this.dfs(currentVisit, visited))
       }
     })
   }
@@ -54,7 +53,7 @@ export class GraphQueries<S, T> {
   private bfs(visit: Visit, visited: Set<VertexId>): List<Visit> {
     visited.add(visit.vertex)
     const path = visit.path.append(visit.vertex)
-    const layer = this.graph.neighbours(visit.vertex).map((vertex) => ({ type: this.updateVisited(visited, vertex), vertex, path }))
+    const layer = this.graph.neighbours(visit.vertex).map((vertex) => ({ type: this.updateVisited(visited, vertex), vertex, path }), true)
     return layer.concat(() => layer.filter((v) => v.type === 'tree').flatMap((current) => this.bfs(current, visited)))
   }
 

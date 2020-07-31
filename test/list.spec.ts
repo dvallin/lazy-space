@@ -74,25 +74,22 @@ describe('List', () => {
   describe('head', () => {
     it('takes first', () => {
       expect(List.head(natural())).toEqual(Option.some(1))
-      expect(natural().head.eval()).toEqual(Option.some(1))
     })
 
     it('takes first twice', () => {
       const n = natural()
-      expect(n.head.eval()).toEqual(Option.some(1))
-      expect(n.head.eval()).toEqual(Option.some(1))
-      expect(n.tail().head.eval()).toEqual(Option.some(2))
+      expect(List.head(n)).toEqual(Option.some(1))
+      expect(List.head(List.tail(n))).toEqual(Option.some(2))
     })
 
     it('is invalid on empty lists', () => {
-      expect(List.empty().head.eval()).toEqual(Option.none())
+      expect(List.head(List.empty())).toEqual(Option.none())
     })
   })
 
   describe('tail', () => {
     it('takes tail', () => {
-      expect(List.tail(natural()).head.eval()).toEqual(Option.some(2))
-      expect(natural().tail().head.eval()).toEqual(Option.some(2))
+      expect(List.head(List.tail(natural()))).toEqual(Option.some(2))
     })
   })
 
@@ -113,8 +110,6 @@ describe('List', () => {
     it('takes full lists', () => {
       expect(List.toArray(of([1, 2, 3]).takeWhile((n) => n < 100))).toEqual([1, 2, 3])
     })
-
-    testLazyOperation((l) => l.takeWhile((v) => v))
   })
 
   describe('dropWhile', () => {
@@ -144,7 +139,7 @@ describe('List', () => {
     })
 
     it('takes empty', () => {
-      expect(List.empty().take().head.eval()).toEqual(Option.none())
+      expect(List.head(List.empty().take())).toEqual(Option.none())
     })
 
     testLazyOperation((l) => l.take(3))
@@ -157,7 +152,7 @@ describe('List', () => {
     })
 
     it('drops empty', () => {
-      expect(List.empty().drop().head.eval()).toEqual(Option.none())
+      expect(List.head(List.empty().drop())).toEqual(Option.none())
     })
 
     testLazyOperation((l) => l.drop(3))
@@ -317,6 +312,12 @@ describe('List', () => {
     })
   })
 
+  describe('flattenOptionals', () => {
+    it('flattens', () => {
+      expect(List.flattenOptionals(of([Option.none(), Option.some(1), Option.none(), Option.some(2)])).toArray()).toEqual([1, 2])
+    })
+  })
+
   describe('isEmpty', () => {
     it('true on empty', () => {
       expect(of([]).isEmpty()).toBeTruthy()
@@ -341,10 +342,12 @@ function testLazyOperation(op: (l: List<boolean>) => void): void {
     let lazy = true
     op(
       new List(
-        new Lazy(() => {
-          lazy = false
-          return Option.some(lazy)
-        }),
+        Option.some(
+          new Lazy(() => {
+            lazy = false
+            return lazy
+          })
+        ),
         () => List.empty()
       )
     )

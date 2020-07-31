@@ -6,8 +6,8 @@ export class Lazy<T> implements Monad<T> {
   private memory: T | undefined = undefined
   public constructor(private readonly value: lazy<T>, private readonly memoized: boolean = false) {}
 
-  public map<U>(f: (a: T) => U): Lazy<U> {
-    return Lazy.map(this, f)
+  public map<U>(f: (a: T) => U, memoized = false): Lazy<U> {
+    return Lazy.map(this, f, memoized)
   }
   public flatMap<U>(f: (a: T) => Lazy<U>): Lazy<U> {
     return Lazy.flatMap(this, f)
@@ -27,8 +27,8 @@ export class Lazy<T> implements Monad<T> {
     return this.value()
   }
 
-  public static map<S, U>(value: Lazy<S>, f: (a: S) => U): Lazy<U> {
-    return new Lazy(() => f(value.eval()))
+  public static map<S, U>(value: Lazy<S>, f: (a: S) => U, memoized = false): Lazy<U> {
+    return new Lazy(() => f(value.eval()), memoized)
   }
   public static flatMap<S, U>(value: Lazy<S>, f: (a: S) => Lazy<U>): Lazy<U> {
     return f(value.eval())

@@ -3,9 +3,9 @@ import { Monad } from './monad'
 import { Lazy, lazy } from './lazy'
 
 export class List<T> implements Monad<T> {
-  public constructor(public readonly head: Lazy<Option<T>>, public readonly tail: lazy<List<T>>) {}
+  public constructor(public readonly _head: Option<Lazy<T>>, public readonly _tail: lazy<List<T>>) {}
 
-  public map<U>(f: (a: T) => U, memoized = true): List<U> {
+  public map<U>(f: (a: T) => U, memoized = false): List<U> {
     return List.map(this, f, memoized)
   }
 
@@ -70,11 +70,11 @@ export class List<T> implements Monad<T> {
   }
 
   public filterType<U extends T = T>(predicate: (v: T) => v is U): List<U> {
-    return List.filter(this, predicate)
+    return List.filterType(this, predicate)
   }
 
   public filter(predicate: (v: T) => boolean): List<T> {
-    return List.filter(this, (v): v is T => predicate(v))
+    return List.filterType(this, (v): v is T => predicate(v))
   }
 
   public some(predicate: (v: T) => boolean): boolean {
@@ -105,24 +105,27 @@ export class List<T> implements Monad<T> {
     return List.toArray(this)
   }
 
-  public consume(): void {
-    return List.consume(this)
+  public eval(): void {
+    return List.eval(this)
   }
 
-  public static lift<T>(val: T): List<T> {
-    return new List<T>(Lazy.lift(Option.of(val)), List.empty)
+  public static lift<T>(val: T, tail: () => List<T> = List.empty): List<T> {
+    return new List<T>(Option.of(val).map(Lazy.lift), tail)
   }
 
   public static of<T>(val: T[], start = 0): List<T> {
-    return new List(Lazy.lift(Option.of(val[start])), () => List.of(val, start + 1))
+    return List.lift(val[start], () => List.of(val, start + 1))
   }
 
   public static ofLazies<T>(val: Lazy<T>[], start = 0): List<T> {
-    return new List(Lazy.lift(Option.of(val[start]).map((v) => v.eval())), () => List.ofLazies(val, start + 1))
+    return new List(Option.of(val[start]), () => List.ofLazies(val, start + 1))
   }
 
-  public static map<S, T>(val: List<S>, f: (a: S) => T, memoized = true): List<T> {
-    return new List(new Lazy(() => val.head.eval().map(f), memoized), () => val.tail().map(f))
+  public static map<S, T>(val: List<S>, f: (a: S) => T, memoized = false): List<T> {
+    return new List(
+      val._head.map((a) => a.map(f, memoized)),
+      () => val._tail().map(f)
+    )
   }
 
   public static flatMap<S, T>(val: List<S>, f: (s: S) => List<T>): List<T> {
@@ -130,7 +133,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static prepend<T>(list: List<T>, value: T): List<T> {
-    return new List(Lazy.lift(Option.some(value)), () => list)
+    return this.lift(value, () => list)
   }
 
   public static append<T>(list: List<T>, value: T): List<T> {
@@ -138,7 +141,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static concat<T>(left: List<T>, right: () => List<T>): List<T> {
-    return left.foldr(right, (t, h) => new List(Lazy.lift(Option.some(h)), t))
+    return left.foldr(right, (t, h) => List.lift(h, t))
   }
 
   public static join<T>(val: List<List<T>>): List<T> {
@@ -146,46 +149,46 @@ export class List<T> implements Monad<T> {
   }
 
   public static head<T>(val: List<T>): Option<T> {
-    return val.head.eval()
+    return val._head.map((v) => v.eval())
   }
 
   public static tail<T>(val: List<T>): List<T> {
-    return val.tail()
+    return val._tail()
+  }
+
+  public static forEach<T>(val: List<T>, f: (a: T) => void): void {
+    val.map(f).eval()
+  }
+
+  public static take<T>(val: List<T>, amount = 1): List<T> {
+    return new List(val._head, () => (amount > 1 ? val._tail().take(amount - 1) : List.empty()))
+  }
+
+  public static drop<T>(val: List<T>, amount = 1): List<T> {
+    return amount > 0 ? val._tail().drop(amount - 1) : val
   }
 
   public static takeWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
-    return new List(new Lazy(() => val.head.eval().flatMap((h) => (predicate(h) ? Option.some(h) : Option.none()))), () =>
-      val.tail().takeWhile(predicate)
-    )
-  }
-
-  public static dropWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
-    return val.head.eval().unwrap(
-      (h) => (predicate(h) ? val.tail().dropWhile(predicate) : val),
+    return val._head.unwrap(
+      (h) => (predicate(h.eval()) ? new List(val._head, () => val._tail().takeWhile(predicate)) : List.empty()),
       () => List.empty()
     )
   }
 
-  public static forEach<T>(val: List<T>, f: (a: T) => void): void {
-    val.map(f).consume()
-  }
-
-  public static take<T>(val: List<T>, amount = 1): List<T> {
-    return new List(val.head, () => (amount > 1 ? val.tail().take(amount - 1) : List.empty()))
-  }
-
-  public static drop<T>(val: List<T>, amount = 1): List<T> {
-    return amount > 0 ? val.tail().drop(amount - 1) : val
+  public static dropWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
+    return val._head.unwrap(
+      (h) => (predicate(h.eval()) ? val._tail().dropWhile(predicate) : val),
+      () => List.empty()
+    )
   }
 
   public static fold<S, T>(val: List<S>, initial: T, combine: (l: T, r: S) => T): T {
     let aggregate = initial
     let current = val
     while (true) {
-      const head = current.head.eval()
-      if (Option.isSome(head)) {
-        aggregate = combine(aggregate, head.value)
-        current = current.tail()
+      if (Option.isSome(current._head)) {
+        aggregate = combine(aggregate, current._head.value.eval())
+        current = current._tail()
       } else {
         break
       }
@@ -194,8 +197,8 @@ export class List<T> implements Monad<T> {
   }
 
   public static foldr<S, T>(val: List<S>, initial: () => T, combine: (l: () => T, r: S) => T): T {
-    return val.head.eval().unwrap(
-      (h) => combine(() => val.tail().foldr(initial, combine), h),
+    return val._head.unwrap(
+      (h) => combine(() => val._tail().foldr(initial, combine), h.eval()),
       () => initial()
     )
   }
@@ -203,12 +206,11 @@ export class List<T> implements Monad<T> {
   public static seek<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
     let current = val
     while (true) {
-      const head = current.head.eval()
-      if (Option.isSome(head)) {
-        if (predicate(head.value)) {
+      if (Option.isSome(current._head)) {
+        if (predicate(current._head.value.eval())) {
           return current
         }
-        current = current.tail()
+        current = current._tail()
       } else {
         break
       }
@@ -217,12 +219,12 @@ export class List<T> implements Monad<T> {
   }
 
   public static find<T>(val: List<T>, predicate: (v: T) => boolean): Option<T> {
-    return val.seek(predicate).head.eval()
+    return val.seek(predicate)._head.map((v) => v.eval())
   }
 
-  public static filter<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
+  public static filterType<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
     const found = val.seek(predicate)
-    return new List(found.head as Lazy<Option<U>>, () => found.tail().filterType(predicate))
+    return new List(found._head as Option<Lazy<U>>, () => found._tail().filterType(predicate))
   }
 
   public static some<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
@@ -234,13 +236,10 @@ export class List<T> implements Monad<T> {
   }
 
   public static batch<T>(val: List<T>, length: number, step: number = length): List<T[]> {
-    return new List(
-      new Lazy(() => {
-        const head = val.take(length).toArray()
-        return head.length > 0 ? Option.some(head) : Option.none()
-      }, true),
-      () => val.drop(step).batch(length, step)
-    )
+    if (Option.isSome(val._head)) {
+      return new List(Option.some(new Lazy(() => val.take(length).toArray())), () => val.drop(step).batch(length, step))
+    }
+    return List.empty()
   }
 
   public static toArray<T>(val: List<T>): T[] {
@@ -250,27 +249,28 @@ export class List<T> implements Monad<T> {
     })
   }
 
-  public static consume<T>(val: List<T>): void {
+  public static eval<T>(val: List<T>): void {
     let current = val
-    while (Option.isSome(current.head.eval())) {
-      current = current.tail()
+    while (Option.isSome(current._head)) {
+      current._head.value.eval()
+      current = current._tail()
     }
   }
 
   public static repeat<T>(value: T): List<T> {
-    return new List(Lazy.lift(Option.some(value)), () => List.repeat(value))
+    return new List<T>(Option.of(Lazy.lift(value)), () => List.repeat(value))
   }
 
   public static empty<T>(): List<T> {
-    return new List<T>(Lazy.lift(Option.none()), List.empty)
+    return new List<T>(Option.none(), List.empty)
   }
 
   public static natural(start = 1): List<number> {
-    return new List(Lazy.lift(Option.some(start)), () => List.natural(start + 1))
+    return List.lift(start, () => List.natural(start + 1))
   }
 
   public static reverse<T>(list: List<T>): List<T> {
-    return List.fold(list, List.empty(), (l, r) => new List(Lazy.lift(Option.of(r)), () => l))
+    return List.fold(list, List.empty(), (l, r) => List.lift(r, () => l))
   }
 
   public static size<T>(list: List<T>): number {
@@ -278,10 +278,10 @@ export class List<T> implements Monad<T> {
   }
 
   public static isEmpty<T>(list: List<T>): boolean {
-    return list.head.eval().isRight()
+    return list._head.isRight()
   }
 
-  public static flattenOptionals<T>(list: List<Option<T>>, memoized = true): List<T> {
-    return new List(new Lazy(() => Option.join(list.head.eval()), memoized), () => List.flattenOptionals(list.tail()))
+  public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
+    return list.filterType(Option.isSome).map((v) => v.value)
   }
 }
