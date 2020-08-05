@@ -38,6 +38,10 @@ export class Async<T> implements Monad<T> {
     return Async.run(this)
   }
 
+  public unwrap<U, V>(f: (s: T) => U, g: (error: Error) => V): Async<U | V> {
+    return Async.of(this.run()).map((c) => c.unwrap(f, g))
+  }
+
   public static empty(): Async<void> {
     return new Async(Promise.resolve())
   }
@@ -88,6 +92,10 @@ export class Async<T> implements Monad<T> {
 
   public static all<T>(values: Async<T>[]): Async<T[]> {
     return new Async(Promise.all(values.map((v) => v.promise)))
+  }
+
+  public static unwrap<T, U, V>(val: Async<T>, f: (s: T) => U, g: (error: Error) => V): Async<U | V> {
+    return Async.of(val.run()).map((c) => c.unwrap(f, g))
   }
 
   public static async run<T>(val: Async<T>): Promise<Try<T>> {

@@ -122,6 +122,26 @@ describe('Async', () => {
     })
   })
 
+  describe('unwrap', () => {
+    const error = new Error('error')
+
+    it('unwraps resolved promises', async () => {
+      const success = jest.fn()
+      const failure = jest.fn()
+      await Async.resolve(1).unwrap(success, failure).run()
+      expect(success).toHaveBeenCalledWith(1)
+      expect(failure).not.toHaveBeenCalled()
+    })
+
+    it('unwraps rejected promises', async () => {
+      const success = jest.fn()
+      const failure = jest.fn()
+      await Async.reject(error).unwrap(success, failure).run()
+      expect(success).not.toHaveBeenCalled()
+      expect(failure).toHaveBeenCalledWith(error)
+    })
+  })
+
   describe('race', () => {
     it('returns first resolving', () => {
       return expect(Async.race([Async.resolve(1), Async.reject(2), Async.resolve(3)]).promise).resolves.toEqual(1)
