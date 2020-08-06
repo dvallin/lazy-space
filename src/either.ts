@@ -51,6 +51,10 @@ export class Either<S, T> implements Monad<S> {
     return Either.recover(this, f)
   }
 
+  public flatRecover<U>(f: (error: T) => Either<U, T>): Either<S | U, T> {
+    return Either.flatRecover(this, f)
+  }
+
   public or(other: Either<S, T>): Either<S, T> {
     return Either.or(this, other)
   }
@@ -129,6 +133,14 @@ export class Either<S, T> implements Monad<S> {
     return Either.unwrap(
       val,
       (u) => u,
+      (v) => f(v)
+    )
+  }
+
+  public static flatRecover<S, T, U>(val: Either<S, T>, f: (error: T) => Either<U, T>): Either<S | U, T> {
+    return Either.unwrap(
+      val,
+      (u) => Either.left(u),
       (v) => f(v)
     )
   }

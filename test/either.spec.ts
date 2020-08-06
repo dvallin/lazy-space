@@ -65,6 +65,18 @@ describe('either', () => {
     })
   })
 
+  describe('flatRecover', () => {
+    it('returns left', () => {
+      expect(left(1).flatRecover((r) => left('' + r))).toEqual(left(1))
+    })
+    it('passes left into function', () => {
+      expect(right(1).flatRecover((r) => left('' + r))).toEqual(left('1'))
+    })
+    it('passes right into function', () => {
+      expect(right(1).flatRecover(() => right(2))).toEqual(right(2))
+    })
+  })
+
   describe('get', () => {
     it('returns left', () => {
       expect(left(1).get()).toEqual(1)

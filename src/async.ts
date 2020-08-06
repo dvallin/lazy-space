@@ -10,7 +10,7 @@ export class Async<T> implements Monad<T> {
     return Async.map(this, f)
   }
 
-  public recover(f: () => T): Async<T> {
+  public recover(f: (error?: unknown) => T): Async<T> {
     return Async.recover(this, f)
   }
 
@@ -22,8 +22,8 @@ export class Async<T> implements Monad<T> {
     return Async.flatMap(this, f)
   }
 
-  public recoverMap(f: () => Async<T>): Async<T> {
-    return Async.recoverMap(this, f)
+  public flatRecover(f: (error?: unknown) => Async<T>): Async<T> {
+    return Async.flatRecover(this, f)
   }
 
   public join<U>(value: Async<Async<U>>): Async<U> {
@@ -47,7 +47,7 @@ export class Async<T> implements Monad<T> {
   }
 
   public unwrap<U, V>(f: (s: T) => U, g: (error: Error) => V): Async<U | V> {
-    return Async.of(this.run()).map((c) => c.unwrap(f, g))
+    return Async.unwrap(this, f, g)
   }
 
   public static empty(): Async<void> {
@@ -74,11 +74,11 @@ export class Async<T> implements Monad<T> {
     return new Async(val.promise.then(f))
   }
 
-  public static recover<S>(val: Async<S>, f: () => S): Async<S> {
+  public static recover<S>(val: Async<S>, f: (error?: unknown) => S): Async<S> {
     return new Async(val.promise.catch(f))
   }
 
-  public static recoverMap<S>(val: Async<S>, f: () => Async<S>): Async<S> {
+  public static flatRecover<S>(val: Async<S>, f: (error?: unknown) => Async<S>): Async<S> {
     return new Async(
       new Promise((resolve, reject) => {
         val.promise.then(resolve).catch(() => f().promise.then(resolve).catch(reject))

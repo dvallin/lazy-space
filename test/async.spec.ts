@@ -37,12 +37,26 @@ describe('Async', () => {
     })
   })
 
-  describe('recover', () => {
-    it('flatmaps on reject', () => {
-      const value = Async.reject('1')
-        .recoverMap(() => Async.resolve('1'))
+  describe('flatRecover', () => {
+    it('does not recover if resolved', () => {
+      const value = Async.resolve('1')
+        .flatRecover(() => Async.reject('2'))
         .map((s) => Number(s))
       return expect(value.promise).resolves.toEqual(1)
+    })
+
+    it('flatmaps on reject', () => {
+      const value = Async.reject('1')
+        .flatRecover(() => Async.resolve('2'))
+        .map((s) => Number(s))
+      return expect(value.promise).resolves.toEqual(2)
+    })
+
+    it('flatmaps on reject into new reject', () => {
+      const value = Async.reject('1')
+        .flatRecover(() => Async.reject('2'))
+        .map((s) => Number(s))
+      return expect(value.promise).rejects.toEqual('2')
     })
   })
 
@@ -168,6 +182,12 @@ describe('Async', () => {
 
     it('returns first rejecting', () => {
       return expect(Async.all([Async.resolve(1), Async.reject(2), Async.resolve(3)]).promise).rejects.toEqual(2)
+    })
+  })
+
+  describe('toVoid', () => {
+    it('swallows returned value', () => {
+      return expect(Async.resolve(1).toVoid().promise).resolves.toBeUndefined()
     })
   })
 })
