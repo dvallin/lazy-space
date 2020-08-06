@@ -22,6 +22,10 @@ export class Async<T> implements Monad<T> {
     return Async.flatMap(this, f)
   }
 
+  public recoverMap(f: () => Async<T>): Async<T> {
+    return Async.recoverMap(this, f)
+  }
+
   public join<U>(value: Async<Async<U>>): Async<U> {
     return Async.join(value)
   }
@@ -32,6 +36,10 @@ export class Async<T> implements Monad<T> {
 
   public liftMap<U>(f: (a: T) => async<U>): Async<U> {
     return Async.liftMap(this, f)
+  }
+
+  public toVoid(): Async<void> {
+    return Async.toVoid(this)
   }
 
   public run(): Promise<Try<T>> {
@@ -70,8 +78,20 @@ export class Async<T> implements Monad<T> {
     return new Async(val.promise.catch(f))
   }
 
+  public static recoverMap<S>(val: Async<S>, f: () => Async<S>): Async<S> {
+    return new Async(
+      new Promise((resolve, reject) => {
+        val.promise.then(resolve).catch(() => f().promise.then(resolve).catch(reject))
+      })
+    )
+  }
+
   public static finally<S>(val: Async<S>, f: () => void): Async<S> {
     return new Async(val.promise.finally(f))
+  }
+
+  public static toVoid<T>(val: Async<T>): Async<void> {
+    return Async.map(val, () => undefined)
   }
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {

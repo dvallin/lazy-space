@@ -22,12 +22,12 @@ export class Option<T> extends Either<T, undefined> {
     return value !== undefined && value !== null ? Option.some(value) : Option.none()
   }
 
+  public static filterType<T, S extends T = T>(val: Option<T>, f: (a: T) => a is S): Option<S> {
+    return val.flatMap((v) => (f(v) ? Option.some(v) : Option.none()))
+  }
+
   public static filter<T>(val: Option<T>, f: (a: T) => boolean): Option<T> {
-    return Either.unwrap(
-      val,
-      (u) => (f(u) ? val : Option.none()),
-      () => Option.none()
-    )
+    return Option.filterType(val, (v): v is T => f(v))
   }
 
   public static ofMap<T, U>(val: Option<T>, f: (a: T) => option<U>): Option<U> {

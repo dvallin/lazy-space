@@ -37,6 +37,15 @@ describe('Async', () => {
     })
   })
 
+  describe('recover', () => {
+    it('flatmaps on reject', () => {
+      const value = Async.reject('1')
+        .recoverMap(() => Async.resolve('1'))
+        .map((s) => Number(s))
+      return expect(value.promise).resolves.toEqual(1)
+    })
+  })
+
   describe('finally', () => {
     it('all finallies are invoked', async () => {
       const fn1 = jest.fn()
