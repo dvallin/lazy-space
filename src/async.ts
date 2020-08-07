@@ -127,12 +127,12 @@ export class Async<T> implements Monad<T> {
    * Flatmaps over an array of request, ignoring their returned values
    * @param requests
    */
-  public static chain(...requests: Async<unknown>[]): Async<unknown> {
+  public static chain(...requests: Lazy<Async<unknown>>[]): Async<unknown> {
     const [head, ...tail] = requests
     if (tail.length > 0) {
-      return Async.flatMap(head, () => Async.chain(...tail))
+      return Async.flatMap(head.eval(), () => Async.chain(...tail))
     } else {
-      return head
+      return head.eval()
     }
   }
 
@@ -140,10 +140,10 @@ export class Async<T> implements Monad<T> {
     try {
       return Try.success(await val.promise)
     } catch (error) {
-      if (error instanceof Error) {
-        return Try.failure(error)
+      if (error === undefined || typeof error === 'string') {
+        return Try.failure(new Error(error))
       }
-      return Try.failure(new Error(error))
+      return Try.failure(error)
     }
   }
 }

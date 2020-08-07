@@ -134,6 +134,14 @@ describe('Async', () => {
       expect(value).toEqual(Try.failure(error))
     })
 
+    it('wraps thrown strings in errors', async () => {
+      const value = await Async.empty()
+        .flatMap(() => Async.reject('error'))
+        .run()
+      expect(Try.isFailure(value)).toBeTruthy()
+      expect(value).toEqual(Try.failure(error))
+    })
+
     it('unwraps thrown errors as rejections', async () => {
       const value = await Async.lift(
         new Promise((_r) => {
@@ -195,7 +203,11 @@ describe('Async', () => {
     it('executes all in order', async () => {
       const executions: string[] = []
       const push = (name: string): Async<void> => Async.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
-      const result = await Async.chain(push('1'), push('2'), push('3')).run()
+      const result = await Async.chain(
+        Lazy.of(() => push('1')),
+        Lazy.of(() => push('2')),
+        Lazy.of(() => push('3'))
+      ).run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(executions).toEqual(['1', '2', '3'])
     })
@@ -203,9 +215,13 @@ describe('Async', () => {
     it('fails if a single request fails', async () => {
       const executions: string[] = []
       const push = (name: string): Async<void> => Async.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
-      const result = await Async.chain(push('1'), Async.reject('error'), push('3')).run()
+      const result = await Async.chain(
+        Lazy.of(() => push('1')),
+        Lazy.of(() => Async.reject('error')),
+        Lazy.of(() => push('3'))
+      ).run()
       expect(Try.isFailure(result)).toBeTruthy()
-      expect(executions).toEqual(['1', '3'])
+      expect(executions).toEqual(['1'])
     })
   })
 })
