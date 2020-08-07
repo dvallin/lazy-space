@@ -126,6 +126,16 @@ describe('Request', () => {
       const result = await Request.all([one, fail]).read(context).run()
       expect(Try.isFailure(result)).toBeTruthy()
     })
+
+    it('eagerly executes all', async () => {
+      const executions: string[] = []
+      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const result = await Request.all([push('1'), fail, push('2')])
+        .read(context)
+        .run()
+      expect(Try.isFailure(result)).toBeTruthy()
+      expect(executions).toEqual(['1', '2'])
+    })
   })
 
   describe('race', () => {
