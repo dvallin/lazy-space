@@ -1,5 +1,6 @@
 import { Try } from './try'
 import { Monad } from './monad'
+import { Lazy } from './lazy'
 
 export type async<T> = Promise<T>
 
@@ -10,7 +11,7 @@ export class Async<T> implements Monad<T> {
     return Async.map(this, f)
   }
 
-  public recover(f: (error?: unknown) => T): Async<T> {
+  public recover<U>(f: (error: unknown) => U): Async<T | U> {
     return Async.recover(this, f)
   }
 
@@ -22,7 +23,7 @@ export class Async<T> implements Monad<T> {
     return Async.flatMap(this, f)
   }
 
-  public flatRecover(f: (error?: unknown) => Async<T>): Async<T> {
+  public flatRecover<U>(f: (error: unknown) => Async<U>): Async<T | U> {
     return Async.flatRecover(this, f)
   }
 
@@ -58,6 +59,10 @@ export class Async<T> implements Monad<T> {
     return new Async(value)
   }
 
+  public static ofLazy<T>(value: Lazy<T>): Async<T> {
+    return Async.lift(value.eval())
+  }
+
   public static resolve<T>(value: T): Async<T> {
     return new Async(Promise.resolve(value))
   }
@@ -74,14 +79,14 @@ export class Async<T> implements Monad<T> {
     return new Async(val.promise.then(f))
   }
 
-  public static recover<S>(val: Async<S>, f: (error?: unknown) => S): Async<S> {
+  public static recover<S, U>(val: Async<S>, f: (error: unknown) => U): Async<S | U> {
     return new Async(val.promise.catch(f))
   }
 
-  public static flatRecover<S>(val: Async<S>, f: (error?: unknown) => Async<S>): Async<S> {
+  public static flatRecover<S, U>(val: Async<S>, f: (error: unknown) => Async<U>): Async<S | U> {
     return new Async(
       new Promise((resolve, reject) => {
-        val.promise.then(resolve).catch(() => f().promise.then(resolve).catch(reject))
+        val.promise.then(resolve).catch((e) => f(e).promise.then(resolve).catch(reject))
       })
     )
   }
@@ -95,7 +100,7 @@ export class Async<T> implements Monad<T> {
   }
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {
-    return Async.join(new Async(val.promise.then(f)))
+    return Async.of(val.promise.then((a) => f(a).promise))
   }
 
   public static liftMap<S, T>(val: Async<S>, f: (a: S) => async<T>): Async<T> {
@@ -118,11 +123,27 @@ export class Async<T> implements Monad<T> {
     return Async.of(val.run()).map((c) => c.unwrap(f, g))
   }
 
+  /**
+   * Flatmaps over an array of request, ignoring their returned values
+   * @param requests
+   */
+  public static chain(...requests: Async<unknown>[]): Async<unknown> {
+    const [head, ...tail] = requests
+    if (tail.length > 0) {
+      return Async.flatMap(head, () => Async.chain(...tail))
+    } else {
+      return head
+    }
+  }
+
   public static async run<T>(val: Async<T>): Promise<Try<T>> {
     try {
       return Try.success(await val.promise)
     } catch (error) {
-      return Try.failure(error)
+      if (error instanceof Error) {
+        return Try.failure(error)
+      }
+      return Try.failure(new Error(error))
     }
   }
 }

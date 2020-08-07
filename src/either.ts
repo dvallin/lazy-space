@@ -19,8 +19,16 @@ export class Either<S, T> implements Monad<S> {
     return Either.map(this, f)
   }
 
+  public recover<U>(f: (error: T) => U): S | U {
+    return Either.recover(this, f)
+  }
+
   public flatMap<U>(f: (s: S) => Either<U, T>): Either<U, T> {
     return Either.flatMap(this, f)
+  }
+
+  public flatRecover<U>(f: (error: T) => Either<U, T>): Either<S | U, T> {
+    return Either.flatRecover(this, f)
   }
 
   public lift<U>(v: U): Either<U, T> {
@@ -35,7 +43,7 @@ export class Either<S, T> implements Monad<S> {
     return Either.join(v)
   }
 
-  public get(): S {
+  public get(): S | T {
     return Either.get(this)
   }
 
@@ -43,16 +51,12 @@ export class Either<S, T> implements Monad<S> {
     return Either.getOrElse(this, value)
   }
 
+  public getOrThrow(error: Error): S {
+    return Either.getOrThrow(this, error)
+  }
+
   public unwrap<U, V>(f: (s: S) => U, g: (t: T) => V): U | V {
     return Either.unwrap(this, f, g)
-  }
-
-  public recover<U>(f: (error: T) => U): S | U {
-    return Either.recover(this, f)
-  }
-
-  public flatRecover<U>(f: (error: T) => Either<U, T>): Either<S | U, T> {
-    return Either.flatRecover(this, f)
   }
 
   public or(other: Either<S, T>): Either<S, T> {
@@ -87,14 +91,18 @@ export class Either<S, T> implements Monad<S> {
     return new Either<S, T>('right', value)
   }
 
-  public static get<S, T>(val: Either<S, T>): S {
-    return val.recover((e) => {
-      throw e
-    })
+  public static get<S, T>(val: Either<S, T>): S | T {
+    return val.value
   }
 
   public static getOrElse<S, T, U>(val: Either<S, T>, value: U): S | U {
     return val.recover(() => value)
+  }
+
+  public static getOrThrow<S, T>(val: Either<S, T>, error: Error): S {
+    return val.recover(() => {
+      throw error
+    })
   }
 
   public static unwrap<S, T, U, V>(val: Either<S, T>, f: (s: S) => U, g: (t: T) => V): U | V {

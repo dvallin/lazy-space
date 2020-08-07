@@ -10,6 +10,7 @@ Monads and Monad Transformers for a more functional Typescript
 - Identity (the simplest monad)
 - Lazy (just a monadic wrapper of a parameterless function)
 - Reader (a very simple monadic wrapper of a function that reads some state)
+- Request (a monad that reads some context and returns an asynchronous result)
 - List (a lazy list)
 - Tree (a monadic tree)
 - FullTree (a applicative tree that also keeps values at inner nodes)

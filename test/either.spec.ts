@@ -81,8 +81,8 @@ describe('either', () => {
     it('returns left', () => {
       expect(left(1).get()).toEqual(1)
     })
-    it('throws right', () => {
-      expect(() => right('error').get()).toThrow('error')
+    it('returns right', () => {
+      expect(right('error').get()).toEqual('error')
     })
   })
 
@@ -92,6 +92,15 @@ describe('either', () => {
     })
     it('returns value', () => {
       expect(right('error').getOrElse(2)).toEqual(2)
+    })
+  })
+
+  describe('getOrThrow', () => {
+    it('returns left', () => {
+      expect(left(1).getOrThrow(new Error())).toEqual(1)
+    })
+    it('throws error', () => {
+      expect(() => right('error').getOrThrow(new Error())).toThrow()
     })
   })
 

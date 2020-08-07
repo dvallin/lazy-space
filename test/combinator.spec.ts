@@ -75,7 +75,7 @@ describe('parser', () => {
             )
           )
       )
-      .get()
+      .getOrThrow(new Error('missing'))
 
   it('recognizes empty', () => {
     expect(empty('', 0).toArray()).toEqual([{ type: 'empty', first: 0, follow: 0 }])

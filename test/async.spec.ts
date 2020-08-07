@@ -1,4 +1,4 @@
-import { Async, Try } from '../src'
+import { Async, Try, Lazy } from '../src'
 import { testMonad } from './monad.tests'
 
 describe('Async', () => {
@@ -188,6 +188,24 @@ describe('Async', () => {
   describe('toVoid', () => {
     it('swallows returned value', () => {
       return expect(Async.resolve(1).toVoid().promise).resolves.toBeUndefined()
+    })
+  })
+
+  describe('chain', () => {
+    it('executes all in order', async () => {
+      const executions: string[] = []
+      const push = (name: string): Async<void> => Async.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const result = await Async.chain(push('1'), push('2'), push('3')).run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(executions).toEqual(['1', '2', '3'])
+    })
+
+    it('fails if a single request fails', async () => {
+      const executions: string[] = []
+      const push = (name: string): Async<void> => Async.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const result = await Async.chain(push('1'), Async.reject('error'), push('3')).run()
+      expect(Try.isFailure(result)).toBeTruthy()
+      expect(executions).toEqual(['1', '3'])
     })
   })
 })

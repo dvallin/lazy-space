@@ -27,6 +27,10 @@ export class Lazy<T> implements Monad<T> {
     return this.value()
   }
 
+  public static of<T>(value: () => T, memoized = false): Lazy<T> {
+    return new Lazy(value, memoized)
+  }
+
   public static map<S, U>(value: Lazy<S>, f: (a: S) => U, memoized = false): Lazy<U> {
     return new Lazy(() => f(value.eval()), memoized)
   }
