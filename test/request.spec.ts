@@ -115,6 +115,19 @@ describe('Request', () => {
     })
   })
 
+  describe('both', () => {
+    it('returns successful requests', async () => {
+      const result = await Request.both(one, two).read(context).run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(result.value).toEqual([1, 2])
+    })
+
+    it('fails if a single request fails', async () => {
+      const result = await Request.both(one, fail).read(context).run()
+      expect(Try.isFailure(result)).toBeTruthy()
+    })
+  })
+
   describe('all', () => {
     it('returns successful requests', async () => {
       const result = await Request.all([one, two]).read(context).run()

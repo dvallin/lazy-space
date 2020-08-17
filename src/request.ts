@@ -112,6 +112,10 @@ export class Request<C, T> implements Monad<T> {
     return new Request(Reader.lift((c) => Async.all(requests.map((r) => r.read(c)))))
   }
 
+  static both<C, S, T>(request1: Request<C, S>, request2: Request<C, T>): Request<C, [S, T]> {
+    return new Request(Reader.lift((c) => Async.both(request1.read(c), request2.read(c))))
+  }
+
   /**
    * Executes all requests as a single request returning the first finished result
    * @param request

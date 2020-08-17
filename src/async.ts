@@ -11,7 +11,8 @@ export class Async<T> implements Monad<T> {
     return Async.map(this, f)
   }
 
-  public recover<U>(f: (error: unknown) => U): Async<T | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public recover<U>(f: (error: any) => U): Async<T | U> {
     return Async.recover(this, f)
   }
 
@@ -23,7 +24,8 @@ export class Async<T> implements Monad<T> {
     return Async.flatMap(this, f)
   }
 
-  public flatRecover<U>(f: (error: unknown) => Async<U>): Async<T | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public flatRecover<U>(f: (error: any) => Async<U>): Async<T | U> {
     return Async.flatRecover(this, f)
   }
 
@@ -79,11 +81,13 @@ export class Async<T> implements Monad<T> {
     return new Async(val.promise.then(f))
   }
 
-  public static recover<S, U>(val: Async<S>, f: (error: unknown) => U): Async<S | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public static recover<S, U>(val: Async<S>, f: (error: any) => U): Async<S | U> {
     return new Async(val.promise.catch(f))
   }
 
-  public static flatRecover<S, U>(val: Async<S>, f: (error: unknown) => Async<U>): Async<S | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public static flatRecover<S, U>(val: Async<S>, f: (error: any) => Async<U>): Async<S | U> {
     return new Async(
       new Promise((resolve, reject) => {
         val.promise.then(resolve).catch((e) => f(e).promise.then(resolve).catch(reject))
@@ -113,6 +117,10 @@ export class Async<T> implements Monad<T> {
 
   public static race<T>(values: Async<T>[]): Async<T> {
     return new Async(Promise.race(values.map((v) => v.promise)))
+  }
+
+  public static both<S, T>(value1: Async<S>, value2: Async<T>): Async<[S, T]> {
+    return new Async(Promise.all([value1.promise, value2.promise]))
   }
 
   public static all<T>(values: Async<T>[]): Async<T[]> {
