@@ -68,7 +68,7 @@ describe('parser', () => {
                   )
                 )
               },
-              (_none) => {
+              () => {
                 const currentResult = r(data, index)
                 return currentResult.flatMap((r) => buildNode('sequence', currentResult, index, r.follow))
               }
