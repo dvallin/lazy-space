@@ -12,6 +12,7 @@ interface Keys {
 }
 
 export class JsonPath {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public constructor(public readonly access: (o: any) => List<unknown>) {}
 
   public flatMap(other: JsonPath): JsonPath {

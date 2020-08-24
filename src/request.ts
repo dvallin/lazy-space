@@ -3,6 +3,7 @@ import { Reader } from './reader'
 import { Async } from './async'
 import { Try } from './try'
 import { Lazy } from './lazy'
+import { List } from './list'
 
 export class Request<C, T> implements Monad<T> {
   constructor(private readonly request: Reader<C, Async<T>>) {}
@@ -110,6 +111,10 @@ export class Request<C, T> implements Monad<T> {
    */
   static all<C, T>(requests: Request<C, T>[]): Request<C, T[]> {
     return new Request(Reader.lift((c) => Async.all(requests.map((r) => r.read(c)))))
+  }
+
+  static fold<C, T>(requests: List<Request<C, T>>): Request<C, List<T>> {
+    return new Request(Reader.lift((c) => Async.fold(requests.map((r) => r.read(c)))))
   }
 
   static both<C, S, T>(request1: Request<C, S>, request2: Request<C, T>): Request<C, [S, T]> {

@@ -1,6 +1,7 @@
 import { Try } from './try'
 import { Monad } from './monad'
 import { Lazy } from './lazy'
+import { List } from './list'
 
 export type async<T> = Promise<T>
 
@@ -125,6 +126,13 @@ export class Async<T> implements Monad<T> {
 
   public static all<T>(values: Async<T>[]): Async<T[]> {
     return new Async(Promise.all(values.map((v) => v.promise)))
+  }
+
+  public static fold<T>(values: List<Async<T>>): Async<List<T>> {
+    return values.foldr(
+      () => Async.resolve(List.empty()),
+      (l, r) => r.flatMap((v) => l().map((list) => list.prepend(v)))
+    )
   }
 
   public static unwrap<T, U, V>(val: Async<T>, f: (s: T) => U, g: (error: Error) => V): Async<U | V> {

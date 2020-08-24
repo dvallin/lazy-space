@@ -74,8 +74,16 @@ export class Try<T> implements Monad<T> {
     return this.type === 'left'
   }
 
-  public isRight(): this is Right<T> {
+  public isRight(): this is Right<Error> {
     return this.type === 'right'
+  }
+
+  public isSuccess(): this is Left<T> {
+    return Try.isSuccess(this)
+  }
+
+  public isFailure(): this is Right<Error> {
+    return Try.isFailure(this)
   }
 
   public static lift<T>(value: T): Try<T> {
@@ -168,7 +176,7 @@ export class Try<T> implements Monad<T> {
     return option.isLeft()
   }
 
-  public static isFailure<T>(option: Try<T>): option is Try<T> & Right<undefined> {
+  public static isFailure<T>(option: Try<T>): option is Try<T> & Right<Error> {
     return option.isRight()
   }
 
