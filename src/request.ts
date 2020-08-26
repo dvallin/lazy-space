@@ -269,6 +269,15 @@ export class Request<C, T> implements Monad<T> {
     }
   }
 
+  static chainN<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
+    const [head, ...tail] = requests
+    if (tail.length > 0) {
+      return Request.flatMap(head, () => Request.chainN(...tail))
+    } else {
+      return head
+    }
+  }
+
   static toVoid<C, T>(v: Request<C, T>): Request<C, void> {
     return new Request(v.request.map((a) => a.toVoid()))
   }
