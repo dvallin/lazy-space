@@ -12,6 +12,10 @@ export class Request<C, T> implements Monad<T> {
     return Request.read(this, context)
   }
 
+  run(context: C): Async<T> {
+    return Request.run(this, context)
+  }
+
   map<U>(f: (a: T) => U): Request<C, U> {
     return Request.map(this, f)
   }
@@ -58,6 +62,10 @@ export class Request<C, T> implements Monad<T> {
 
   static read<C, T>(v: Request<C, T>, context: C): Async<T> {
     return v.request.read(context)
+  }
+
+  static run<C, T>(v: Request<C, T>, context: C): Async<T> {
+    return Request.read(v, context)
   }
 
   static empty<C>(): Request<C, void> {
@@ -118,7 +126,69 @@ export class Request<C, T> implements Monad<T> {
   }
 
   static both<C, S, T>(request1: Request<C, S>, request2: Request<C, T>): Request<C, [S, T]> {
-    return new Request(Reader.lift((c) => Async.both(request1.read(c), request2.read(c))))
+    return Request.zip(request1, request2)
+  }
+
+  public static zip<C, T1, T2>(value1: Request<C, T1>, value2: Request<C, T2>): Request<C, [T1, T2]>
+  public static zip<C, T1, T2, T3>(value1: Request<C, T1>, value2: Request<C, T2>, value3: Request<C, T3>): Request<C, [T1, T2, T3]>
+  public static zip<C, T1, T2, T3, T4>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>
+  ): Request<C, [T1, T2, T3, T4]>
+  public static zip<C, T1, T2, T3, T4, T5>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>
+  ): Request<C, [T1, T2, T3, T4, T5]>
+  public static zip<C, T1, T2, T3, T4, T5, T6>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>
+  ): Request<C, [T1, T2, T3, T4, T5, T6]>
+  public static zip<C, T1, T2, T3, T4, T5, T6, T7>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>
+  ): Request<C, [T1, T2, T3, T4, T5, T6, T7]>
+  public static zip<C, T1, T2, T3, T4, T5, T6, T7, T8>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>,
+    value8: Request<C, T8>
+  ): Request<C, [T1, T2, T3, T4, T5, T6, T7, T8]>
+  public static zip<C, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>,
+    value8: Request<C, T8>,
+    value9: Request<C, T9>
+  ): Request<C, [T1, T2, T3, T4, T5, T6, T7, T8, T9]>
+  public static zip<C>(...requests: Request<C, unknown>[]): Request<C, unknown[]> {
+    return new Request(
+      Reader.lift((c) => {
+        const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = requests.map((r) => r.read(c))
+        return Async.zip(r1, r2, r3, r4, r5, r6, r7, r8, r9)
+      })
+    )
   }
 
   /**
@@ -133,16 +203,69 @@ export class Request<C, T> implements Monad<T> {
     return Request.join(requests.map(Request.all))
   }
 
+  public static chain<C, T1, T2>(value1: Request<C, T1>, value2: Request<C, T2>): Request<C, T2>
+  public static chain<C, T1, T2, T3>(value1: Request<C, T1>, value2: Request<C, T2>, value3: Request<C, T3>): Request<C, T3>
+  public static chain<C, T1, T2, T3, T4>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>
+  ): Request<C, T4>
+  public static chain<C, T1, T2, T3, T4, T5>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>
+  ): Request<C, T5>
+  public static chain<C, T1, T2, T3, T4, T5, T6>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>
+  ): Request<C, T6>
+  public static chain<C, T1, T2, T3, T4, T5, T6, T7>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>
+  ): Request<C, T7>
+  public static chain<C, T1, T2, T3, T4, T5, T6, T7, T8>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>,
+    value8: Request<C, T8>
+  ): Request<C, T8>
+  public static chain<C, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    value1: Request<C, T1>,
+    value2: Request<C, T2>,
+    value3: Request<C, T3>,
+    value4: Request<C, T4>,
+    value5: Request<C, T5>,
+    value6: Request<C, T6>,
+    value7: Request<C, T7>,
+    value8: Request<C, T8>,
+    value9: Request<C, T9>
+  ): Request<C, T9>
   /**
-   * Flatmaps over an array of request, ignoring their returned values
+   * Flatmaps over an array of request
    * @param requests
    */
   static chain<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
-    const [head, ...tail] = requests
-    if (tail.length > 0) {
-      return Request.flatMap(head, () => Request.chain(...tail))
+    const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = requests
+    if (r2 !== undefined) {
+      return Request.flatMap(r1, () => Request.chain(r2, r3, r4, r5, r6, r7, r8, r9))
     } else {
-      return head
+      return r1
     }
   }
 

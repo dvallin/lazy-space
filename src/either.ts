@@ -72,11 +72,11 @@ export class Either<S, T> implements Monad<S> {
   }
 
   public isLeft(): this is Left<S> {
-    return this.type === 'left'
+    return Either.isLeft(this)
   }
 
   public isRight(): this is Right<T> {
-    return this.type === 'right'
+    return Either.isRight(this)
   }
 
   public static lift<S, T>(value: S): Either<S, T> {
@@ -151,6 +151,14 @@ export class Either<S, T> implements Monad<S> {
       (u) => Either.left(u),
       (v) => f(v)
     )
+  }
+
+  public static isLeft<S, T>(either: Either<S, T>): either is Either<S, T> & Left<S> {
+    return either.type === 'left'
+  }
+
+  public static isRight<S, T>(either: Either<S, T>): either is Either<S, T> & Right<T> {
+    return either.type === 'right'
   }
 
   public static or<S, T, U>(left: Either<S, T>, right: Either<U, T>): Either<S | U, T> {

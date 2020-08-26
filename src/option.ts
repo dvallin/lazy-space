@@ -67,11 +67,19 @@ export class Option<T> implements Monad<T> {
   }
 
   public isLeft(): this is Left<T> {
-    return this.type === 'left'
+    return Option.isLeft(this)
   }
 
   public isRight(): this is Right<T> {
-    return this.type === 'right'
+    return Option.isRight(this)
+  }
+
+  public isSome(): this is Left<T> {
+    return Option.isSome(this)
+  }
+
+  public isNone(): this is Right<T> {
+    return Option.isNone(this)
   }
 
   public static lift<T>(value: T): Option<T> {
@@ -160,12 +168,20 @@ export class Option<T> implements Monad<T> {
     return left.type === right.type && left.value === right.value
   }
 
+  public static isLeft<T>(option: Option<T>): option is Option<T> & Left<T> {
+    return option.type === 'left'
+  }
+
+  public static isRight<T>(option: Option<T>): option is Option<T> & Right<undefined> {
+    return option.type === 'right'
+  }
+
   public static isSome<T>(option: Option<T>): option is Option<T> & Left<T> {
-    return option.isLeft()
+    return Option.isLeft(option)
   }
 
   public static isNone<T>(option: Option<T>): option is Option<T> & Right<undefined> {
-    return option.isRight()
+    return Option.isRight(option)
   }
 
   public static none<T>(): Option<T> {

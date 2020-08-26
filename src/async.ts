@@ -124,6 +124,62 @@ export class Async<T> implements Monad<T> {
     return new Async(Promise.all([value1.promise, value2.promise]))
   }
 
+  public static zip2<T1, T2, T3>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>): Async<[T1, T2, T3]> {
+    return new Async(Promise.all([value1.promise, value2.promise, value3.promise]))
+  }
+
+  public static zip<T1, T2>(value1: Async<T1>, value2: Async<T2>): Async<[T1, T2]>
+  public static zip<T1, T2, T3>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>): Async<[T1, T2, T3]>
+  public static zip<T1, T2, T3, T4>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>, value4: Async<T4>): Async<[T1, T2, T3, T4]>
+  public static zip<T1, T2, T3, T4, T5>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+    value5: Async<T5>
+  ): Async<[T1, T2, T3, T4, T5]>
+  public static zip<T1, T2, T3, T4, T5, T6>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+    value5: Async<T5>,
+    value6: Async<T6>
+  ): Async<[T1, T2, T3, T4, T5, T6]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+    value5: Async<T5>,
+    value6: Async<T6>,
+    value7: Async<T7>
+  ): Async<[T1, T2, T3, T4, T5, T6, T7]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7, T8>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+    value5: Async<T5>,
+    value6: Async<T6>,
+    value7: Async<T7>,
+    value8: Async<T8>
+  ): Async<[T1, T2, T3, T4, T5, T6, T7, T8]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+    value5: Async<T5>,
+    value6: Async<T6>,
+    value7: Async<T7>,
+    value8: Async<T8>,
+    value9: Async<T9>
+  ): Async<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>
+  public static zip(...args: Async<unknown>[]): Async<unknown[]> {
+    return Async.all(args.filter((a) => a !== undefined))
+  }
+
   public static all<T>(values: Async<T>[]): Async<T[]> {
     return new Async(Promise.all(values.map((v) => v.promise)))
   }
