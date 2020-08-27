@@ -9,8 +9,8 @@ export class Lazy<T> implements Monad<T> {
   public map<U>(f: (a: T) => U, memoized = false): Lazy<U> {
     return Lazy.map(this, f, memoized)
   }
-  public flatMap<U>(f: (a: T) => Lazy<U>): Lazy<U> {
-    return Lazy.flatMap(this, f)
+  public flatMap<U>(f: (a: T) => Lazy<U>, memoized = false): Lazy<U> {
+    return Lazy.flatMap(this, f, memoized)
   }
   public lift<U>(v: U): Lazy<U> {
     return Lazy.lift(v)
@@ -34,8 +34,8 @@ export class Lazy<T> implements Monad<T> {
   public static map<S, U>(value: Lazy<S>, f: (a: S) => U, memoized = false): Lazy<U> {
     return new Lazy(() => f(value.eval()), memoized)
   }
-  public static flatMap<S, U>(value: Lazy<S>, f: (a: S) => Lazy<U>): Lazy<U> {
-    return f(value.eval())
+  public static flatMap<S, U>(value: Lazy<S>, f: (a: S) => Lazy<U>, memoized = false): Lazy<U> {
+    return new Lazy(() => f(value.eval()).eval(), memoized)
   }
   public static lift<U>(v: U): Lazy<U> {
     return new Lazy(() => v)

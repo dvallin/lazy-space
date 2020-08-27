@@ -260,22 +260,76 @@ export class Request<C, T> implements Monad<T> {
    * Flatmaps over an array of request
    * @param requests
    */
-  static chain<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
+  public static chain<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
     const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = requests
-    if (r2 !== undefined) {
-      return Request.flatMap(r1, () => Request.chain(r2, r3, r4, r5, r6, r7, r8, r9))
-    } else {
-      return r1
-    }
+    return r2 === undefined ? r1 : r1.flatMap(() => Request.chain(r2, r3, r4, r5, r6, r7, r8, r9))
   }
 
-  static chainN<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
+  public static chainN<C>(...requests: Request<C, unknown>[]): Request<C, unknown> {
     const [head, ...tail] = requests
-    if (tail.length > 0) {
-      return Request.flatMap(head, () => Request.chainN(...tail))
-    } else {
-      return head
-    }
+    return tail.length === 0 ? head : head.flatMap(() => Request.chainN(...tail))
+  }
+
+  public static flow<C, T1, T2>(value1: Request<C, T1>, value2: (i: T1) => Request<C, T2>): Request<C, T2>
+  public static flow<C, T1, T2, T3>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>
+  ): Request<C, T3>
+  public static flow<C, T1, T2, T3, T4>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>
+  ): Request<C, T4>
+  public static flow<C, T1, T2, T3, T4, T5>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>,
+    value5: (i: T4) => Request<C, T5>
+  ): Request<C, T5>
+  public static flow<C, T1, T2, T3, T4, T5, T6>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>,
+    value5: (i: T4) => Request<C, T5>,
+    value6: (i: T5) => Request<C, T6>
+  ): Request<C, T6>
+  public static flow<C, T1, T2, T3, T4, T5, T6, T7>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>,
+    value5: (i: T4) => Request<C, T5>,
+    value6: (i: T5) => Request<C, T6>,
+    value7: (i: T6) => Request<C, T7>
+  ): Request<C, T7>
+  public static flow<C, T1, T2, T3, T4, T5, T6, T7, T8>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>,
+    value5: (i: T4) => Request<C, T5>,
+    value6: (i: T5) => Request<C, T6>,
+    value7: (i: T6) => Request<C, T7>,
+    value8: (i: T7) => Request<C, T8>
+  ): Request<C, T8>
+  public static flow<C, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    value1: Request<C, T1>,
+    value2: (i: T1) => Request<C, T2>,
+    value3: (i: T2) => Request<C, T3>,
+    value4: (i: T3) => Request<C, T4>,
+    value5: (i: T4) => Request<C, T5>,
+    value6: (i: T5) => Request<C, T6>,
+    value7: (i: T6) => Request<C, T7>,
+    value8: (i: T7) => Request<C, T8>,
+    value9: (i: T8) => Request<C, T9>
+  ): Request<C, T9>
+  public static flow<C>(head: Request<C, unknown>, ...tail: ((i: unknown) => Request<C, unknown>)[]): Request<C, unknown> {
+    const [v2, v3, v4, v5, v6, v7, v8, v9] = tail
+    return v2 === undefined ? head : head.flatMap((i) => Request.flow(v2(i), v3, v4, v5, v6, v7, v8, v9))
   }
 
   static toVoid<C, T>(v: Request<C, T>): Request<C, void> {

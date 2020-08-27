@@ -10,6 +10,10 @@ export class Try<T> implements Monad<T> {
     return Try.map(this, f)
   }
 
+  public ofMap<U>(f: (a: T) => tryable<U>): Try<U> {
+    return Try.ofMap(this, f)
+  }
+
   public recover<U>(f: (error: Error) => U): T | U {
     return Try.recover(this, f)
   }

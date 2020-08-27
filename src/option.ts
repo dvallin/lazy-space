@@ -26,6 +26,10 @@ export class Option<T> implements Monad<T> {
     return Option.left(v)
   }
 
+  public ofMap<U>(f: (a: T) => option<U>): Option<U> {
+    return Option.ofMap(this, f)
+  }
+
   public join<U>(v: Option<Option<U>>): Option<U> {
     return Option.join(v)
   }

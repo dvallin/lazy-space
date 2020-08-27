@@ -198,4 +198,38 @@ describe('Request', () => {
       expect(executions).toEqual(['1'])
     })
   })
+
+  describe('chainN', () => {
+    it('executes all in order', async () => {
+      const executions: string[] = []
+      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const result = await Request.chainN(push('1'), push('2'), push('3')).read(context).run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(executions).toEqual(['1', '2', '3'])
+    })
+
+    it('fails if a single request fails', async () => {
+      const executions: string[] = []
+      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const result = await Request.chainN(push('1'), fail, push('3')).read(context).run()
+      expect(Try.isFailure(result)).toBeTruthy()
+      expect(executions).toEqual(['1'])
+    })
+  })
+
+  describe('flow', () => {
+    it('passes each result into the next request', async () => {
+      const pipeline = Request.flow(
+        Request.lift(1),
+        (i) => Request.lift('' + (i + 1)),
+        (i) => Request.lift(Number.parseInt(i) * 2),
+        (i) => Request.lift('' + (i + 1))
+      )
+
+      const result = await pipeline.read(context).run()
+
+      expect(result.isSuccess()).toBeTruthy()
+      expect(result.value).toEqual('5')
+    })
+  })
 })
