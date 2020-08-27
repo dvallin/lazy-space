@@ -73,23 +73,23 @@ describe('List', () => {
 
   describe('head', () => {
     it('takes first', () => {
-      expect(List.head(natural())).toEqual(Option.some(1))
+      expect(natural().head()).toEqual(Option.some(1))
     })
 
     it('takes first twice', () => {
       const n = natural()
-      expect(List.head(n)).toEqual(Option.some(1))
-      expect(List.head(List.tail(n))).toEqual(Option.some(2))
+      expect(n.head()).toEqual(Option.some(1))
+      expect(n.tail().head()).toEqual(Option.some(2))
     })
 
     it('is invalid on empty lists', () => {
-      expect(List.head(List.empty())).toEqual(Option.none())
+      expect(List.empty().head()).toEqual(Option.none())
     })
   })
 
   describe('tail', () => {
     it('takes tail', () => {
-      expect(List.head(List.tail(natural()))).toEqual(Option.some(2))
+      expect(natural().tail().head()).toEqual(Option.some(2))
     })
   })
 

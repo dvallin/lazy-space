@@ -15,7 +15,7 @@ export interface StreamNode<T> {
 }
 
 export class Stream<T> implements Monad<T> {
-  public constructor(public readonly _node: Lazy<Async<StreamNode<T>>>, public readonly _close: () => void) {}
+  public constructor(public readonly _node: Lazy<Async<StreamNode<T>>>, public readonly _close: () => void = () => undefined) {}
 
   public static fromCursor<T>(cursor: Cursor<T>, autoClose = true): Stream<T> {
     const node: Lazy<Async<StreamNode<T>>> = Lazy.of(cursor.next, true).map((n) =>
@@ -48,6 +48,14 @@ export class Stream<T> implements Monad<T> {
     return Stream.foldr(this, initial, combine)
   }
 
+  public head(): Async<Option<T>> {
+    return Stream.head(this)
+  }
+
+  public tail(): Async<Stream<T>> {
+    return Stream.tail(this)
+  }
+
   public static flatMap<T, U>(val: Stream<T>, f: (a: T) => Stream<U>): Stream<U> {
     let close = new Lazy(val._close)
     return new Stream(
@@ -57,7 +65,7 @@ export class Stream<T> implements Monad<T> {
           (t, h) => {
             const stream = f(h)
             close = close.map(stream._close)
-            return stream.concat(() => new Stream(new Lazy(t), () => undefined))._node.eval()
+            return stream.concat(() => new Stream(new Lazy(t)))._node.eval()
           }
         )
       ),
@@ -71,7 +79,7 @@ export class Stream<T> implements Monad<T> {
       new Lazy(() => {
         return left.foldr(
           () => r.eval()._node.eval(),
-          (t, h) => Async.resolve({ head: Option.some(h), tail: () => new Stream(new Lazy(t), () => undefined) })
+          (t, h) => Async.resolve({ head: Option.some(h), tail: () => new Stream(new Lazy(t)) })
         )
       }),
       () => {
@@ -118,15 +126,24 @@ export class Stream<T> implements Monad<T> {
   }
 
   public static lift<U>(v: U): Stream<U> {
-    return Stream.lift(v)
+    const n: StreamNode<U> = { head: Option.lift(v), tail: Stream.empty }
+    return new Stream<U>(Lazy.lift(Async.lift(n)))
   }
 
   public take(amount = 1): Stream<T> {
     return Stream.take(this, amount)
   }
 
+  public takeWhile(predicate: (v: T) => boolean): Stream<T> {
+    return Stream.takeWhile(this, predicate)
+  }
+
   public drop(amount = 1): Stream<T> {
     return Stream.drop(this, amount)
+  }
+
+  public dropWhile(predicate: (v: T) => boolean): Stream<T> {
+    return Stream.dropWhile(this, predicate)
   }
 
   public static head<T>(val: Stream<T>): Async<Option<T>> {
@@ -151,6 +168,18 @@ export class Stream<T> implements Monad<T> {
         )
   }
 
+  public static takeWhile<T>(val: Stream<T>, predicate: (v: T) => boolean): Stream<T> {
+    return new Stream(
+      val._node.map((n) =>
+        n.map((h) => ({
+          head: h.head.filter(predicate),
+          tail: () => h.tail().takeWhile(predicate),
+        }))
+      ),
+      val._close
+    )
+  }
+
   public static drop<T>(val: Stream<T>, amount = 1): Stream<T> {
     return amount > 0
       ? new Stream(
@@ -165,6 +194,17 @@ export class Stream<T> implements Monad<T> {
           val._close
         )
       : val
+  }
+
+  public static dropWhile<T>(val: Stream<T>, predicate: (v: T) => boolean): Stream<T> {
+    return val.flatMap((t) => {
+      return predicate(t)
+        ? new Stream(
+            val._node.map((a) => a.flatMap((n) => n.tail().dropWhile(predicate)._node.eval())),
+            val._close
+          )
+        : val
+    })
   }
 
   public static empty<T>(): Stream<T> {

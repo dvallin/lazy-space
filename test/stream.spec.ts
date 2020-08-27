@@ -1,6 +1,12 @@
 import { Stream, Async, Option } from '../src'
+import { testMonad } from './monad.tests'
 
 describe('fromCursor', () => {
+  testMonad(
+    Stream.empty(),
+    (a, b) => Async.zip(a.collectToList(), b.collectToList()).map(([a, b]) => expect(a.toArray()).toEqual(b.toArray())).promise
+  )
+
   describe('collectToList', () => {
     it('closes the stream on finished processing', async () => {
       const close = jest.fn()
@@ -75,9 +81,29 @@ describe('fromCursor', () => {
     })
   }
 
+  describe('head', () => {
+    it('takes first', () => {
+      return expect(natural().head().promise).resolves.toEqual(Option.some(1))
+    })
+
+    it('is invalid on empty lists', () => {
+      return expect(Stream.empty().head().promise).resolves.toEqual(Option.none())
+    })
+  })
+
+  describe('tail', () => {
+    it('takes tail', () => {
+      return expect(
+        natural()
+          .tail()
+          .flatMap((t) => t.head()).promise
+      ).resolves.toEqual(Option.some(2))
+    })
+  })
+
   describe('take', () => {
     it('works on empty streams', async () => {
-      const result = await Stream.empty().take(2).collectToList().run()
+      const result = await Stream.empty().take().collectToList().run()
       expect(result.isSuccess()).toBeTruthy()
       if (result.isSuccess()) {
         expect(result.value.toArray()).toEqual([])
@@ -93,9 +119,59 @@ describe('fromCursor', () => {
     })
   })
 
+  describe('takeWhile', () => {
+    it('works on empty streams', async () => {
+      const result = await Stream.empty<number>()
+        .takeWhile((i) => i < 4)
+        .collectToList()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([])
+      }
+    })
+
+    it('works on infinite streams', async () => {
+      const result = await natural()
+        .takeWhile((i) => i < 4)
+        .collectToList()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([1, 2, 3])
+      }
+    })
+  })
+
+  describe('dropWhile', () => {
+    it('works on empty streams', async () => {
+      const result = await Stream.empty<number>()
+        .dropWhile((i) => i < 4)
+        .take(2)
+        .collectToList()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([])
+      }
+    })
+
+    it('works on infinite streams', async () => {
+      const result = await natural()
+        .dropWhile((i) => i < 4)
+        .take(2)
+        .collectToList()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([4, 5])
+      }
+    })
+  })
+
   describe('drop', () => {
     it('works on empty streams', async () => {
-      const result = await Stream.empty().drop(2).collectToList().run()
+      const result = await Stream.empty().drop().collectToList().run()
       expect(result.isSuccess()).toBeTruthy()
       if (result.isSuccess()) {
         expect(result.value.toArray()).toEqual([])
@@ -175,6 +251,18 @@ describe('fromCursor', () => {
       expect(result.isSuccess()).toBeTruthy()
       if (result.isSuccess()) {
         expect(result.value.toArray()).toEqual([1, 2, 2, 3, 3, 3, 4])
+      }
+    })
+
+    it('flatmaps empty streams', async () => {
+      const result = await natural(1)
+        .flatMap((i) => (i % 2 === 0 ? Stream.empty() : Stream.lift(i)))
+        .take(7)
+        .collectToList()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([1, 3, 5, 7, 9, 11, 13])
       }
     })
 

@@ -5,6 +5,14 @@ import { Lazy, lazy } from './lazy'
 export class List<T> implements Monad<T> {
   public constructor(public readonly _head: Option<Lazy<T>>, public readonly _tail: lazy<List<T>>) {}
 
+  public head(): Option<T> {
+    return List.head(this)
+  }
+
+  public tail(): List<T> {
+    return List.tail(this)
+  }
+
   public map<U>(f: (a: T) => U, memoized = false): List<U> {
     return List.map(this, f, memoized)
   }

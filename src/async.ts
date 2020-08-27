@@ -121,11 +121,7 @@ export class Async<T> implements Monad<T> {
   }
 
   public static both<S, T>(value1: Async<S>, value2: Async<T>): Async<[S, T]> {
-    return new Async(Promise.all([value1.promise, value2.promise]))
-  }
-
-  public static zip2<T1, T2, T3>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>): Async<[T1, T2, T3]> {
-    return new Async(Promise.all([value1.promise, value2.promise, value3.promise]))
+    return Async.zip(value1, value2)
   }
 
   public static zip<T1, T2>(value1: Async<T1>, value2: Async<T2>): Async<[T1, T2]>

@@ -132,15 +132,48 @@ describe('Option', () => {
 
   describe('ofMap', () => {
     it('lifts and maps', () => {
-      expect(Option.ofMap(Option.of('v'), (v) => v).value).toEqual('v')
-      expect(Option.ofMap(Option.none(), (_v) => undefined).value).toEqual(undefined)
+      expect(Option.of('v').ofMap((v) => v).value).toEqual('v')
+      expect(Option.none().ofMap((_v) => undefined).value).toEqual(undefined)
     })
   })
+
   describe('filter', () => {
-    it('lifts and maps', () => {
-      expect(Option.filter(Option.of('v'), (v) => v === 'v').value).toEqual('v')
-      expect(Option.filter(Option.of('u'), (v) => v === 'v').value).toEqual(undefined)
-      expect(Option.filter(Option.none(), (v) => v === 'v').value).toEqual(undefined)
+    it('filters', () => {
+      expect(
+        Option.of('v')
+          .filter((v) => v === 'v')
+          .isSome()
+      ).toBeTruthy()
+      expect(
+        Option.of('u')
+          .filter((v) => v === 'v')
+          .isNone()
+      ).toBeTruthy()
+      expect(
+        Option.none()
+          .filter((v) => v === 'v')
+          .isNone()
+      ).toBeTruthy()
+    })
+  })
+
+  describe('filterType', () => {
+    it('filters with type conversion', () => {
+      expect(
+        Option.of<string | number>('v')
+          .filterType((v): v is string => typeof v === 'string')
+          .isSome()
+      ).toBeTruthy()
+      expect(
+        Option.of<string | number>(1)
+          .filterType((v): v is string => typeof v === 'string')
+          .isNone()
+      ).toBeTruthy()
+      expect(
+        Option.none()
+          .filterType((v): v is string => typeof v === 'string')
+          .isNone()
+      ).toBeTruthy()
     })
   })
 })

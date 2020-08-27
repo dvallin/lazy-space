@@ -250,7 +250,7 @@ export class TryT<T> implements Monad<T> {
         (v) =>
           v.unwrap(
             (s) => f(s).value,
-            (e) => t.value.lift(Try.failure<U>(e))
+            (e) => t.value.lift(v.liftRight(e))
           ) as Monad<Try<U>>
       )
     )

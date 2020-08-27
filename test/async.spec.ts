@@ -1,4 +1,4 @@
-import { Async, Try, Lazy } from '../src'
+import { Async, Try, Lazy, List } from '../src'
 import { testMonad } from './monad.tests'
 
 describe('Async', () => {
@@ -199,6 +199,16 @@ describe('Async', () => {
     })
   })
 
+  describe('fold', () => {
+    it('flattens a list of asyncs into a list of values', async () => {
+      const result = await Async.fold(List.of([1, 2, 3]).map(Async.lift)).run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([1, 2, 3])
+      }
+    })
+  })
+
   describe('chain', () => {
     it('executes all in order', async () => {
       const executions: string[] = []
@@ -222,6 +232,22 @@ describe('Async', () => {
       ).run()
       expect(Try.isFailure(result)).toBeTruthy()
       expect(executions).toEqual(['1'])
+    })
+  })
+
+  describe('zip', () => {
+    it('zips all in order', async () => {
+      const result = await Async.zip(Async.lift(1), Async.lift('2'), Async.lift(3)).run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toEqual([1, '2', 3])
+      }
+    })
+
+    it('fails if a single request fails', async () => {
+      const result = await Async.both(Async.lift(1), Async.reject('2')).run()
+      expect(result.isFailure()).toBeTruthy()
+      expect(result.value).toEqual(new Error('2'))
     })
   })
 })

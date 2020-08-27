@@ -1,4 +1,4 @@
-import { Async, Try, Request, Lazy } from '../src'
+import { Async, Try, Request, Lazy, List } from '../src'
 import { testMonad } from './monad.tests'
 
 const context = { some: 'context' }
@@ -14,7 +14,7 @@ describe('Request', () => {
     it('maps successful requests', async () => {
       const result = await one
         .map((a) => a + 1)
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(2)
@@ -22,7 +22,7 @@ describe('Request', () => {
     it('does not map failed requests', async () => {
       const result = await fail
         .map((a) => a + 1)
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isFailure(result)).toBeTruthy()
     })
@@ -32,7 +32,7 @@ describe('Request', () => {
     it('does nothing on successful request', async () => {
       const result = await one
         .recover(() => 2)
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(1)
@@ -40,7 +40,7 @@ describe('Request', () => {
     it('recovers failed requests', async () => {
       const result = await fail
         .recover(() => 2)
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(2)
@@ -69,7 +69,7 @@ describe('Request', () => {
     it('does nothing on successful requests', async () => {
       const result = await one
         .flatRecover(() => Request.lift(2))
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(1)
@@ -77,7 +77,7 @@ describe('Request', () => {
     it('recovers and flattens failed requests', async () => {
       const result = await fail
         .flatRecover(() => Request.lift(2))
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(2)
@@ -88,7 +88,7 @@ describe('Request', () => {
     it('flatmaps successful requests', async () => {
       const result = await one
         .runFlatmap((result) => Request.lift(result))
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(Try.join(result).value).toEqual(1)
@@ -96,7 +96,7 @@ describe('Request', () => {
     it('successfully flatmaps failed requests', async () => {
       const result = await fail
         .runFlatmap((result) => Request.lift(result))
-        .read(context)
+        .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(Try.join(result).value).toEqual(new Error('failure'))
@@ -178,6 +178,18 @@ describe('Request', () => {
         .read(context)
         .run()
       expect(Try.isFailure(result)).toBeTruthy()
+    })
+  })
+
+  describe('fold', () => {
+    it('flattens a list of requests into a list of values', async () => {
+      const result = await Request.fold(List.of([1, 2, 3]).map(Request.lift))
+        .read(context)
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value.toArray()).toEqual([1, 2, 3])
+      }
     })
   })
 

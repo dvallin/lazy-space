@@ -124,6 +124,26 @@ describe('try', () => {
     })
   })
 
+  describe('ofMap', () => {
+    it('lifts and maps', () => {
+      expect(
+        Try.of('v')
+          .ofMap((v) => v)
+          .isSuccess()
+      ).toBeTruthy()
+      expect(
+        Try.of('v')
+          .ofMap((_v) => new Error(''))
+          .isFailure()
+      ).toBeTruthy()
+      expect(
+        Try.failure(new Error(''))
+          .ofMap((_v) => new Error(''))
+          .isFailure()
+      ).toBeTruthy()
+    })
+  })
+
   describe('equals', () => {
     it('returns true if equal', () => {
       expect(left(1).equals(left(1))).toBeTruthy()
@@ -135,6 +155,46 @@ describe('try', () => {
       expect(left(1).equals(right(new Error('message')))).toBeFalsy()
       expect(right(new Error('message')).equals(right(new Error('message')))).toBeFalsy()
       expect(right(new Error('message')).equals(left(1))).toBeFalsy()
+    })
+  })
+
+  describe('filter', () => {
+    it('filters', () => {
+      expect(
+        Try.of('v')
+          .filter((v) => v === 'v')
+          .isSuccess()
+      ).toBeTruthy()
+      expect(
+        Try.of('u')
+          .filter((v) => v === 'v')
+          .isFailure()
+      ).toBeTruthy()
+      expect(
+        Try.failure(new Error('error'))
+          .filter((v) => v === 'v')
+          .isFailure()
+      ).toBeTruthy()
+    })
+  })
+
+  describe('filterType', () => {
+    it('filters with type conversion', () => {
+      expect(
+        Try.of<string | number>('v')
+          .filterType((v): v is string => typeof v === 'string')
+          .isSuccess()
+      ).toBeTruthy()
+      expect(
+        Try.of<string | number>(1)
+          .filterType((v): v is string => typeof v === 'string')
+          .isFailure()
+      ).toBeTruthy()
+      expect(
+        Try.of<string | number>(new Error('error'))
+          .filterType((v): v is string => typeof v === 'string')
+          .isFailure()
+      ).toBeTruthy()
     })
   })
 })
