@@ -244,4 +244,17 @@ describe('Request', () => {
       expect(result.value).toEqual('5')
     })
   })
+
+  describe('retry', () => {
+    it('retries with exponential backoff', async () => {
+      let times = 0
+      const failsTwice = Request.ofNative(() => {
+        console.log(times)
+        return times++ < 2 ? Promise.reject('failure') : Promise.resolve(42)
+      })
+      const result = await failsTwice.retry(context, 3, 1).run()
+      expect(result.isSuccess()).toBeTruthy()
+      expect(result.value).toEqual(42)
+    })
+  })
 })

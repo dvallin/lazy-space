@@ -176,6 +176,25 @@ describe('List', () => {
     })
   })
 
+  describe('scan', () => {
+    it('calculates running sum', () => {
+      expect(
+        natural()
+          .scan(0, (a, b) => a + b)
+          .take(5)
+          .toArray()
+      ).toEqual([1, 3, 6, 10, 15])
+    })
+
+    it('works on empty lists', () => {
+      expect(
+        List.empty<number>()
+          .scan(0, (a, b) => a + b)
+          .toArray()
+      ).toEqual([])
+    })
+  })
+
   describe('all', () => {
     it('is true if all are true', () => {
       expect(

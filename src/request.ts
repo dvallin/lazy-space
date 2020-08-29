@@ -16,6 +16,16 @@ export class Request<C, T> implements Monad<T> {
     return Request.run(this, context)
   }
 
+  /**
+   * retry with exponential backoff
+   * @param context
+   * @param times
+   * @param backoffMs
+   */
+  retry(context: C, times = 1, backoffMs = 100): Async<T> {
+    return Request.retry(this, context, times, backoffMs)
+  }
+
   map<U>(f: (a: T) => U): Request<C, U> {
     return Request.map(this, f)
   }
@@ -66,6 +76,12 @@ export class Request<C, T> implements Monad<T> {
 
   static run<C, T>(v: Request<C, T>, context: C): Async<T> {
     return Request.read(v, context)
+  }
+
+  static retry<C, T>(v: Request<C, T>, context: C, times = 1, backoffMs = 100): Async<T> {
+    return Request.read(v, context).flatRecover((e) =>
+      times >= 1 ? Async.delay(backoffMs).flatMap(() => Request.retry(v, context, times - 1, 2 * backoffMs)) : Async.reject(e)
+    )
   }
 
   static empty<C>(): Request<C, void> {

@@ -250,4 +250,14 @@ describe('Async', () => {
       expect(result.value).toEqual(new Error('2'))
     })
   })
+
+  describe('delay', () => {
+    it('delays execution', async () => {
+      jest.useFakeTimers()
+      const promise = Async.delay().map(() => 42).promise
+      jest.runAllTimers()
+      const result = await promise
+      expect(result).toEqual(42)
+    })
+  })
 })

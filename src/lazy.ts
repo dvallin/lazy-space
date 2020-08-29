@@ -4,7 +4,7 @@ export type lazy<T> = () => T
 
 export class Lazy<T> implements Monad<T> {
   private memory: T | undefined = undefined
-  public constructor(private readonly value: lazy<T>, private readonly memoized: boolean = false) {}
+  public constructor(public readonly value: lazy<T>, private readonly memoized: boolean = false) {}
 
   public map<U>(f: (a: T) => U, memoized = false): Lazy<U> {
     return Lazy.map(this, f, memoized)

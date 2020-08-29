@@ -17,6 +17,11 @@ export class Async<T> implements Monad<T> {
     return Async.recover(this, f)
   }
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public onError(f: (error: any) => never): Async<T> {
+    return Async.onError(this, f)
+  }
+
   public finally(f: () => void): Async<T> {
     return Async.finally(this, f)
   }
@@ -74,6 +79,10 @@ export class Async<T> implements Monad<T> {
     return new Async(Promise.reject(value))
   }
 
+  public static delay(ms = 0): Async<void> {
+    return new Async(new Promise((resolve) => setTimeout(resolve, ms)))
+  }
+
   public static lift<T>(value: T): Async<T> {
     return new Async(Promise.resolve(value))
   }
@@ -84,6 +93,11 @@ export class Async<T> implements Monad<T> {
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public static recover<S, U>(val: Async<S>, f: (error: any) => U): Async<S | U> {
+    return new Async(val.promise.catch(f))
+  }
+
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public static onError<S>(val: Async<S>, f: (error: any) => never): Async<S> {
     return new Async(val.promise.catch(f))
   }
 

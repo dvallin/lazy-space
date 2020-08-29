@@ -53,6 +53,10 @@ export class List<T> implements Monad<T> {
     return List.fold(this, initial, combine)
   }
 
+  public scan<S>(initial: S, combine: (l: S, r: T) => S): List<S> {
+    return List.scan(this, initial, combine)
+  }
+
   public foldr<S>(initial: () => S, combine: (l: () => S, r: T) => S): S {
     return List.foldr(this, initial, combine)
   }
@@ -202,6 +206,16 @@ export class List<T> implements Monad<T> {
       }
     }
     return aggregate
+  }
+
+  public static scan<S, T>(val: List<S>, initial: T, combine: (l: T, r: S) => T): List<T> {
+    return val._head.unwrap(
+      (h) => {
+        const head = combine(initial, h.eval())
+        return List.lift(head, () => val.tail().scan(head, combine))
+      },
+      () => List.empty()
+    )
   }
 
   public static foldr<S, T>(val: List<S>, initial: () => T, combine: (l: () => T, r: S) => T): T {
