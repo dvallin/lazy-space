@@ -1,4 +1,4 @@
-import { Async, Lazy, range, Stream } from '../src'
+import { Async, Lazy, List, range, Stream } from '../src'
 
 describe('Stream', () => {
   describe('empty', () => {
@@ -102,6 +102,98 @@ describe('Stream', () => {
         .collect()
         .run()
       close.forEach((c) => expect(c).toHaveBeenCalledTimes(1))
+    })
+  })
+
+  describe('filter', () => {
+    it('filter type', async () => {
+      const result = await Stream.fromList(List.of(['a', 1, 'b', 2, '2']))
+        .filterType((a): a is string => typeof a === 'string')
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual(['a', 'b', '2'])
+    })
+  })
+
+  describe('filter', () => {
+    it('filters stream', async () => {
+      const result = await Stream.range(0, 2)
+        .filter((a) => a % 2 === 0)
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([0, 2])
+    })
+  })
+
+  describe('scan', () => {
+    it('aggregates stream', async () => {
+      const result = await Stream.range(0, 2)
+        .scan(0, (l, r) => l + r)
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([0, 1, 3])
+    })
+  })
+
+  describe('take', () => {
+    it('takes n items', async () => {
+      const result = await Stream.natural().take(5).collect().run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([1, 2, 3, 4, 5])
+    })
+  })
+
+  describe('takeWhile', () => {
+    it('takes while true', async () => {
+      const result = await Stream.natural()
+        .takeWhile((i) => i <= 5)
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([1, 2, 3, 4, 5])
+    })
+  })
+
+  describe('drop', () => {
+    it('drops items and creates artificial coverage', async () => {
+      const result = await Stream.take(Stream.natural().drop(4).drop()).collect().run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([6])
+    })
+  })
+
+  describe('dropWhile', () => {
+    it('drops while true', async () => {
+      const result = await Stream.natural()
+        .dropWhile((i) => i <= 5)
+        .take()
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([6])
+    })
+  })
+
+  describe('forEach', () => {
+    it('iterates over each item', async () => {
+      const callback = jest.fn()
+      const result = await Stream.repeat(2).take(5).forEach(callback).run()
+      expect(result.isSuccess())
+      expect(callback).toHaveBeenCalledTimes(5)
+    })
+  })
+
+  describe('join', () => {
+    it('flattens streams and creates artificial coverage', async () => {
+      const result = await Stream.drop(Stream.repeat(1).join(Stream.repeat(1).map(() => Stream.repeat(2))))
+        .take()
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([2])
     })
   })
 })

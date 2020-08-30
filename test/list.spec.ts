@@ -298,9 +298,20 @@ describe('List', () => {
     it('concats whole lists', () => {
       expect(
         of([1, 2])
-          .concat(() => of([3, 4]))
+          .concat(() => List.natural(3))
+          .take(4)
           .toArray()
       ).toEqual([1, 2, 3, 4])
+    })
+  })
+
+  describe('intersperse', () => {
+    it('alternates between item and list', () => {
+      expect(List.repeat('v').intersperse(',').take(4).toArray()).toEqual(['v', ',', 'v', ','])
+    })
+
+    it('does not append the last item', () => {
+      expect(List.of(['a', 'b', 'c']).intersperse(',').toArray()).toEqual(['a', ',', 'b', ',', 'c'])
     })
   })
 

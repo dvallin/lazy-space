@@ -247,14 +247,16 @@ describe('Request', () => {
 
   describe('retry', () => {
     it('retries with exponential backoff', async () => {
+      const delay = jest.spyOn(Async, 'delay')
+      const ms = 1
       let times = 0
-      const failsTwice = Request.ofNative(() => {
-        console.log(times)
-        return times++ < 2 ? Promise.reject('failure') : Promise.resolve(42)
-      })
-      const result = await failsTwice.retry(context, 3, 1).run()
+      const failsTwice = Request.ofNative(() => (++times < 3 ? Promise.reject('failure') : Promise.resolve(42)))
+      const result = await failsTwice.retry(context, 3, ms).run()
       expect(result.isSuccess()).toBeTruthy()
       expect(result.value).toEqual(42)
+      expect(delay).toHaveBeenCalledTimes(2)
+      expect(delay).toHaveBeenCalledWith(ms)
+      expect(delay).toHaveBeenCalledWith(2 * ms)
     })
   })
 })

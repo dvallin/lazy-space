@@ -73,6 +73,10 @@ export class List<T> implements Monad<T> {
     return List.concat(this, other)
   }
 
+  public intersperse(item: T): List<T> {
+    return List.intersperse(this, item)
+  }
+
   public seek(predicate: (v: T) => boolean): List<T> {
     return List.seek(this, predicate)
   }
@@ -154,6 +158,10 @@ export class List<T> implements Monad<T> {
 
   public static concat<T>(left: List<T>, right: () => List<T>): List<T> {
     return left.foldr(right, (t, h) => List.lift(h, t))
+  }
+
+  public static intersperse<T>(left: List<T>, item: T): List<T> {
+    return left.flatMap((a) => List.of([item, a])).drop()
   }
 
   public static join<T>(val: List<List<T>>): List<T> {
