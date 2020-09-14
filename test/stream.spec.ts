@@ -165,6 +165,16 @@ describe('Stream', () => {
     })
   })
 
+  describe('merge', () => {
+    it('merges two streams', async () => {
+      const result = await Stream.merge([Stream.natural().take(4), Stream.natural().take(2)])
+        .collect()
+        .run()
+      expect(result.isSuccess())
+      expect(result.value).toEqual([1, 2, 3, 4, 1, 2])
+    })
+  })
+
   describe('dropWhile', () => {
     it('drops while true', async () => {
       const result = await Stream.natural()

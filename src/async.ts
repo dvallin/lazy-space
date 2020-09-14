@@ -134,6 +134,29 @@ export class Async<T> implements Monad<T> {
     return new Async(Promise.race(values.map((v) => v.promise)))
   }
 
+  public static any<T>(values: Async<T>[]): Async<T> {
+    return new Async(
+      new Promise((resolve, reject) => {
+        let resolved = false
+        let resolvable = values.length
+        values.map((a) =>
+          a
+            .map((v) => {
+              if (!resolved) {
+                resolved = true
+                resolve(v)
+              }
+            })
+            .recover(() => {
+              if (--resolvable === 0) {
+                reject(new Error('all rejected'))
+              }
+            })
+        )
+      })
+    )
+  }
+
   public static both<S, T>(value1: Async<S>, value2: Async<T>): Async<[S, T]> {
     return Async.zip(value1, value2)
   }

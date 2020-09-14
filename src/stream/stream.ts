@@ -63,6 +63,10 @@ export class Stream<T> implements Monad<T> {
     })
   }
 
+  public static merge<T>(streams: Stream<T>[]): Stream<T> {
+    return new Stream(new Op.Merge(streams.map((s) => s.source)).apply())
+  }
+
   public static empty<T>(): Stream<T> {
     return new Stream(empty())
   }

@@ -117,8 +117,7 @@ export class Request<C, T> implements Monad<T> {
   }
 
   static runFlatmap<C, T, U>(value: Request<C, T>, f: (value: Try<T>) => Request<C, U>): Request<C, U> {
-    const r: Request<C, Request<C, U>> = new Request(Reader.lift((context) => Async.of(value.read(context).run()).map(f)))
-    return Request.join(r)
+    return Request.join(new Request(Reader.lift((context) => Async.of(value.read(context).run()).map(f))))
   }
 
   static flatRecover<C, T, U>(value: Request<C, T>, f: (error: unknown) => Request<C, U>): Request<C, T | U> {
