@@ -4,6 +4,7 @@ import { Async } from './async'
 import { Try } from './try'
 import { Lazy } from './lazy'
 import { List } from './list'
+import { Option } from './option'
 
 export class Request<C, T> implements Monad<T> {
   constructor(private readonly request: Reader<C, Async<T>>) {}
@@ -40,6 +41,10 @@ export class Request<C, T> implements Monad<T> {
 
   flatMap<U>(f: (a: T) => Request<C, U>): Request<C, U> {
     return Request.flatMap(this, f)
+  }
+
+  optionMap<U>(f: (a: T) => Option<Request<C, U>>): Request<C, Option<U>> {
+    return Request.optionMap(this, f)
   }
 
   /**
@@ -114,6 +119,18 @@ export class Request<C, T> implements Monad<T> {
 
   static flatMap<C, T, U>(value: Request<C, T>, f: (a: T) => Request<C, U>): Request<C, U> {
     return new Request(Reader.lift((context) => value.read(context).flatMap((a) => f(a).read(context))))
+  }
+
+  static optionMap<C, T, U>(value: Request<C, T>, f: (a: T) => Option<Request<C, U>>): Request<C, Option<U>> {
+    return new Request(
+      Reader.lift((context) =>
+        value.read(context).flatMap((a) =>
+          f(a)
+            .map((r) => r.read(context).map((u) => Option.of(u)))
+            .getOrElse(Async.resolve(Option.none()))
+        )
+      )
+    )
   }
 
   static runFlatmap<C, T, U>(value: Request<C, T>, f: (value: Try<T>) => Request<C, U>): Request<C, U> {
