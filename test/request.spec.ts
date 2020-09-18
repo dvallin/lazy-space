@@ -1,4 +1,4 @@
-import { Async, Try, Request, Lazy, List } from '../src'
+import { Async, Try, Request, Lazy, List, Option } from '../src'
 import { testMonad } from './monad.tests'
 
 const context = { some: 'context' }
@@ -81,6 +81,26 @@ describe('Request', () => {
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(2)
+    })
+  })
+
+  describe('optionMap', () => {
+    it('maps some requests to some', async () => {
+      const result = await one
+        .optionMap((a) => Option.some(Request.lift(a)))
+        .run(context)
+        .run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(result.value).toEqual(Option.some(1))
+    })
+
+    it('maps none requests to none', async () => {
+      const result = await one
+        .optionMap((_a) => Option.none())
+        .run(context)
+        .run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(result.value).toEqual(Option.none())
     })
   })
 

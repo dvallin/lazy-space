@@ -4,7 +4,7 @@ import { List } from '../list'
 import { Monad } from '../monad'
 import { Option } from '../option'
 import * as Op from './ops'
-import { empty, natural, once, range, repeat, Source } from './source'
+import { empty, natural, ofNative, once, range, repeat, Source } from './source'
 
 export class Stream<T> implements Monad<T> {
   public constructor(private readonly source: Source<T>) {}
@@ -55,6 +55,10 @@ export class Stream<T> implements Monad<T> {
 
   public bracket(close: () => void): Stream<T> {
     return Stream.bracket(this, close)
+  }
+
+  public static ofNative<T>(generator: () => AsyncGenerator<T>): Stream<T> {
+    return new Stream(ofNative(generator))
   }
 
   public static of<T>(source: Lazy<Async<Option<T>>>): Stream<T> {

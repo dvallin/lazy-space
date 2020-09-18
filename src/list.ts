@@ -129,6 +129,18 @@ export class List<T> implements Monad<T> {
     return new List<T>(Option.of(val).map(Lazy.lift), tail)
   }
 
+  public static ofNative<T>(val: () => Generator<T>): List<T> {
+    return List.ofGenerator(new Lazy(val, true))
+  }
+
+  public static ofGenerator<T>(generator: Lazy<Generator<T>>): List<T> {
+    const next = generator.eval().next()
+    if (next.done) {
+      return List.empty()
+    }
+    return new List(Option.lift(Lazy.lift(next.value)), () => List.ofGenerator(generator))
+  }
+
   public static of<T>(val: T[], start = 0): List<T> {
     return List.lift(val[start], () => List.of(val, start + 1))
   }

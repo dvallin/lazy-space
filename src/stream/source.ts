@@ -1,4 +1,5 @@
 import { Async } from '../async'
+import { Lazy } from '../lazy'
 import { Option } from '../option'
 
 export interface Source<T> {
@@ -17,6 +18,13 @@ export function repeat<T>(value: T): Source<T> {
   }
 }
 
+export function ofNative<T>(iterator: () => AsyncGenerator<T>): Source<T> {
+  const generator = Lazy.of(iterator, true)
+  return {
+    next: () => Async.of(generator.eval().next()).map((result) => (result.done ? Option.none() : Option.some(result.value))),
+  }
+}
+
 export function once<T>(value: T): Source<T> {
   let done = false
   return {
@@ -30,6 +38,7 @@ export function once<T>(value: T): Source<T> {
     },
   }
 }
+
 export function natural(from: number): Source<number> {
   let current = from
   return {

@@ -1,4 +1,4 @@
-import { Async, Lazy, List, range, Stream } from '../src'
+import { Lazy, List, range, Stream } from '../src'
 
 describe('Stream', () => {
   describe('empty', () => {
@@ -7,6 +7,22 @@ describe('Stream', () => {
       expect(result.isSuccess())
       if (result.isSuccess()) {
         expect(result.value).toEqual([])
+      }
+    })
+  })
+
+  describe('ofNative', () => {
+    it('fully streams the generator', async () => {
+      const result = await Stream.ofNative(async function* () {
+        for (let i = 1; i < 5; i++) {
+          yield Promise.resolve(i)
+        }
+      })
+        .collect()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toEqual([1, 2, 3, 4])
       }
     })
   })
@@ -34,7 +50,9 @@ describe('Stream', () => {
 
     it('closes on error', async () => {
       const close = jest.fn()
-      const result = await Stream.of(Lazy.of(() => Async.reject(new Error('my message'))))
+      const result = await Stream.ofNative(async function* () {
+        throw new Error('my message')
+      })
         .bracket(close)
         .collect()
         .run()

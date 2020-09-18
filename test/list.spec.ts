@@ -40,6 +40,27 @@ describe('List', () => {
       ])
     })
 
+    describe('ofNative', () => {
+      it('works on finite lists', () => {
+        const firstTen = List.ofNative(function* () {
+          for (let i = 1; i <= 10; i++) {
+            yield i
+          }
+        })
+        expect(firstTen.toArray()).toEqual(natural().take(10).toArray())
+      })
+
+      it('works on finite lists', () => {
+        const allNumber = List.ofNative(function* () {
+          let i = 1
+          while (true) {
+            yield i++
+          }
+        })
+        expect(allNumber.take(10).toArray()).toEqual(natural().take(10).toArray())
+      })
+    })
+
     it('can take very long lists', () => {
       const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
       expect(List.toArray(take(nxn, 6000))).toHaveLength(6000)
