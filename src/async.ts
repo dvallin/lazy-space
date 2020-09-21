@@ -83,6 +83,21 @@ export class Async<T> implements Monad<T> {
     return new Async(new Promise((resolve) => setTimeout(resolve, ms)))
   }
 
+  public static debounce(ms: number): Lazy<Async<void>> {
+    let timeout: NodeJS.Timeout
+    return Lazy.of(() => {
+      clearTimeout(timeout)
+      return Async.of(
+        new Promise((resolve) => {
+          timeout = setTimeout(() => {
+            clearTimeout(timeout)
+            resolve()
+          }, ms)
+        })
+      )
+    })
+  }
+
   public static lift<T>(value: T): Async<T> {
     return new Async(Promise.resolve(value))
   }

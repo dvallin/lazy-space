@@ -260,4 +260,20 @@ describe('Async', () => {
       expect(result).toEqual(42)
     })
   })
+
+  describe('debounce', () => {
+    it('debounces execution', async () => {
+      const d = Async.debounce(10)
+      jest.useFakeTimers()
+      const callback = jest.fn()
+      d.eval().map(callback)
+      d.eval().map(callback)
+
+      const promise = d.eval().map(callback).promise
+      jest.runAllTimers()
+      await promise
+
+      expect(callback).toHaveBeenCalledTimes(1)
+    })
+  })
 })
