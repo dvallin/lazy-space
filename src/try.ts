@@ -219,6 +219,17 @@ export class Try<T> implements Monad<T> {
       (e) => Try.failure(e)
     )
   }
+
+  public static run<T>(f: () => T): Try<T> {
+    try {
+      return Try.success(f())
+    } catch (error) {
+      if (error === undefined || typeof error === 'string') {
+        return Try.failure(new Error(error))
+      }
+      return Try.failure(error)
+    }
+  }
 }
 
 export class TryT<T> implements Monad<T> {
