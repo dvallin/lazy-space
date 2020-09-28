@@ -1,4 +1,4 @@
-import { Lazy, List, range, Stream } from '../src'
+import { Async, Lazy, List, range, Stream } from '../src'
 
 describe('Stream', () => {
   describe('empty', () => {
@@ -123,6 +123,30 @@ describe('Stream', () => {
     })
   })
 
+  describe('asyncMap', () => {
+    it('maps', async () => {
+      const result = await Stream.range(0, 2)
+        .asyncMap((i) => Async.resolve(i))
+        .collect()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toEqual([0, 1, 2])
+      }
+    })
+
+    it('breaks on rejects', async () => {
+      const result = await Stream.range(0, 2)
+        .asyncMap(() => Async.reject())
+        .collect()
+        .run()
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toEqual([])
+      }
+    })
+  })
+
   describe('filter', () => {
     it('filter type', async () => {
       const result = await Stream.fromList(List.of(['a', 1, 'b', 2, '2']))
@@ -206,11 +230,13 @@ describe('Stream', () => {
   })
 
   describe('forEach', () => {
-    it('iterates over each item', async () => {
+    it('iterates over each item and closes', async () => {
       const callback = jest.fn()
-      const result = await Stream.repeat(2).take(5).forEach(callback).run()
+      const bracket = jest.fn()
+      const result = await Stream.repeat(2).take(5).bracket(bracket).forEach(callback).run()
       expect(result.isSuccess())
       expect(callback).toHaveBeenCalledTimes(5)
+      expect(bracket).toHaveBeenCalledTimes(1)
     })
   })
 

@@ -212,4 +212,30 @@ describe('TryT', () => {
     const c = list.flatMap((s) => new TryT(List.of([left(s + 1)])))
     expect((c.value as List<Try<number>>).toArray()).toEqual([right(new Error('message')), left(3)])
   })
+
+  describe('run', () => {
+    const error = new Error('error')
+
+    it('resolves result', () => {
+      const value = Try.run(() => 1)
+      expect(Try.isSuccess(value)).toBeTruthy()
+      expect(value).toEqual(Try.success(1))
+    })
+
+    it('catches strings', () => {
+      const value = Try.run(() => {
+        throw 'error'
+      })
+      expect(Try.isFailure(value)).toBeTruthy()
+      expect(value).toEqual(Try.failure(error))
+    })
+
+    it('catches exceptions', () => {
+      const value = Try.run(() => {
+        throw error
+      })
+      expect(Try.isFailure(value)).toBeTruthy()
+      expect(value).toEqual(Try.failure(error))
+    })
+  })
 })

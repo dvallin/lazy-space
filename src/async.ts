@@ -83,6 +83,19 @@ export class Async<T> implements Monad<T> {
     return new Async(new Promise((resolve) => setTimeout(resolve, ms)))
   }
 
+  public static throttle(ms: number): Lazy<Async<void>> {
+    let last = 0
+    return Lazy.of(() => {
+      const now = Date.now()
+      if (last + ms < now) {
+        last = now
+        return Async.empty()
+      } else {
+        return Async.reject('throttled')
+      }
+    })
+  }
+
   public static debounce(ms: number): Lazy<Async<void>> {
     let timeout: NodeJS.Timeout
     return Lazy.of(() => {

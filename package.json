@@ -1,6 +1,6 @@
 {
   "name": "lazy-space",
-  "version": "0.2.7-SNAPSHOT",
+  "version": "0.2.10-SNAPSHOT",
   "description": "Monads and collections in typescript",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -28,6 +28,7 @@
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
+    "mockdate": "^3.0.2",
     "prettier": "^2.0.2",
     "ts-jest": "^26.1.1",
     "typescript": "^4.0.2"

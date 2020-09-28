@@ -17,6 +17,10 @@ export class Stream<T> implements Monad<T> {
     return Stream.flatMap(this, f)
   }
 
+  public asyncMap<U>(f: (a: T) => Async<U>): Stream<U> {
+    return Stream.asyncMap(this, f)
+  }
+
   public lift<U>(v: U): Stream<U> {
     return Stream.lift(v)
   }
@@ -95,6 +99,10 @@ export class Stream<T> implements Monad<T> {
     return new Stream(new Op.FlatMap(val.source, (a) => f(a).source).apply())
   }
 
+  public static asyncMap<T, U>(val: Stream<T>, f: (v: T) => Async<U>): Stream<U> {
+    return new Stream(new Op.AsyncMap(val.source, f).apply())
+  }
+
   public static lift<U>(v: U): Stream<U> {
     return new Stream(once(v))
   }
@@ -146,28 +154,23 @@ export class Stream<T> implements Monad<T> {
     })
   }
 
-  public forEach<U>(f: (v: T) => U): Async<void> {
-    return this.source
-      .next()
-      .flatMap((n) =>
-        n.unwrap(
-          (head) => {
-            f(head)
-            return this.forEach(f)
-          },
-          () => Async.resolve(undefined)
-        )
+  public forEach(f: (v: T) => void): Async<void> {
+    return this.source.next().flatMap((n) =>
+      n.unwrap(
+        (head) => {
+          f(head)
+          return this.forEach(f)
+        },
+        () => Async.resolve(undefined)
       )
-      .toVoid()
+    )
   }
 
   public fold<U>(initial: U, combine: (l: U, r: T) => U): Async<U> {
-    return Async.join(
-      this.source.next().map((n) =>
-        n.unwrap(
-          (v) => this.fold(initial, combine).map((l) => combine(l, v)),
-          () => Async.lift(initial)
-        )
+    return this.source.next().flatMap((n) =>
+      n.unwrap(
+        (v) => this.fold(initial, combine).map((l) => combine(l, v)),
+        () => Async.lift(initial)
       )
     )
   }

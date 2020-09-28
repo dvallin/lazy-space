@@ -1,6 +1,8 @@
 import { Async, Try, Lazy, List } from '../src'
 import { testMonad } from './monad.tests'
 
+import * as Mockdate from 'mockdate'
+
 describe('Async', () => {
   testMonad(Async.empty(), async (a, b) => expect(await a.promise).toEqual(await b.promise))
 
@@ -274,6 +276,27 @@ describe('Async', () => {
       await promise
 
       expect(callback).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('throttle', () => {
+    it('throttles execution', async () => {
+      Mockdate.set(new Date('2020-07-27T11:44:40.293Z'))
+      const d = Async.throttle(10)
+      const callback = jest.fn()
+
+      const first = await d.eval().map(callback).run()
+
+      Mockdate.set(new Date('2020-07-27T11:44:40.303Z'))
+      const second = await d.eval().map(callback).run()
+
+      Mockdate.set(new Date('2020-07-27T11:44:40.304Z'))
+      const third = await d.eval().map(callback).run()
+
+      expect(first.isSuccess()).toBeTruthy()
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(second.isFailure()).toBeTruthy()
+      expect(third.isSuccess()).toBeTruthy()
     })
   })
 })
