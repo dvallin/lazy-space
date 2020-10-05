@@ -5,11 +5,11 @@ export type reader<C, T> = (context: C) => T
 export class Reader<C, T> implements Monad<T> {
   public constructor(public readonly read: reader<C, T>) {}
 
-  public map<U>(f: (t: T) => U): Reader<C, U> {
+  public map<U>(f: (t: T, c: C) => U): Reader<C, U> {
     return Reader.map(this, f)
   }
 
-  public flatMap<C2, U>(f: (t: T) => Reader<C2, U>): Reader<C & C2, U> {
+  public flatMap<C2, U>(f: (t: T, c: C & C2) => Reader<C2, U>): Reader<C & C2, U> {
     return Reader.flatMap(this, f)
   }
 
@@ -42,12 +42,12 @@ export class Reader<C, T> implements Monad<T> {
     return new Reader(() => value)
   }
 
-  public static map<C, T, U>(val: Reader<C, T>, f: (t: T) => U): Reader<C, U> {
-    return new Reader((c) => f(val.read(c)))
+  public static map<C, T, U>(val: Reader<C, T>, f: (t: T, c: C) => U): Reader<C, U> {
+    return new Reader((c) => f(val.read(c), c))
   }
 
-  public static flatMap<C1, C2, S, T>(val: Reader<C1, S>, f: (s: S) => Reader<C2, T>): Reader<C1 & C2, T> {
-    return new Reader((c) => f(val.read(c)).read(c))
+  public static flatMap<C1, C2, S, T>(val: Reader<C1, S>, f: (s: S, c: C1 & C2) => Reader<C2, T>): Reader<C1 & C2, T> {
+    return new Reader((c) => f(val.read(c), c).read(c))
   }
 
   public static mapContext<C1, C2, S>(reader: Reader<C1, S>, f: (c: C2) => C1): Reader<C2, S> {

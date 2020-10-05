@@ -1,6 +1,7 @@
 import { Left, Right } from './either'
 import { Monad } from './monad'
 import { Identity } from './identity'
+import { Option } from './option'
 
 export type tryable<T> = T | Error
 export class Try<T> implements Monad<T> {
@@ -24,6 +25,14 @@ export class Try<T> implements Monad<T> {
 
   public flatRecover<U>(f: (error: Error) => Try<U>): Try<T | U> {
     return Try.flatRecover(this, f)
+  }
+
+  public result(): Option<T> {
+    return Try.result(this)
+  }
+
+  public error(): Option<Error> {
+    return Try.error(this)
   }
 
   public lift<U>(v: U): Try<U> {
@@ -100,6 +109,20 @@ export class Try<T> implements Monad<T> {
 
   public static right<T>(error: Error): Try<T> {
     return new Try<T>('right', error)
+  }
+
+  public static result<T>(value: Try<T>): Option<T> {
+    return value.unwrap(
+      (s) => Option.some(s),
+      () => Option.none()
+    )
+  }
+
+  public static error<T>(value: Try<T>): Option<Error> {
+    return value.unwrap(
+      () => Option.none(),
+      (e) => Option.some(e)
+    )
   }
 
   public static get<T>(val: Try<T>): T | Error {

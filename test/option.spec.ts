@@ -178,6 +178,40 @@ describe('Option', () => {
   })
 })
 
+describe('all', () => {
+  it('only is some if all are some', () => {
+    expect(Option.all([Option.some(1), Option.none()]).isSome()).toBeFalsy()
+    expect(Option.all([Option.some(1), Option.some(1)]).isSome()).toBeTruthy()
+  })
+
+  it('collects somes into arrays', () => {
+    expect(Option.all([Option.some(1), Option.some(2)]).get()).toEqual([1, 2])
+    expect(
+      Option.all<unknown>([Option.some(1), Option.some(undefined), Option.some('')]).get()
+    ).toEqual([1, undefined, ''])
+  })
+})
+
+describe('zip', () => {
+  it('only is some if all are some', () => {
+    expect(Option.zip(Option.some(1), Option.none()).isSome()).toBeFalsy()
+    expect(Option.zip(Option.some(1), Option.some(1)).isSome()).toBeTruthy()
+  })
+
+  it('zips all int a tuple', () => {
+    expect(
+      Option.zip(Option.some(1), Option.some(2))
+        .map(([l, r]) => l + r)
+        .get()
+    ).toEqual(3)
+    expect(
+      Option.zip(Option.some(1), Option.some(undefined), Option.some(''))
+        .map(([l, r, s]) => l + s + r)
+        .get()
+    ).toEqual('1undefined')
+  })
+})
+
 describe('OptionT', () => {
   testMonad(OptionT.lift(1), async (a, b) => expect(a.value).toEqual(b.value))
 

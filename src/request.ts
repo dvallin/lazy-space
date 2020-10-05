@@ -27,7 +27,7 @@ export class Request<C, T> implements Monad<T> {
     return Request.retry(this, context, times, backoffMs)
   }
 
-  map<U>(f: (a: T) => U): Request<C, U> {
+  map<U>(f: (a: T, c: C) => U): Request<C, U> {
     return Request.map(this, f)
   }
 
@@ -35,15 +35,21 @@ export class Request<C, T> implements Monad<T> {
    * recovers from failure
    * @param f
    */
-  recover<U>(f: (error: unknown) => U): Request<C, T | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  recover<U>(f: (error: any) => U): Request<C, T | U> {
     return Request.recover(this, f)
   }
 
-  flatMap<U>(f: (a: T) => Request<C, U>): Request<C, U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  onError(f: (error: any, c: C) => never): Request<C, T> {
+    return Request.onError(this, f)
+  }
+
+  flatMap<U>(f: (a: T, c: C) => Request<C, U>): Request<C, U> {
     return Request.flatMap(this, f)
   }
 
-  optionMap<U>(f: (a: T) => Option<Request<C, U>>): Request<C, Option<U>> {
+  optionMap<U>(f: (a: T, c: C) => Option<Request<C, U>>): Request<C, Option<U>> {
     return Request.optionMap(this, f)
   }
 
@@ -51,7 +57,7 @@ export class Request<C, T> implements Monad<T> {
    * Runs the request and flatmaps over results
    * @param f
    */
-  runFlatmap<U>(f: (value: Try<T>) => Request<C, U>): Request<C, U> {
+  runFlatmap<U>(f: (value: Try<T>, c: C) => Request<C, U>): Request<C, U> {
     return Request.runFlatmap(this, f)
   }
 
@@ -59,7 +65,8 @@ export class Request<C, T> implements Monad<T> {
    * Flatmaps over failed requests (a recover that returns a request)
    * @param f
    */
-  flatRecover<U>(f: (error: unknown) => Request<C, U>): Request<C, T | U> {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  flatRecover<U>(f: (error: any, c: C) => Request<C, U>): Request<C, T | U> {
     return Request.flatRecover(this, f)
   }
 
@@ -109,40 +116,47 @@ export class Request<C, T> implements Monad<T> {
     return new Request(Reader.lift((context) => Async.of(request(context))))
   }
 
-  static map<C, T, U>(value: Request<C, T>, f: (a: T) => U): Request<C, U> {
-    return new Request(value.request.map((a) => a.map(f)))
+  static map<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => U): Request<C, U> {
+    return new Request(value.request.map((a, c) => a.map((v) => f(v, c))))
   }
 
-  static recover<C, T, U>(value: Request<C, T>, f: (error: unknown) => U): Request<C, T | U> {
-    return new Request(value.request.map((a) => a.recover(f)))
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  static recover<C, T, U>(value: Request<C, T>, f: (error: any, c: C) => U): Request<C, T | U> {
+    return new Request(value.request.map((a, c) => a.recover((v) => f(v, c))))
   }
 
-  static flatMap<C, T, U>(value: Request<C, T>, f: (a: T) => Request<C, U>): Request<C, U> {
-    return new Request(Reader.lift((context) => value.read(context).flatMap((a) => f(a).read(context))))
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  static onError<C, T>(value: Request<C, T>, f: (error: any, c: C) => never): Request<C, T> {
+    return new Request(value.request.map((a, c) => a.onError((v) => f(v, c))))
   }
 
-  static optionMap<C, T, U>(value: Request<C, T>, f: (a: T) => Option<Request<C, U>>): Request<C, Option<U>> {
+  static flatMap<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => Request<C, U>): Request<C, U> {
+    return new Request(Reader.lift((c) => value.read(c).flatMap((v) => f(v, c).read(c))))
+  }
+
+  static optionMap<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => Option<Request<C, U>>): Request<C, Option<U>> {
     return new Request(
-      Reader.lift((context) =>
-        value.read(context).flatMap((a) =>
-          f(a)
-            .map((r) => r.read(context).map((u) => Option.of(u)))
+      Reader.lift((c) =>
+        value.read(c).flatMap((a) =>
+          f(a, c)
+            .map((r) => r.read(c).map((u) => Option.of(u)))
             .getOrElse(Async.resolve(Option.none()))
         )
       )
     )
   }
 
-  static runFlatmap<C, T, U>(value: Request<C, T>, f: (value: Try<T>) => Request<C, U>): Request<C, U> {
-    return Request.join(new Request(Reader.lift((context) => Async.of(value.read(context).run()).map(f))))
+  static runFlatmap<C, T, U>(value: Request<C, T>, f: (value: Try<T>, c: C) => Request<C, U>): Request<C, U> {
+    return Request.join(new Request(Reader.lift((c) => Async.of(value.read(c).run()).map((v) => f(v, c)))))
   }
 
-  static flatRecover<C, T, U>(value: Request<C, T>, f: (error: unknown) => Request<C, U>): Request<C, T | U> {
-    return new Request(Reader.lift((context) => value.read(context).flatRecover((e) => f(e).read(context))))
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  static flatRecover<C, T, U>(value: Request<C, T>, f: (error: any, c: C) => Request<C, U>): Request<C, T | U> {
+    return new Request(Reader.lift((c) => value.read(c).flatRecover((e) => f(e, c).read(c))))
   }
 
   static join<C, U>(v: Request<C, Request<C, U>>): Request<C, U> {
-    return new Request(Reader.lift((context) => v.read(context).flatMap((a) => a.read(context))))
+    return new Request(Reader.lift((c) => v.read(c).flatMap((a) => a.read(c))))
   }
 
   /**

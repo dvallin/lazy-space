@@ -47,6 +47,31 @@ describe('Request', () => {
     })
   })
 
+  describe('onError', () => {
+    it('does not pass onError on success', async () => {
+      const call = jest.fn()
+      await one
+        .onError((e) => {
+          call(e)
+          throw e
+        })
+        .run(context)
+        .run()
+      expect(call).not.toHaveBeenCalled()
+    })
+    it('passes errors into onError', async () => {
+      const call = jest.fn()
+      await fail
+        .onError((e) => {
+          call(e)
+          throw e
+        })
+        .run(context)
+        .run()
+      expect(call).toHaveBeenCalledWith('failure')
+    })
+  })
+
   describe('flatMap', () => {
     it('flatmaps successful requests', async () => {
       const result = await one

@@ -1,4 +1,4 @@
-import { Try, TryT, List } from '../src'
+import { Try, TryT, List, Option } from '../src'
 import { testMonad } from './monad.tests'
 
 const right = Try.right
@@ -74,6 +74,24 @@ describe('try', () => {
     })
     it('passes right into function', () => {
       expect(right(new Error('message')).flatRecover(() => right(new Error('message2')))).toEqual(right(new Error('message2')))
+    })
+  })
+
+  describe('result', () => {
+    it('returns left as option some', () => {
+      expect(left(1).result()).toEqual(Option.some(1))
+    })
+    it('returns right as option none', () => {
+      expect(right(new Error('message')).result()).toEqual(Option.none())
+    })
+  })
+
+  describe('error', () => {
+    it('returns left as option none', () => {
+      expect(left(1).error()).toEqual(Option.none())
+    })
+    it('returns right as option some', () => {
+      expect(right(new Error('message')).error()).toEqual(Option.some(new Error('message')))
     })
   })
 

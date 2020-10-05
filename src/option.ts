@@ -168,6 +168,76 @@ export class Option<T> implements Monad<T> {
     return left.isRight() ? left : right
   }
 
+  public static zip<T1, T2>(value1: Option<T1>, value2: Option<T2>): Option<[T1, T2]>
+  public static zip<T1, T2, T3>(value1: Option<T1>, value2: Option<T2>, value3: Option<T3>): Option<[T1, T2, T3]>
+  public static zip<T1, T2, T3, T4>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>
+  ): Option<[T1, T2, T3, T4]>
+  public static zip<T1, T2, T3, T4, T5>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>,
+    value5: Option<T5>
+  ): Option<[T1, T2, T3, T4, T5]>
+  public static zip<T1, T2, T3, T4, T5, T6>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>,
+    value5: Option<T5>,
+    value6: Option<T6>
+  ): Option<[T1, T2, T3, T4, T5, T6]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>,
+    value5: Option<T5>,
+    value6: Option<T6>,
+    value7: Option<T7>
+  ): Option<[T1, T2, T3, T4, T5, T6, T7]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7, T8>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>,
+    value5: Option<T5>,
+    value6: Option<T6>,
+    value7: Option<T7>,
+    value8: Option<T8>
+  ): Option<[T1, T2, T3, T4, T5, T6, T7, T8]>
+  public static zip<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    value1: Option<T1>,
+    value2: Option<T2>,
+    value3: Option<T3>,
+    value4: Option<T4>,
+    value5: Option<T5>,
+    value6: Option<T6>,
+    value7: Option<T7>,
+    value8: Option<T8>,
+    value9: Option<T9>
+  ): Option<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>
+  public static zip(...args: Option<unknown>[]): Option<unknown[]> {
+    return Option.all(args.filter((a) => a !== undefined))
+  }
+
+  public static all<T>(values: Option<T>[]): Option<T[]> {
+    const result: T[] = []
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i]
+      if (v.isSome()) {
+        result.push(v.value)
+      } else {
+        return Option.none()
+      }
+    }
+    return Option.some(result)
+  }
+
   public static equals<S>(left: Option<S>, right: Option<S>): boolean {
     return left.type === right.type && left.value === right.value
   }
