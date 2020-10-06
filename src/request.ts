@@ -1,7 +1,6 @@
 import { Monad } from './monad'
 import { Reader } from './reader'
 import { Async } from './async'
-import { Try } from './try'
 import { Lazy } from './lazy'
 import { List } from './list'
 import { Option } from './option'
@@ -27,7 +26,7 @@ export class Request<C, T> implements Monad<T> {
     return Request.retry(this, context, times, backoffMs)
   }
 
-  map<U>(f: (a: T, c: C) => U): Request<C, U> {
+  map<U>(f: (a: T, c: C) => U | Promise<U>): Request<C, U> {
     return Request.map(this, f)
   }
 
@@ -36,7 +35,7 @@ export class Request<C, T> implements Monad<T> {
    * @param f
    */
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  recover<U>(f: (error: any) => U): Request<C, T | U> {
+  recover<U>(f: (error: any) => U | Promise<U>): Request<C, T | U> {
     return Request.recover(this, f)
   }
 
@@ -51,14 +50,6 @@ export class Request<C, T> implements Monad<T> {
 
   optionMap<U>(f: (a: T, c: C) => Option<Request<C, U>>): Request<C, Option<U>> {
     return Request.optionMap(this, f)
-  }
-
-  /**
-   * Runs the request and flatmaps over results
-   * @param f
-   */
-  runFlatmap<U>(f: (value: Try<T>, c: C) => Request<C, U>): Request<C, U> {
-    return Request.runFlatmap(this, f)
   }
 
   /**
@@ -116,12 +107,12 @@ export class Request<C, T> implements Monad<T> {
     return new Request(Reader.lift((context) => Async.of(request(context))))
   }
 
-  static map<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => U): Request<C, U> {
+  static map<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => U | Promise<U>): Request<C, U> {
     return new Request(value.request.map((a, c) => a.map((v) => f(v, c))))
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  static recover<C, T, U>(value: Request<C, T>, f: (error: any, c: C) => U): Request<C, T | U> {
+  static recover<C, T, U>(value: Request<C, T>, f: (error: any, c: C) => U | Promise<U>): Request<C, T | U> {
     return new Request(value.request.map((a, c) => a.recover((v) => f(v, c))))
   }
 
@@ -144,10 +135,6 @@ export class Request<C, T> implements Monad<T> {
         )
       )
     )
-  }
-
-  static runFlatmap<C, T, U>(value: Request<C, T>, f: (value: Try<T>, c: C) => Request<C, U>): Request<C, U> {
-    return Request.join(new Request(Reader.lift((c) => Async.of(value.read(c).run()).map((v) => f(v, c)))))
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any

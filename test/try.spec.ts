@@ -14,6 +14,15 @@ describe('try', () => {
     it('does not map right value', () => {
       expect(right(new Error()).map(Number)).toEqual(right(new Error()))
     })
+    it('catches errors', () => {
+      expect(
+        Try.of('v')
+          .map(() => {
+            throw new Error('')
+          })
+          .isFailure()
+      ).toBeTruthy()
+    })
   })
 
   describe('flatMap', () => {
@@ -100,7 +109,7 @@ describe('try', () => {
       expect(left(1).get()).toEqual(1)
     })
     it('returns right', () => {
-      expect(right(new Error('message')).get()).toEqual(new Error('message'))
+      expect(() => right(new Error('message')).get()).toThrow(new Error('message'))
     })
   })
 
@@ -139,26 +148,6 @@ describe('try', () => {
     })
     it('gets last left', () => {
       expect(left(1).and(left(2))).toEqual(left(2))
-    })
-  })
-
-  describe('ofMap', () => {
-    it('lifts and maps', () => {
-      expect(
-        Try.of('v')
-          .ofMap((v) => v)
-          .isSuccess()
-      ).toBeTruthy()
-      expect(
-        Try.of('v')
-          .ofMap((_v) => new Error(''))
-          .isFailure()
-      ).toBeTruthy()
-      expect(
-        Try.failure(new Error(''))
-          .ofMap((_v) => new Error(''))
-          .isFailure()
-      ).toBeTruthy()
     })
   })
 

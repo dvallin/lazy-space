@@ -74,8 +74,8 @@ describe('GraphBuilder', () => {
       expect(graph.neighbours('r.0').toArray()).toEqual([])
       expect(graph.neighbours('r.1').toArray()).toEqual([])
       expect(graph.neighbours('r.2').toArray()).toEqual(['r.2.0'])
-      expect(Option.ofMap(graph.getVertex('r.0'), (v) => v.value)).toEqual(Option.some('11'))
-      expect(Option.ofMap(graph.getVertex('r.1'), (v) => v.value)).toEqual(Option.none())
+      expect(graph.getVertex('r.0').map((v) => v.value)).toEqual(Option.some('11'))
+      expect(graph.getVertex('r.1').map((v) => v.value)).toEqual(Option.none())
     })
 
     it('builds undirected graph', () => {
@@ -86,8 +86,8 @@ describe('GraphBuilder', () => {
       expect(graph.neighbours('r.0').toArray()).toEqual(['r'])
       expect(graph.neighbours('r.1').toArray()).toEqual(['r'])
       expect(graph.neighbours('r.2').toArray()).toEqual(['r', 'r.2.0'])
-      expect(Option.ofMap(graph.getVertex('r.0'), (v) => v.value)).toEqual(Option.some('11'))
-      expect(Option.ofMap(graph.getVertex('r.1'), (v) => v.value)).toEqual(Option.none())
+      expect(graph.getVertex('r.0').map((v) => v.value)).toEqual(Option.some('11'))
+      expect(graph.getVertex('r.1').map((v) => v.value)).toEqual(Option.none())
     })
   })
 })

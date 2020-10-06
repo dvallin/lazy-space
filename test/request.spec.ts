@@ -129,25 +129,6 @@ describe('Request', () => {
     })
   })
 
-  describe('runFlatmap', () => {
-    it('flatmaps successful requests', async () => {
-      const result = await one
-        .runFlatmap((result) => Request.lift(result))
-        .run(context)
-        .run()
-      expect(Try.isSuccess(result)).toBeTruthy()
-      expect(Try.join(result).value).toEqual(1)
-    })
-    it('successfully flatmaps failed requests', async () => {
-      const result = await fail
-        .runFlatmap((result) => Request.lift(result))
-        .run(context)
-        .run()
-      expect(Try.isSuccess(result)).toBeTruthy()
-      expect(Try.join(result).value).toEqual(new Error('failure'))
-    })
-  })
-
   describe('toVoid', () => {
     it('swallows returned value', () => {
       return expect(one.toVoid().read(context).promise).resolves.toBeUndefined()

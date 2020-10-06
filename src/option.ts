@@ -6,8 +6,12 @@ export type option<T> = T | undefined
 export class Option<T> implements Monad<T> {
   public constructor(public readonly type: 'left' | 'right', public readonly value: option<T>) {}
 
-  public map<U>(f: (a: T) => U): Option<U> {
+  public map<U>(f: (a: T) => option<U>): Option<U> {
     return Option.map(this, f)
+  }
+
+  public strictMap<U>(f: (a: T) => U): Option<U> {
+    return Option.strictMap(this, f)
   }
 
   public recover<U>(f: () => U): T | U {
@@ -24,10 +28,6 @@ export class Option<T> implements Monad<T> {
 
   public lift<U>(v: U): Option<U> {
     return Option.left(v)
-  }
-
-  public ofMap<U>(f: (a: T) => option<U>): Option<U> {
-    return Option.ofMap(this, f)
   }
 
   public join<U>(v: Option<Option<U>>): Option<U> {
@@ -120,10 +120,18 @@ export class Option<T> implements Monad<T> {
     }
   }
 
-  public static map<T, U>(val: Option<T>, f: (a: T) => U): Option<U> {
+  public static strictMap<T, U>(val: Option<T>, f: (a: T) => U): Option<U> {
     return Option.unwrap(
       val,
-      (u) => Option.left(f(u)),
+      (u) => Option.some(f(u)),
+      () => Option.right()
+    )
+  }
+
+  public static map<T, U>(val: Option<T>, f: (a: T) => option<U>): Option<U> {
+    return Option.unwrap(
+      val,
+      (u) => Option.of(f(u)),
       () => Option.right()
     )
   }
@@ -276,14 +284,6 @@ export class Option<T> implements Monad<T> {
 
   public static filter<T>(val: Option<T>, f: (a: T) => boolean): Option<T> {
     return Option.filterType(val, (v): v is T => f(v))
-  }
-
-  public static ofMap<T, U>(val: Option<T>, f: (a: T) => option<U>): Option<U> {
-    return Option.unwrap(
-      val,
-      (u) => Option.of(f(u)),
-      () => Option.none()
-    )
   }
 }
 

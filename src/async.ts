@@ -8,12 +8,12 @@ export type async<T> = Promise<T>
 export class Async<T> implements Monad<T> {
   public constructor(public readonly promise: async<T>) {}
 
-  public map<U>(f: (a: T) => U): Async<U> {
+  public map<U>(f: (a: T) => U | Promise<U>): Async<U> {
     return Async.map(this, f)
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public recover<U>(f: (error: any) => U): Async<T | U> {
+  public recover<U>(f: (error: any) => U | Promise<U>): Async<T | U> {
     return Async.recover(this, f)
   }
 
@@ -115,12 +115,12 @@ export class Async<T> implements Monad<T> {
     return new Async(Promise.resolve(value))
   }
 
-  public static map<S, T>(val: Async<S>, f: (a: S) => T): Async<T> {
+  public static map<S, T>(val: Async<S>, f: (a: S) => T | Promise<T>): Async<T> {
     return new Async(val.promise.then(f))
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public static recover<S, U>(val: Async<S>, f: (error: any) => U): Async<S | U> {
+  public static recover<S, U>(val: Async<S>, f: (error: any) => U | Promise<U>): Async<S | U> {
     return new Async(val.promise.catch(f))
   }
 

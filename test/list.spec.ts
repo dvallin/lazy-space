@@ -106,6 +106,10 @@ describe('List', () => {
     it('is invalid on empty lists', () => {
       expect(List.empty().head()).toEqual(Option.none())
     })
+
+    it('works on undefines', () => {
+      expect(repeat(undefined).head().isSome()).toBeTruthy()
+    })
   })
 
   describe('tail', () => {

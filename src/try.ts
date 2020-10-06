@@ -11,10 +11,6 @@ export class Try<T> implements Monad<T> {
     return Try.map(this, f)
   }
 
-  public ofMap<U>(f: (a: T) => tryable<U>): Try<U> {
-    return Try.ofMap(this, f)
-  }
-
   public recover<U>(f: (error: Error) => U): T | U {
     return Try.recover(this, f)
   }
@@ -125,8 +121,13 @@ export class Try<T> implements Monad<T> {
     )
   }
 
-  public static get<T>(val: Try<T>): T | Error {
-    return val.value
+  public static get<T>(val: Try<T>): T {
+    return val.unwrap(
+      (v) => v,
+      (e) => {
+        throw e
+      }
+    )
   }
 
   public static getOrElse<T, U>(val: Try<T>, value: U): T | U {
@@ -150,7 +151,7 @@ export class Try<T> implements Monad<T> {
   public static map<T, U>(val: Try<T>, f: (a: T) => U): Try<U> {
     return Try.unwrap(
       val,
-      (u) => Try.left(f(u)),
+      (u) => Try.run(() => f(u)),
       (e) => Try.right(e)
     )
   }
@@ -233,14 +234,6 @@ export class Try<T> implements Monad<T> {
 
   public static filter<T>(val: Try<T>, f: (a: T) => boolean): Try<T> {
     return Try.filterType(val, (v): v is T => f(v))
-  }
-
-  public static ofMap<T, U>(val: Try<T>, f: (a: T) => tryable<U>): Try<U> {
-    return Try.unwrap(
-      val,
-      (u) => Try.of(f(u)),
-      (e) => Try.failure(e)
-    )
   }
 
   public static run<T>(f: () => T): Try<T> {

@@ -14,6 +14,9 @@ describe('Option', () => {
     it('does not map right value', () => {
       expect(right().map(Number)).toEqual(right())
     })
+    it('flattens undefined', () => {
+      expect(left('1').map(() => undefined)).toEqual(right())
+    })
   })
 
   describe('flatMap', () => {
@@ -127,13 +130,6 @@ describe('Option', () => {
       expect(left(1).equals(left(2))).toBeFalsy()
       expect(left(1).equals(right())).toBeFalsy()
       expect(right().equals(left(1))).toBeFalsy()
-    })
-  })
-
-  describe('ofMap', () => {
-    it('lifts and maps', () => {
-      expect(Option.of('v').ofMap((v) => v).value).toEqual('v')
-      expect(Option.none().ofMap((_v) => undefined).value).toEqual(undefined)
     })
   })
 

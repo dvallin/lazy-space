@@ -14,7 +14,7 @@ export class GraphQueries<S, T> {
   public path(path: Path): PathQuery<S, T> {
     const traversal = this.traversal(path)
     return {
-      exists: () => traversal.all((a) => Option.isSome(a)),
+      exists: () => traversal.all((a) => a.isSome()),
       edges: () => List.flattenOptionals(traversal.map((t) => t.flatMap((info) => this.graph.getEdge(info.edge)))),
       vertices: () =>
         List.flattenOptionals(

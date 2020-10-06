@@ -181,7 +181,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static head<T>(val: List<T>): Option<T> {
-    return val._head.map((v) => v.eval())
+    return val._head.strictMap((v) => v.eval())
   }
 
   public static tail<T>(val: List<T>): List<T> {
@@ -218,7 +218,7 @@ export class List<T> implements Monad<T> {
     let aggregate = initial
     let current = val
     while (true) {
-      if (Option.isSome(current._head)) {
+      if (current._head.isSome()) {
         aggregate = combine(aggregate, current._head.value.eval())
         current = current._tail()
       } else {
@@ -248,7 +248,7 @@ export class List<T> implements Monad<T> {
   public static seek<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
     let current = val
     while (true) {
-      if (Option.isSome(current._head)) {
+      if (current._head.isSome()) {
         if (predicate(current._head.value.eval())) {
           return current
         }
@@ -261,7 +261,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static find<T>(val: List<T>, predicate: (v: T) => boolean): Option<T> {
-    return val.seek(predicate)._head.map((v) => v.eval())
+    return val.seek(predicate)._head.strictMap((v) => v.eval())
   }
 
   public static filterType<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
@@ -270,15 +270,15 @@ export class List<T> implements Monad<T> {
   }
 
   public static some<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
-    return Option.isSome(List.find(val, predicate))
+    return List.find(val, predicate).isSome()
   }
 
   public static all<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
-    return !Option.isSome(List.find(val, (v) => !predicate(v)))
+    return List.find(val, (v) => !predicate(v)).isNone()
   }
 
   public static batch<T>(val: List<T>, length: number, step: number = length): List<T[]> {
-    if (Option.isSome(val._head)) {
+    if (val._head.isSome()) {
       return new List(Option.some(new Lazy(() => val.take(length).toArray())), () => val.drop(step).batch(length, step))
     }
     return List.empty()
@@ -293,7 +293,7 @@ export class List<T> implements Monad<T> {
 
   public static eval<T>(val: List<T>): void {
     let current = val
-    while (Option.isSome(current._head)) {
+    while (current._head.isSome()) {
       current._head.value.eval()
       current = current._tail()
     }
