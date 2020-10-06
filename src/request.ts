@@ -35,7 +35,7 @@ export class Request<C, T> implements Monad<T> {
    * @param f
    */
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  recover<U>(f: (error: any) => U | Promise<U>): Request<C, T | U> {
+  recover<U>(f: (error: any, c: C) => U | Promise<U>): Request<C, T | U> {
     return Request.recover(this, f)
   }
 
