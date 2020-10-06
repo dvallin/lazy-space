@@ -2,7 +2,7 @@ import { Left, Right } from './either'
 import { Monad } from './monad'
 import { Identity } from './identity'
 
-export type option<T> = T | undefined
+export type option<T> = T | undefined | null
 export class Option<T> implements Monad<T> {
   public constructor(public readonly type: 'left' | 'right', public readonly value: option<T>) {}
 
@@ -34,7 +34,7 @@ export class Option<T> implements Monad<T> {
     return Option.join(v)
   }
 
-  public get(): T | undefined {
+  public get(): option<T> {
     return Option.get(this)
   }
 
@@ -98,7 +98,7 @@ export class Option<T> implements Monad<T> {
     return new Option<T>('right', undefined)
   }
 
-  public static get<T>(val: Option<T>): T | undefined {
+  public static get<T>(val: Option<T>): option<T> {
     return val.value
   }
 
@@ -274,7 +274,7 @@ export class Option<T> implements Monad<T> {
     return new Option<T>('left', value)
   }
 
-  public static of<T>(value: T | undefined | null): Option<T> {
+  public static of<T>(value: option<T>): Option<T> {
     return value !== undefined && value !== null ? Option.some(value) : Option.none()
   }
 
