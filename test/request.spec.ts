@@ -26,6 +26,15 @@ describe('Request', () => {
         .run()
       expect(Try.isFailure(result)).toBeTruthy()
     })
+
+    it('works on promises', async () => {
+      const result = await one
+        .map((a) => Promise.resolve(a + 1))
+        .run(context)
+        .run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(result.value).toEqual(2)
+    })
   })
 
   describe('recover', () => {
@@ -37,9 +46,19 @@ describe('Request', () => {
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(1)
     })
+
     it('recovers failed requests', async () => {
       const result = await fail
         .recover(() => 2)
+        .run(context)
+        .run()
+      expect(Try.isSuccess(result)).toBeTruthy()
+      expect(result.value).toEqual(2)
+    })
+
+    it('works on promises', async () => {
+      const result = await fail
+        .recover(() => Promise.resolve(2))
         .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()

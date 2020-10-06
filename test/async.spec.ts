@@ -28,6 +28,11 @@ describe('Async', () => {
       const value = Async.reject('1').map((s) => Number(s))
       return expect(value.promise).rejects.toEqual('1')
     })
+
+    it('works on promises', () => {
+      const value = Async.resolve('1').map((s) => Promise.resolve(Number(s)))
+      return expect(value.promise).resolves.toEqual(1)
+    })
   })
 
   describe('recover', () => {
@@ -35,6 +40,13 @@ describe('Async', () => {
       const value = Async.reject('1')
         .recover(() => '1')
         .map((s) => Number(s))
+      return expect(value.promise).resolves.toEqual(1)
+    })
+
+    it('works on promises', () => {
+      const value = Async.reject('1')
+        .recover(() => '1')
+        .map((s) => Promise.resolve(Number(s)))
       return expect(value.promise).resolves.toEqual(1)
     })
   })
@@ -102,13 +114,6 @@ describe('Async', () => {
     it('does not flatmap on reject', () => {
       const value = Async.reject('1').flatMap((s) => Async.resolve(Number(s)))
       return expect(value.promise).rejects.toEqual('1')
-    })
-  })
-
-  describe('liftMap', () => {
-    it('lifts and maps', () => {
-      const value = Async.resolve('1').liftMap((s) => Promise.resolve(Number(s)))
-      return expect(value.promise).resolves.toEqual(1)
     })
   })
 

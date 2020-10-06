@@ -43,10 +43,6 @@ export class Async<T> implements Monad<T> {
     return Async.lift(value)
   }
 
-  public liftMap<U>(f: (a: T) => async<U>): Async<U> {
-    return Async.liftMap(this, f)
-  }
-
   public toVoid(): Async<void> {
     return Async.toVoid(this)
   }
@@ -148,10 +144,6 @@ export class Async<T> implements Monad<T> {
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {
     return Async.of(val.promise.then((a) => f(a).promise))
-  }
-
-  public static liftMap<S, T>(val: Async<S>, f: (a: S) => async<T>): Async<T> {
-    return Async.flatMap(val, (v) => Async.of(f(v)))
   }
 
   public static join<T>(val: Async<Async<T>>): Async<T> {
