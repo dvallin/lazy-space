@@ -326,4 +326,11 @@ export class List<T> implements Monad<T> {
   public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
     return list.filterType(Option.isSome).map((v) => v.value)
   }
+
+  public static product<T>(lists: List<List<T>>): List<List<T>> {
+    return lists.foldr(
+      () => List.lift(List.empty()),
+      (l, r) => r.flatMap((a) => l().map((b) => List.lift(a).concat(() => b)))
+    )
+  }
 }

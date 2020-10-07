@@ -390,6 +390,63 @@ describe('List', () => {
       expect(List.toArray(of([1, 2, 3]).reverse())).toEqual([3, 2, 1])
     })
   })
+
+  describe('product', () => {
+    it('works with empty lists', () => {
+      expect(
+        List.product(List.empty())
+          .map((l) => l.toArray())
+          .toArray()
+      ).toEqual([[]])
+    })
+
+    it('works on two lists', () => {
+      expect(
+        List.product(List.of([List.of([1, 2, 3]), List.of([1, 2])]))
+          .map((l) => l.toArray())
+          .toArray()
+      ).toEqual([
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [2, 2],
+        [3, 1],
+        [3, 2],
+      ])
+    })
+
+    it('works on many lists', () => {
+      expect(
+        List.product(List.of([List.of([1, 2]), List.of([1, 2]), List.of([1, 2])]))
+          .map((l) => l.toArray())
+          .toArray()
+      ).toEqual([
+        [1, 1, 1],
+        [1, 1, 2],
+        [1, 2, 1],
+        [1, 2, 2],
+        [2, 1, 1],
+        [2, 1, 2],
+        [2, 2, 1],
+        [2, 2, 2],
+      ])
+    })
+
+    it('works on fininite lists of infinite lists', () => {
+      expect(
+        List.product(List.of([List.of([1, 2]), List.natural(), List.of([1, 2])]))
+          .take(5)
+          .map((l) => l.toArray())
+          .toArray()
+      ).toEqual([
+        [1, 1, 1],
+        [1, 1, 2],
+        [1, 2, 1],
+        [1, 2, 2],
+        [1, 3, 1],
+      ])
+    })
+  })
 })
 
 function testLazyOperation(op: (l: List<boolean>) => void): void {
