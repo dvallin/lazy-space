@@ -9,7 +9,7 @@ import { empty, natural, ofNative, once, range, repeat, Source } from './source'
 export class Stream<T> implements Monad<T> {
   public constructor(private readonly source: Source<T>) {}
 
-  public map<U>(f: (a: T) => U): Stream<U> {
+  public map<U>(f: (a: T) => U | Promise<U>): Stream<U> {
     return Stream.map(this, f)
   }
 
@@ -91,7 +91,7 @@ export class Stream<T> implements Monad<T> {
     return new Stream(repeat(v))
   }
 
-  public static map<T, U>(val: Stream<T>, f: (a: T) => U): Stream<U> {
+  public static map<T, U>(val: Stream<T>, f: (a: T) => U | Promise<U>): Stream<U> {
     return new Stream(new Op.Map(val.source, f).apply())
   }
 
@@ -100,7 +100,7 @@ export class Stream<T> implements Monad<T> {
   }
 
   public static asyncMap<T, U>(val: Stream<T>, f: (v: T) => Async<U>): Stream<U> {
-    return new Stream(new Op.AsyncMap(val.source, f).apply())
+    return new Stream(new Op.Map(val.source, (v) => f(v).promise).apply())
   }
 
   public static lift<U>(v: U): Stream<U> {

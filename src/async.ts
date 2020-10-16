@@ -51,16 +51,12 @@ export class Async<T> implements Monad<T> {
     return Async.run(this)
   }
 
-  public unwrap<U, V>(f: (s: T) => U, g: (error: Error) => V): Async<U | V> {
-    return Async.unwrap(this, f, g)
-  }
-
   public static empty(): Async<void> {
     return new Async(Promise.resolve())
   }
 
-  public static of<T>(value: Promise<T>): Async<T> {
-    return new Async(value)
+  public static of<T>(value: Promise<T> | T): Async<T> {
+    return new Async(Promise.resolve(value))
   }
 
   public static ofLazy<T>(value: Lazy<T>): Async<T> {
@@ -71,7 +67,7 @@ export class Async<T> implements Monad<T> {
     return new Async(Promise.resolve(value))
   }
 
-  public static reject<T, E>(value?: E): Async<T> {
+  public static reject<T, E = Error>(value?: E): Async<T> {
     return new Async(Promise.reject(value))
   }
 
@@ -244,10 +240,6 @@ export class Async<T> implements Monad<T> {
     )
   }
 
-  public static unwrap<T, U, V>(val: Async<T>, f: (s: T) => U, g: (error: Error) => V): Async<U | V> {
-    return Async.of(val.run()).map((c) => c.unwrap(f, g))
-  }
-
   /**
    * Flatmaps over an array of request, ignoring their returned values
    * @param requests
@@ -270,5 +262,10 @@ export class Async<T> implements Monad<T> {
       }
       return Try.failure(error)
     }
+  }
+
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public static execute<T>(executor: (resolve: (v: T) => void, reject: (e?: any) => void) => void): Async<T> {
+    return new Async(new Promise((resolve, reject) => Try.run(() => executor(resolve, reject)).recover((e) => reject(e))))
   }
 }

@@ -1,7 +1,7 @@
 import { Vertex, Edge, AdjacencyInformation } from '.'
 import { AdjacencyGraph, AdjacencyVertex } from './adjacency-graph'
 import { List } from '../list'
-import { FullTree, Tree } from '../tree'
+import { Tree } from '../tree'
 
 export type EdgeKeyGenerator = (from: string, to: string) => string
 export const directed: EdgeKeyGenerator = (from, to) => `${from}->${to}`
@@ -26,31 +26,11 @@ export class GraphBuilder<S = undefined, T = undefined> {
     return this
   }
 
-  public static fromFullTree<T>(tree: FullTree<T>, directed = true): GraphBuilder<T, T> {
-    return GraphBuilder.addFullTree(new GraphBuilder<T, T>(directed), 'r', tree)
-  }
-
-  public static fromTree<T>(tree: Tree<T>, directed = true): GraphBuilder<T, T> {
-    return GraphBuilder.addTree(new GraphBuilder<T, T>(directed), 'r', tree)
+  public static fromTree<T>(tree: Tree<T>, root = '_', directed = true): GraphBuilder<T, T> {
+    return GraphBuilder.addTree(new GraphBuilder<T, T>(directed), root, tree)
   }
 
   private static addTree<T>(builder: GraphBuilder<T, T>, id: string, tree: Tree<T>): GraphBuilder<T, T> {
-    return tree.tree.unwrap(
-      (leaf) => builder.setVertex(id, leaf.value),
-      (node) => {
-        let index = 0
-        node.children.forEach((child) => {
-          const childId = id + '.' + index
-          builder.addEdge(id, childId)
-          GraphBuilder.addTree(builder, childId, child)
-          index++
-        })
-        return builder
-      }
-    )
-  }
-
-  private static addFullTree<T>(builder: GraphBuilder<T, T>, id: string, tree: FullTree<T>): GraphBuilder<T, T> {
     return tree.tree.unwrap(
       (leaf) => builder.setVertex(id, leaf.value),
       (node) => {
@@ -59,7 +39,7 @@ export class GraphBuilder<S = undefined, T = undefined> {
         node.children.forEach((child) => {
           const childId = id + '.' + index
           builder.addEdge(id, childId)
-          GraphBuilder.addFullTree(builder, childId, child)
+          GraphBuilder.addTree(builder, childId, child)
           index++
         })
         return builder

@@ -124,7 +124,7 @@ describe('Async', () => {
     })
   })
 
-  describe('runAsync', () => {
+  describe('run', () => {
     const error = new Error('error')
 
     it('unwraps resolved promises', async () => {
@@ -160,24 +160,15 @@ describe('Async', () => {
     })
   })
 
-  describe('unwrap', () => {
-    const error = new Error('error')
-
-    it('unwraps resolved promises', async () => {
-      const success = jest.fn()
-      const failure = jest.fn()
-      await Async.resolve(1).unwrap(success, failure).run()
-      expect(success).toHaveBeenCalledWith(1)
-      expect(failure).not.toHaveBeenCalled()
-    })
-
-    it('unwraps rejected promises', async () => {
-      const success = jest.fn()
-      const failure = jest.fn()
-      await Async.reject(error).unwrap(success, failure).run()
-      expect(success).not.toHaveBeenCalled()
-      expect(failure).toHaveBeenCalledWith(error)
-    })
+  describe('execute', () => {
+    it('resolves', () => expect(Async.execute((resolve) => resolve(1)).promise).resolves.toEqual(1))
+    it('rejectes', () => expect(Async.execute((_, reject) => reject(new Error('error'))).promise).rejects.toEqual(new Error('error')))
+    it('catches exceptions', () =>
+      expect(
+        Async.execute(() => {
+          throw new Error('error')
+        }).promise
+      ).rejects.toEqual(new Error('error')))
   })
 
   describe('race', () => {

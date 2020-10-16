@@ -15,6 +15,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/no-empty-interface': 0,
     '@typescript-eslint/no-use-before-define': 0,
+    '@typescript-eslint/ban-types': 0,
     '@typescript-eslint/explicit-function-return-type': ['error', { allowHigherOrderFunctions: true, allowExpressions: true }],
     'react/display-name': [0],
     'react/prop-types': [0],

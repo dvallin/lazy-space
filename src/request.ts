@@ -61,7 +61,7 @@ export class Request<C, T> implements Monad<T> {
     return Request.flatRecover(this, f)
   }
 
-  lift<U>(v: U): Monad<U> {
+  lift<U>(v: U): Request<C, U> {
     return Request.lift(v)
   }
 

@@ -14,5 +14,4 @@ Monads and Monad Transformers for a more functional Typescript
 - List (a lazy list)
 - Stream (_experimental_ reactive stream implementation)
 - Tree (a monadic tree)
-- FullTree (a applicative tree that also keeps values at inner nodes)
 - and some graph and graph traversals

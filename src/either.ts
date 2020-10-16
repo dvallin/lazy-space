@@ -72,11 +72,11 @@ export class Either<S, T> implements Monad<S> {
   }
 
   public isLeft(): this is Left<S> {
-    return Either.isLeft(this)
+    return this.type === 'left'
   }
 
   public isRight(): this is Right<T> {
-    return Either.isRight(this)
+    return this.type === 'right'
   }
 
   public static lift<S, T>(value: S): Either<S, T> {
