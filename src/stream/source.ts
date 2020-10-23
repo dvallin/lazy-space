@@ -14,7 +14,7 @@ export function empty<T>(): Source<T> {
 
 export function repeat<T>(value: T): Source<T> {
   return {
-    next: () => Async.lift(Option.of(value)),
+    next: () => Async.lift(Option.some(value)),
   }
 }
 

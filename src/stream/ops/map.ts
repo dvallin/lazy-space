@@ -10,7 +10,7 @@ export class Map<I, O> {
         this.source
           .next()
           .map((n) => n.unwrap((v) => this.f(v), Promise.reject))
-          .map((o) => Option.of(o))
+          .map((o) => Option.some(o))
           .recover(() => Option.none()),
     }
   }

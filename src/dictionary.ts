@@ -25,8 +25,8 @@ export class Dictionary<T> {
     return Dictionary.value(this)
   }
 
-  public at(key: string): Dictionary<T> {
-    return Dictionary.at(this, key)
+  public get(key: string): Dictionary<T> {
+    return Dictionary.get(this, key)
   }
 
   static fromTree<T>(tree: Tree<T, string>): Dictionary<T> {
@@ -66,7 +66,7 @@ export class Dictionary<T> {
     )
   }
 
-  public static at<T>(dict: Dictionary<T>, key: string): Dictionary<T> {
+  public static get<T>(dict: Dictionary<T>, key: string): Dictionary<T> {
     return dict.state
       .eval()
       .flatMap((tree) =>

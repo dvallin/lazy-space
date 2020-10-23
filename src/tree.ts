@@ -26,6 +26,13 @@ export class Tree<L, N = L> implements Monad<L> {
     )
   }
 
+  public at(index = 0): Option<Tree<L, N>> {
+    return this.tree.unwrap(
+      () => Option.none(),
+      (n) => n.children.at(index)
+    )
+  }
+
   public nodeValue(): Option<N> {
     return this.tree.unwrap(
       () => Option.none(),
@@ -71,7 +78,7 @@ export class Tree<L, N = L> implements Monad<L> {
     return Tree.bimap(this, f, g)
   }
 
-  public traverse(): List<L | N> {
+  public traverse(): List<Either<L, N>> {
     return Tree.traverse(this)
   }
 
@@ -120,10 +127,10 @@ export class Tree<L, N = L> implements Monad<L> {
     )
   }
 
-  public static traverse<L, N = L>(tree: Tree<L, N>): List<L | N> {
+  public static traverse<L, N = L>(tree: Tree<L, N>): List<Either<L, N>> {
     return tree.tree.unwrap(
-      (leaf) => List.lift(leaf.value),
-      (node) => List.lift<L | N>(node.value).concat(() => node.children.flatMap((t) => t.traverse()))
+      (leaf) => List.lift(Either.left<L, N>(leaf.value)),
+      (node) => List.lift(Either.right<L, N>(node.value)).concat(() => node.children.flatMap((t) => t.traverse()))
     )
   }
 

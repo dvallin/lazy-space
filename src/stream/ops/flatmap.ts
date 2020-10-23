@@ -8,30 +8,24 @@ export class FlatMap<I, O> {
   current: Option<Async<Option<Source<O>>>> = Option.none()
 
   public apply(): Source<O> {
-    return {
-      next: () => {
-        if (this.current.isNone()) {
-          this.current = Option.some(this.source.next().map((o) => o.map(this.f)))
-        }
-        return Async.join(
-          this.current.getOrThrow(new Error('')).map((s) =>
-            s.unwrap(
-              (currentSource) =>
-                currentSource.next().flatMap((head) => {
-                  if (head.isNone()) {
-                    this.current = Option.none()
-                    return this.apply().next()
-                  }
-                  return Async.resolve(head)
-                }),
-              () => {
+    const next = (): Async<Option<O>> => {
+      if (this.current.isNone()) {
+        this.current = Option.some(this.source.next().map((o) => o.map(this.f)))
+      }
+      return this.current.getOrThrow(new Error('')).flatMap((s) =>
+        s.unwrap(
+          (currentSource) =>
+            currentSource.next().flatMap((head) => {
+              if (head.isNone()) {
                 this.current = Option.none()
-                return Async.resolve(Option.none())
+                return next()
               }
-            )
-          )
+              return Async.resolve(head)
+            }),
+          () => Async.resolve(Option.none())
         )
-      },
+      )
     }
+    return { next }
   }
 }

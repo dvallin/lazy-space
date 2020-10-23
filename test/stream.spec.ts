@@ -94,6 +94,16 @@ describe('Stream', () => {
         expect(result.value).toEqual(['0', '1', '2', '3'])
       }
     })
+
+    it('works with undefined (void)', async () => {
+      const map = jest.fn().mockResolvedValue(undefined)
+      const result = await Stream.range(0, 2).map(map).collect().run()
+      expect(map).toHaveBeenCalledTimes(3)
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toHaveLength(3)
+      }
+    })
   })
 
   describe('flatMap', () => {
@@ -121,6 +131,22 @@ describe('Stream', () => {
         .run()
       close.forEach((c) => expect(c).toHaveBeenCalledTimes(1))
     })
+
+    it('works with empty streams', async () => {
+      const map = jest.fn()
+      const result = await Stream.range(0, 2)
+        .flatMap(() => {
+          map()
+          return Stream.empty()
+        })
+        .collect()
+        .run()
+      expect(map).toHaveBeenCalledTimes(3)
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toHaveLength(0)
+      }
+    })
   })
 
   describe('asyncMap', () => {
@@ -135,14 +161,24 @@ describe('Stream', () => {
       }
     })
 
+    it('works with undefined (void)', async () => {
+      const map = jest.fn().mockResolvedValue(Async.resolve(undefined))
+      const result = await Stream.range(0, 2).asyncMap(map).collect().run()
+      expect(map).toHaveBeenCalledTimes(3)
+      expect(result.isSuccess()).toBeTruthy()
+      if (result.isSuccess()) {
+        expect(result.value).toHaveLength(3)
+      }
+    })
+
     it('breaks on rejects', async () => {
       const result = await Stream.range(0, 2)
-        .asyncMap(() => Async.reject())
+        .asyncMap((i) => (i === 1 ? Async.reject() : Async.resolve(i)))
         .collect()
         .run()
       expect(result.isSuccess()).toBeTruthy()
       if (result.isSuccess()) {
-        expect(result.value).toEqual([])
+        expect(result.value).toEqual([0])
       }
     })
   })

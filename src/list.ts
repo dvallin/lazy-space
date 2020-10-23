@@ -33,6 +33,10 @@ export class List<T> implements Monad<T> {
     return List.take(this, amount)
   }
 
+  public at(index = 0): Option<T> {
+    return List.at(this, index)
+  }
+
   public drop(amount = 1): List<T> {
     return List.drop(this, amount)
   }
@@ -194,6 +198,10 @@ export class List<T> implements Monad<T> {
 
   public static take<T>(val: List<T>, amount = 1): List<T> {
     return new List(val._head, () => (amount > 1 ? val._tail().take(amount - 1) : List.empty()))
+  }
+
+  public static at<T>(val: List<T>, index = 0): Option<T> {
+    return List.drop(val, index).take(1).head()
   }
 
   public static drop<T>(val: List<T>, amount = 1): List<T> {
