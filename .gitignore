@@ -3,4 +3,5 @@ coverage/
 dist/
 lib/
 node_modules/
+docs/
 yarn-error.log

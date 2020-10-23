@@ -16,6 +16,7 @@
     "format:check": "prettier --config .prettierrc.yaml --list-different '{src,test}/**/*.{ts,tsx,js,jsx,html}'",
     "format": "prettier --config .prettierrc.yaml --write '{src,test}/**/*.{ts,tsx,js,jsx,html}'",
     "lint": "eslint '{src,test}/**/*.{ts,tsx}'",
+    "doc": "typedoc --mode file --theme minimal src/index.ts",
     "clean-lib": "rm -f -r -d lib"
   },
   "dependencies": {},
@@ -31,6 +32,7 @@
     "mockdate": "^3.0.2",
     "prettier": "^2.0.2",
     "ts-jest": "^26.1.1",
+    "typedoc": "^0.19.2",
     "typescript": "^4.0.2"
   }
 }
