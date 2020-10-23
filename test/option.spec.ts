@@ -19,6 +19,15 @@ describe('Option', () => {
     })
   })
 
+  describe('with', () => {
+    it('makes side effects', () => {
+      const fn = jest.fn()
+      const value = left('1').with(fn)
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.value).toEqual('1')
+    })
+  })
+
   describe('flatMap', () => {
     it('binds to the left value', () => {
       expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))

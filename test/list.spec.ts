@@ -13,7 +13,7 @@ describe('List', () => {
     })
 
     it('can take very long lists', () => {
-      const nx2 = natural().map((v) => v * 2)
+      const nx2 = List.map(natural(), (v) => v * 2)
       expect(List.toArray(take(nx2, 6000))).toHaveLength(6000)
     })
 
@@ -25,7 +25,16 @@ describe('List', () => {
     })
   })
 
-  describe('bind', () => {
+  describe('with', () => {
+    it('makes side effects', () => {
+      const fn = jest.fn()
+      const value = List.lift('1').with(fn).toArray()
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value).toEqual(['1'])
+    })
+  })
+
+  describe('flatmap', () => {
     it('works on finite lists', () => {
       const list = of([3, 3]).flatMap((s) => of([2 * s, 2 * s]))
       expect(List.toArray(list)).toEqual([6, 6, 6, 6])
@@ -39,31 +48,38 @@ describe('List', () => {
         { x: 1, y: 3 },
       ])
     })
+  })
 
-    describe('ofNative', () => {
-      it('works on finite lists', () => {
-        const firstTen = List.ofNative(function* () {
-          for (let i = 1; i <= 10; i++) {
-            yield i
-          }
-        })
-        expect(firstTen.toArray()).toEqual(natural().take(10).toArray())
-      })
-
-      it('works on finite lists', () => {
-        const allNumber = List.ofNative(function* () {
-          let i = 1
-          while (true) {
-            yield i++
-          }
-        })
-        expect(allNumber.take(10).toArray()).toEqual(natural().take(10).toArray())
-      })
+  describe('optionMap', () => {
+    it('maps none', () => {
+      const list = of([3, 3]).optionMap(() => Option.none())
+      expect(List.toArray(list)).toEqual([Option.none(), Option.none()])
     })
 
-    it('can take very long lists', () => {
-      const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
-      expect(List.toArray(take(nxn, 6000))).toHaveLength(6000)
+    it('works on infinite lists', () => {
+      const nxn = natural().optionMap((x) => (x % 2 === 1 ? Option.none() : Option.of(natural().map((y) => ({ x, y })))))
+      expect(List.toArray(take(nxn, 3))).toEqual([Option.none(), Option.of({ x: 2, y: 1 }), Option.of({ x: 2, y: 2 })])
+    })
+  })
+
+  describe('ofNative', () => {
+    it('works on finite lists', () => {
+      const firstTen = List.ofNative(function* () {
+        for (let i = 1; i <= 10; i++) {
+          yield i
+        }
+      })
+      expect(firstTen.toArray()).toEqual(natural().take(10).toArray())
+    })
+
+    it('works on finite lists', () => {
+      const allNumber = List.ofNative(function* () {
+        let i = 1
+        while (true) {
+          yield i++
+        }
+      })
+      expect(allNumber.take(10).toArray()).toEqual(natural().take(10).toArray())
     })
   })
 
@@ -167,7 +183,23 @@ describe('List', () => {
       expect(List.head(List.empty().take())).toEqual(Option.none())
     })
 
+    it('can take very long lists', () => {
+      const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
+      expect(List.toArray(take(nxn, 6000))).toHaveLength(6000)
+    })
+
     testLazyOperation((l) => l.take(3))
+  })
+
+  describe('at', () => {
+    it('gets at index', () => {
+      expect(natural().at(1)).toEqual(Option.of(2))
+      expect(List.at(natural())).toEqual(Option.of(1))
+    })
+
+    it('gets from empty', () => {
+      expect(List.empty().at()).toEqual(Option.none())
+    })
   })
 
   describe('drop', () => {

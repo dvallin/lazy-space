@@ -1,5 +1,6 @@
 import { Monad } from './monad'
 import { Identity } from './identity'
+import { Option } from './option'
 
 export interface Left<T> {
   type: 'left'
@@ -19,12 +20,20 @@ export class Either<S, T> implements Monad<S> {
     return Either.map(this, f)
   }
 
+  public with(f: (a: S) => unknown): Either<S, T> {
+    return Either.with(this, f)
+  }
+
   public recover<U>(f: (error: T) => U): S | U {
     return Either.recover(this, f)
   }
 
   public flatMap<U>(f: (s: S) => Either<U, T>): Either<U, T> {
     return Either.flatMap(this, f)
+  }
+
+  public optionMap<U>(f: (a: S) => Option<Either<U, T>>): Either<Option<U>, T> {
+    return Either.optionMap(this, f)
   }
 
   public flatRecover<U>(f: (error: T) => Either<U, T>): Either<S | U, T> {
@@ -121,11 +130,27 @@ export class Either<S, T> implements Monad<S> {
     )
   }
 
+  public static with<S, T>(val: Either<S, T>, f: (a: S) => unknown): Either<S, T> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
+  }
+
   public static flatMap<S, T, U>(val: Either<S, T>, f: (s: S) => Either<U, T>): Either<U, T> {
     return Either.unwrap(
       val,
       (u) => f(u),
       (v) => Either.right(v)
+    )
+  }
+
+  static optionMap<S, T, U>(value: Either<S, T>, f: (a: S) => Option<Either<U, T>>): Either<Option<U>, T> {
+    return value.flatMap((a) =>
+      f(a).unwrap(
+        (value) => value.map(Option.of),
+        () => Either.lift(Option.none())
+      )
     )
   }
 

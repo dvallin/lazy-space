@@ -30,6 +30,10 @@ export class Request<C, T> implements Monad<T> {
     return Request.map(this, f)
   }
 
+  with(f: (a: T, c: C) => unknown): Request<C, T> {
+    return Request.with(this, f)
+  }
+
   /**
    * recovers from failure
    * @param f
@@ -111,6 +115,13 @@ export class Request<C, T> implements Monad<T> {
     return new Request(value.request.map((a, c) => a.map((v) => f(v, c))))
   }
 
+  static with<C, T>(value: Request<C, T>, f: (a: T, c: C) => unknown): Request<C, T> {
+    return value.map((a, c) => {
+      f(a, c)
+      return a
+    })
+  }
+
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   static recover<C, T, U>(value: Request<C, T>, f: (error: any, c: C) => U | Promise<U>): Request<C, T | U> {
     return new Request(value.request.map((a, c) => a.recover((v) => f(v, c))))
@@ -126,13 +137,10 @@ export class Request<C, T> implements Monad<T> {
   }
 
   static optionMap<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => Option<Request<C, U>>): Request<C, Option<U>> {
-    return new Request(
-      Reader.lift((c) =>
-        value.read(c).flatMap((a) =>
-          f(a, c)
-            .map((r) => r.read(c).map((u) => Option.of(u)))
-            .getOrElse(Async.resolve(Option.none()))
-        )
+    return value.flatMap((a, c) =>
+      f(a, c).unwrap(
+        (value) => value.map(Option.of),
+        () => Request.lift(Option.none())
       )
     )
   }

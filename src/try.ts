@@ -11,6 +11,10 @@ export class Try<T> implements Monad<T> {
     return Try.map(this, f)
   }
 
+  public with(f: (a: T) => unknown): Try<T> {
+    return Try.with(this, f)
+  }
+
   public recover<U>(f: (error: Error) => U): T | U {
     return Try.recover(this, f)
   }
@@ -19,8 +23,20 @@ export class Try<T> implements Monad<T> {
     return Try.flatMap(this, f)
   }
 
+  public optionMap<U>(f: (s: T) => Option<Try<U>>): Try<Option<U>> {
+    return Try.optionMap(this, f)
+  }
+
   public flatRecover<U>(f: (error: Error) => Try<U>): Try<T | U> {
     return Try.flatRecover(this, f)
+  }
+
+  public onError(f: (e: Error) => unknown): Try<T> {
+    return Try.onError(this, f)
+  }
+
+  public finally(f: () => unknown): Try<T> {
+    return Try.finally(this, f)
   }
 
   public result(): Option<T> {
@@ -156,11 +172,27 @@ export class Try<T> implements Monad<T> {
     )
   }
 
+  public static with<T>(val: Try<T>, f: (a: T) => unknown): Try<T> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
+  }
+
   public static flatMap<T, U>(val: Try<T>, f: (s: T) => Try<U>): Try<U> {
     return Try.unwrap(
       val,
       (u) => f(u),
       (e) => Try.right(e)
+    )
+  }
+
+  static optionMap<T, U>(value: Try<T>, f: (a: T) => Option<Try<U>>): Try<Option<U>> {
+    return value.flatMap((a) =>
+      f(a).unwrap(
+        (value) => value.map(Option.of),
+        () => Try.lift(Option.none())
+      )
     )
   }
 
@@ -186,6 +218,21 @@ export class Try<T> implements Monad<T> {
       (u) => Try.left(u),
       (e) => f(e)
     )
+  }
+
+  public static onError<T>(val: Try<T>, f: (e: Error) => unknown): Try<T> {
+    return Try.join(
+      Try.run(() => {
+        if (val.isRight()) {
+          f(val.value)
+        }
+        return val
+      })
+    )
+  }
+
+  public static finally<T>(val: Try<T>, f: () => unknown): Try<T> {
+    return Try.run(f).flatMap(() => val)
   }
 
   public static or<S, U>(left: Try<S>, right: Try<U>): Try<S | U> {

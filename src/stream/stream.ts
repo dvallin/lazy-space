@@ -13,6 +13,10 @@ export class Stream<T> implements Monad<T> {
     return Stream.map(this, f)
   }
 
+  public with(f: (a: T) => unknown): Stream<T> {
+    return Stream.with(this, f)
+  }
+
   public flatMap<U>(f: (a: T) => Stream<U>): Stream<U> {
     return Stream.flatMap(this, f)
   }
@@ -93,6 +97,13 @@ export class Stream<T> implements Monad<T> {
 
   public static map<T, U>(val: Stream<T>, f: (a: T) => U | Promise<U>): Stream<U> {
     return new Stream(new Op.Map(val.source, f).apply())
+  }
+
+  public static with<T>(val: Stream<T>, f: (a: T) => unknown): Stream<T> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
   }
 
   public static flatMap<T, U>(val: Stream<T>, f: (a: T) => Stream<U>): Stream<U> {

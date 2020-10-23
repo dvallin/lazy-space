@@ -106,6 +106,15 @@ describe('Stream', () => {
     })
   })
 
+  describe('with', () => {
+    it('makes side effects', async () => {
+      const fn = jest.fn()
+      const value = await Stream.lift('1').with(fn).collect().run()
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.value).toEqual(['1'])
+    })
+  })
+
   describe('flatMap', () => {
     it('chains streams', async () => {
       const result = await Stream.range(0, 2)

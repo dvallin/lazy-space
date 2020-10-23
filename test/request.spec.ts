@@ -35,6 +35,26 @@ describe('Request', () => {
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(result.value).toEqual(2)
     })
+
+    it('catches errors', async () => {
+      const result = await one
+        .map(() => {
+          throw new Error('error')
+        })
+        .run(context)
+        .run()
+      expect(Try.isFailure(result)).toBeTruthy()
+      expect(result.value).toEqual(new Error('error'))
+    })
+  })
+
+  describe('with', () => {
+    it('makes side effects', async () => {
+      const fn = jest.fn()
+      const value = await Request.lift('1').with(fn).read(context).run()
+      expect(fn).toHaveBeenCalledWith('1', context)
+      expect(value.value).toEqual('1')
+    })
   })
 
   describe('recover', () => {

@@ -1,4 +1,4 @@
-import { Async, Try, Lazy, List } from '../src'
+import { Async, Try, Lazy, List, Option } from '../src'
 import { testMonad } from './monad.tests'
 
 import * as Mockdate from 'mockdate'
@@ -32,6 +32,22 @@ describe('Async', () => {
     it('works on promises', () => {
       const value = Async.resolve('1').map((s) => Promise.resolve(Number(s)))
       return expect(value.promise).resolves.toEqual(1)
+    })
+
+    it('catches errors', () => {
+      const value = Async.resolve('1').map(() => {
+        throw new Error('error')
+      })
+      return expect(value.promise).rejects.toEqual(new Error('error'))
+    })
+  })
+
+  describe('with', () => {
+    it('makes side effects', async () => {
+      const fn = jest.fn()
+      const value = await Async.resolve('1').with(fn).run()
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.value).toEqual('1')
     })
   })
 
@@ -98,6 +114,30 @@ describe('Async', () => {
       expect(fn1).toHaveBeenCalled()
       expect(fn2).toHaveBeenCalled()
     })
+
+    it('catches last error', async () => {
+      const c = await Async.reject('1')
+        .finally(() => {
+          throw 'finally'
+        })
+        .run()
+      expect(c.isFailure()).toBeTruthy()
+      if (c.isFailure()) {
+        expect(c.value.message).toEqual('finally')
+      }
+    })
+
+    it('catches error', async () => {
+      const c = await Async.resolve('1')
+        .finally(() => {
+          throw 'finally'
+        })
+        .run()
+      expect(c.isFailure()).toBeTruthy()
+      if (c.isFailure()) {
+        expect(c.value.message).toEqual('finally')
+      }
+    })
   })
 
   describe('flatMap', () => {
@@ -106,14 +146,36 @@ describe('Async', () => {
       return expect(value.promise).resolves.toEqual(1)
     })
 
-    it('flatmaps empty', () => {
-      const value = Async.empty().flatMap((s) => Async.resolve(Number(s)))
-      return expect(value.promise).resolves.toEqual(Number.NaN)
+    it('flattens rejects', () => {
+      const value = Async.resolve('1').flatMap((s) => Async.reject(Number(s)))
+      return expect(value.promise).rejects.toEqual(1)
     })
 
     it('does not flatmap on reject', () => {
       const value = Async.reject('1').flatMap((s) => Async.resolve(Number(s)))
       return expect(value.promise).rejects.toEqual('1')
+    })
+  })
+
+  describe('optionMap', () => {
+    it('maps on resolve', () => {
+      const value = Async.resolve('1').optionMap((s) => Option.of(Async.resolve(Number(s))))
+      return expect(value.promise).resolves.toEqual(Option.some(1))
+    })
+
+    it('maps empty', () => {
+      const value = Async.resolve('1').optionMap(() => Option.none())
+      return expect(value.promise).resolves.toEqual(Option.none())
+    })
+
+    it('does not map on reject', () => {
+      const value = Async.reject('1').optionMap(() => Option.none())
+      return expect(value.promise).rejects.toEqual('1')
+    })
+
+    it('flattens rejects', () => {
+      const value = Async.resolve('1').optionMap(() => Option.of(Async.reject(0)))
+      return expect(value.promise).rejects.toEqual(0)
     })
   })
 

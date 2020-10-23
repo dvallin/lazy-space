@@ -51,7 +51,7 @@ describe('Reader', () => {
     it('makes side effects', () => {
       const fn = jest.fn()
       readKey('env2').with(fn).read(context)
-      expect(fn).toHaveBeenCalledWith(context)
+      expect(fn).toHaveBeenCalledWith(Option.none(), context)
     })
   })
 
@@ -61,6 +61,23 @@ describe('Reader', () => {
       const result = pipeline('env2').read(context)
       expect(result).toEqual('missing')
       expect(context.errors).toHaveLength(1)
+    })
+  })
+
+  describe('optionMap', () => {
+    it('maps some', () => {
+      expect(
+        Reader.lift(() => 1)
+          .optionMap((a) => Option.some(Reader.lift(() => a)))
+          .read(context)
+      ).toEqual(Option.of(1))
+    })
+    it('maps none', () => {
+      expect(
+        Reader.lift(() => 1)
+          .optionMap(Option.none)
+          .read(context)
+      ).toEqual(Option.none())
     })
   })
 

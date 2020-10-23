@@ -66,8 +66,16 @@ export class Tree<L, N = L> implements Monad<L> {
     return Tree.map(this, f)
   }
 
+  public with(f: (a: L) => unknown): Tree<L, N> {
+    return Tree.with(this, f)
+  }
+
   public flatMap<U>(f: (a: L) => Tree<U, N>): Tree<U, N> {
     return Tree.flatMap(this, f)
+  }
+
+  public optionMap<U>(f: (a: L) => Option<Tree<U, N>>): Tree<Option<U>, N> {
+    return Tree.optionMap(this, f)
   }
 
   public join<L, N>(v: Tree<Tree<L, N>, N>): Tree<L, N> {
@@ -101,6 +109,13 @@ export class Tree<L, N = L> implements Monad<L> {
     )
   }
 
+  public static with<L, N = L>(value: Tree<L, N>, f: (a: L) => unknown): Tree<L, N> {
+    return value.map((a) => {
+      f(a)
+      return a
+    })
+  }
+
   public static flatMap<L, U, N = L>(value: Tree<L, N>, f: (a: L) => Tree<U, N>): Tree<U, N> {
     return value.tree.unwrap(
       (leaf) => f(leaf.value),
@@ -109,6 +124,15 @@ export class Tree<L, N = L> implements Monad<L> {
           node.value,
           node.children.map((t) => t.flatMap(f))
         )
+    )
+  }
+
+  static optionMap<L, U, N = L>(value: Tree<L, N>, f: (a: L) => Option<Tree<U, N>>): Tree<Option<U>, N> {
+    return value.flatMap((a) =>
+      f(a).unwrap(
+        (value) => value.map(Option.of),
+        () => Tree.lift(Option.none())
+      )
     )
   }
 

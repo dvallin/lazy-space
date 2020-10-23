@@ -1,4 +1,4 @@
-import { Tree, List, Option } from '../src'
+import { Tree, List, Option, Either } from '../src'
 import { testMonad } from './monad.tests'
 
 describe('FullTree', () => {
@@ -20,6 +20,15 @@ describe('FullTree', () => {
     ).toEqual(['1', 11, '12', '13', 21])
   })
 
+  describe('with', () => {
+    it('makes side effects', async () => {
+      const fn = jest.fn()
+      const value = Tree.lift('1').with(fn)
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.traverse().toArray()).toEqual([Either.left('1')])
+    })
+  })
+
   it('flatmaps only leafs', () => {
     expect(
       stringTree
@@ -28,6 +37,23 @@ describe('FullTree', () => {
         .map((r) => r.value)
         .toArray()
     ).toEqual(['1', 'mapped11', 11, '12', '13', 'mapped21', 21])
+  })
+
+  it('optionMaps only leafs', () => {
+    expect(
+      stringTree
+        .optionMap(() => Option.none())
+        .traverse()
+        .map((r) => r.value)
+        .toArray()
+    ).toEqual(['1', Option.none(), '12', '13', Option.none()])
+    expect(
+      stringTree
+        .optionMap((s) => Option.of(Tree.lift(s)))
+        .traverse()
+        .map((r) => r.value)
+        .toArray()
+    ).toEqual(['1', Option.of('11'), '12', '13', Option.of('21')])
   })
 
   it('traverses', () => {
@@ -65,7 +91,7 @@ describe('FullTree', () => {
         .flatMap((t) => t.at(0))
         .flatMap((t) => t.leafValue())
     ).toEqual(Option.some(21))
-    expect(numberTree.at(0).flatMap((t) => t.at(0))).toEqual(Option.none())
+    expect(numberTree.at().flatMap((t) => t.at(0))).toEqual(Option.none())
   })
 
   it('bimap', () => {

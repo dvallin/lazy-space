@@ -25,6 +25,47 @@ describe('try', () => {
     })
   })
 
+  describe('finally and onError', () => {
+    it('works with left value', () => {
+      const f = jest.fn()
+      const g = jest.fn()
+      left('1').map(Number).onError(f).finally(g)
+      expect(f).not.toHaveBeenCalled()
+      expect(g).toHaveBeenCalledWith()
+    })
+
+    it('works with right value', () => {
+      const f = jest.fn()
+      const g = jest.fn()
+      right(new Error('error')).map(Number).onError(f).finally(g)
+      expect(f).toHaveBeenCalledWith(new Error('error'))
+      expect(g).toHaveBeenCalled()
+    })
+
+    it('finally catches errors', () => {
+      const v = left('1').finally(() => {
+        throw new Error('finally')
+      })
+      expect(v.value).toEqual(new Error('finally'))
+    })
+
+    it('finally catches last error', () => {
+      const v = right(new Error('error')).finally(() => {
+        throw new Error('finally')
+      })
+      expect(v.value).toEqual(new Error('finally'))
+    })
+  })
+
+  describe('with', () => {
+    it('makes side effects', () => {
+      const fn = jest.fn()
+      const value = left('1').with(fn)
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.value).toEqual('1')
+    })
+  })
+
   describe('flatMap', () => {
     it('binds to the left value', () => {
       expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))
@@ -33,10 +74,24 @@ describe('try', () => {
       expect(left('1').flatMap((s) => right(new Error(s)))).toEqual(right(new Error('1')))
     })
     it('works on right value', () => {
-      expect(right<number>(new Error('1')).flatMap((s) => left(Number(s)))).toEqual(right(new Error('1')))
+      expect(right(new Error('1')).flatMap((s) => left(Number(s)))).toEqual(right(new Error('1')))
     })
   })
 
+  describe('optionMap', () => {
+    it('binds to the left value', () => {
+      expect(left('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
+    })
+    it('binds to the right value', () => {
+      expect(left('1').optionMap((s) => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
+    })
+    it('binds to none', () => {
+      expect(left('1').optionMap(() => Option.none())).toEqual(left(Option.none()))
+    })
+    it('works on right value', () => {
+      expect(right(new Error('1')).optionMap((s) => Option.of(left(Number(s))))).toEqual(right(new Error('1')))
+    })
+  })
   describe('join', () => {
     it('flattens lefts', () => {
       expect(Try.join(left(left('1')))).toEqual(left('1'))

@@ -1,5 +1,6 @@
 import { Monad } from './monad'
 import { Identity } from './identity'
+import { Option } from './option'
 
 export type reader<C, T> = (context: C) => T
 export class Reader<C, T> implements Monad<T> {
@@ -9,8 +10,16 @@ export class Reader<C, T> implements Monad<T> {
     return Reader.map(this, f)
   }
 
+  public with(f: (t: T, c: C) => unknown): Reader<C, T> {
+    return Reader.with(this, f)
+  }
+
   public flatMap<C2, U>(f: (t: T, c: C & C2) => Reader<C2, U>): Reader<C & C2, U> {
     return Reader.flatMap(this, f)
+  }
+
+  public optionMap<C2, U>(f: (t: T, c: C & C2) => Option<Reader<C2, U>>): Reader<C & C2, Option<U>> {
+    return Reader.optionMap(this, f)
   }
 
   public lift<U>(read: U): Reader<C, U> {
@@ -20,14 +29,6 @@ export class Reader<C, T> implements Monad<T> {
 
   public join<C1, C2, U>(val: Reader<C1, Reader<C2, U>>): Reader<C1 & C2, U> {
     return Reader.join(val)
-  }
-
-  public with(f: (c: C) => void): Reader<C, T> {
-    return Reader.lift((c) => {
-      const r = this.read(c)
-      f(c)
-      return r
-    })
   }
 
   public mapContext<C2>(f: (c: C2) => C): Reader<C2, T> {
@@ -46,8 +47,24 @@ export class Reader<C, T> implements Monad<T> {
     return new Reader((c) => f(val.read(c), c))
   }
 
+  public static with<C, T>(val: Reader<C, T>, f: (a: T, c: C) => unknown): Reader<C, T> {
+    return val.map((a, c) => {
+      f(a, c)
+      return a
+    })
+  }
+
   public static flatMap<C1, C2, S, T>(val: Reader<C1, S>, f: (s: S, c: C1 & C2) => Reader<C2, T>): Reader<C1 & C2, T> {
     return new Reader((c) => f(val.read(c), c).read(c))
+  }
+
+  public static optionMap<C1, C2, S, T>(val: Reader<C1, S>, f: (s: S, c: C1 & C2) => Option<Reader<C2, T>>): Reader<C1 & C2, Option<T>> {
+    return val.flatMap((a, c) =>
+      f(a, c).unwrap(
+        (value) => value.map(Option.of),
+        () => Reader.lift(() => Option.none())
+      )
+    )
   }
 
   public static mapContext<C1, C2, S>(reader: Reader<C1, S>, f: (c: C2) => C1): Reader<C2, S> {

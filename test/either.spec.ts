@@ -1,4 +1,4 @@
-import { Either, EitherT, List } from '../src'
+import { Either, EitherT, List, Option } from '../src'
 import { testMonad } from './monad.tests'
 
 const right = Either.right
@@ -16,6 +16,15 @@ describe('either', () => {
     })
   })
 
+  describe('with', () => {
+    it('makes side effects', () => {
+      const fn = jest.fn()
+      const value = left('1').with(fn)
+      expect(fn).toHaveBeenCalledWith('1')
+      expect(value.value).toEqual('1')
+    })
+  })
+
   describe('flatMap', () => {
     it('binds to the left value', () => {
       expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))
@@ -25,6 +34,21 @@ describe('either', () => {
     })
     it('works on right value', () => {
       expect(right<number, string>('1').flatMap((s) => left(Number(s)))).toEqual(right('1'))
+    })
+  })
+
+  describe('optionMap', () => {
+    it('binds to the left value', () => {
+      expect(left('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
+    })
+    it('binds to the right value', () => {
+      expect(left('1').optionMap((s) => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
+    })
+    it('binds to none', () => {
+      expect(left('1').optionMap(() => Option.none())).toEqual(left(Option.none()))
+    })
+    it('works on right value', () => {
+      expect(right<number, string>('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(right('1'))
     })
   })
 
@@ -74,6 +98,24 @@ describe('either', () => {
     })
     it('passes right into function', () => {
       expect(right(1).flatRecover(() => right(2))).toEqual(right(2))
+    })
+  })
+
+  describe('isLeft', () => {
+    it('returns true', () => {
+      expect(left(1).isLeft()).toBeTruthy()
+    })
+    it('returns false', () => {
+      expect(Either.isLeft(right('error'))).toBeFalsy()
+    })
+  })
+
+  describe('isRight', () => {
+    it('returns true', () => {
+      expect(right('error').isRight()).toBeTruthy()
+    })
+    it('returns false', () => {
+      expect(Either.isRight(left(1))).toBeFalsy()
     })
   })
 

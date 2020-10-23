@@ -17,8 +17,16 @@ export class List<T> implements Monad<T> {
     return List.map(this, f, memoized)
   }
 
+  public with(f: (a: T) => unknown): List<T> {
+    return List.with(this, f)
+  }
+
   public flatMap<U>(f: (a: T) => List<U>): List<U> {
     return List.flatMap(this, f)
+  }
+
+  public optionMap<U>(f: (a: T) => Option<List<U>>): List<Option<U>> {
+    return List.optionMap(this, f)
   }
 
   public lift<U>(value: U): List<U> {
@@ -160,8 +168,24 @@ export class List<T> implements Monad<T> {
     )
   }
 
+  public static with<S>(val: List<S>, f: (a: S) => unknown): List<S> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
+  }
+
   public static flatMap<S, T>(val: List<S>, f: (s: S) => List<T>): List<T> {
     return val.foldr(List.empty, (t: () => List<T>, h) => f(h).concat(t))
+  }
+
+  static optionMap<T, U>(value: List<T>, f: (a: T) => Option<List<U>>): List<Option<U>> {
+    return value.flatMap((a) =>
+      f(a).unwrap(
+        (value) => value.map(Option.of),
+        () => List.lift(Option.none())
+      )
+    )
   }
 
   public static prepend<T>(list: List<T>, value: T): List<T> {
@@ -331,14 +355,14 @@ export class List<T> implements Monad<T> {
     return list._head.isRight()
   }
 
-  public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
-    return list.filterType(Option.isSome).map((v) => v.value)
-  }
-
   public static product<T>(lists: List<List<T>>): List<List<T>> {
     return lists.foldr(
       () => List.lift(List.empty()),
       (l, r) => r.flatMap((a) => l().map((b) => List.lift(a).concat(() => b)))
     )
+  }
+
+  public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
+    return list.filterType(Option.isSome).map((v) => v.value)
   }
 }

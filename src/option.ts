@@ -10,6 +10,10 @@ export class Option<T> implements Monad<T> {
     return Option.map(this, f)
   }
 
+  public with(f: (a: T) => unknown): Option<T> {
+    return Option.with(this, f)
+  }
+
   public strictMap<U>(f: (a: T) => U): Option<U> {
     return Option.strictMap(this, f)
   }
@@ -134,6 +138,13 @@ export class Option<T> implements Monad<T> {
       (u) => Option.of(f(u)),
       () => Option.right()
     )
+  }
+
+  public static with<S>(val: Option<S>, f: (a: S) => unknown): Option<S> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
   }
 
   public static flatMap<T, U>(val: Option<T>, f: (s: T) => Option<U>): Option<U> {

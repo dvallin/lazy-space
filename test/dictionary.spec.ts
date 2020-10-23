@@ -1,4 +1,4 @@
-import { Dictionary } from '../src'
+import { Dictionary, Option } from '../src'
 
 describe('Dictionary', () => {
   it('builds from object', () => {
@@ -14,6 +14,7 @@ describe('Dictionary', () => {
     expect(dict.keys().toArray()).toEqual(['a', 'b'])
     expect(dict.get('a').value().value).toEqual(1)
     expect(dict.get('b').value().value).toEqual(2)
+    expect(dict.get('c').value()).toEqual(Option.none())
   })
 
   it('sets and inserts', () => {

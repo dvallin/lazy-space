@@ -2,6 +2,7 @@ import { Try } from './try'
 import { Monad } from './monad'
 import { Lazy } from './lazy'
 import { List } from './list'
+import { Option } from './option'
 
 export type async<T> = Promise<T>
 
@@ -10,6 +11,10 @@ export class Async<T> implements Monad<T> {
 
   public map<U>(f: (a: T) => U | Promise<U>): Async<U> {
     return Async.map(this, f)
+  }
+
+  public with(f: (a: T) => unknown): Async<T> {
+    return Async.with(this, f)
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
@@ -22,12 +27,16 @@ export class Async<T> implements Monad<T> {
     return Async.onError(this, f)
   }
 
-  public finally(f: () => void): Async<T> {
+  public finally(f: () => unknown): Async<T> {
     return Async.finally(this, f)
   }
 
   public flatMap<U>(f: (a: T) => Async<U>): Async<U> {
     return Async.flatMap(this, f)
+  }
+
+  public optionMap<U>(f: (a: T) => Option<Async<U>>): Async<Option<U>> {
+    return Async.optionMap(this, f)
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
@@ -111,6 +120,13 @@ export class Async<T> implements Monad<T> {
     return new Async(val.promise.then(f))
   }
 
+  public static with<S>(val: Async<S>, f: (a: S) => unknown): Async<S> {
+    return val.map((a) => {
+      f(a)
+      return a
+    })
+  }
+
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public static recover<S, U>(val: Async<S>, f: (error: any) => U | Promise<U>): Async<S | U> {
     return new Async(val.promise.catch(f))
@@ -123,14 +139,10 @@ export class Async<T> implements Monad<T> {
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public static flatRecover<S, U>(val: Async<S>, f: (error: any) => Async<U>): Async<S | U> {
-    return new Async(
-      new Promise((resolve, reject) => {
-        val.promise.then(resolve).catch((e) => f(e).promise.then(resolve).catch(reject))
-      })
-    )
+    return val.recover((e) => f(e).promise)
   }
 
-  public static finally<S>(val: Async<S>, f: () => void): Async<S> {
+  public static finally<S>(val: Async<S>, f: () => unknown): Async<S> {
     return new Async(val.promise.finally(f))
   }
 
@@ -140,6 +152,15 @@ export class Async<T> implements Monad<T> {
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {
     return Async.of(val.promise.then((a) => f(a).promise))
+  }
+
+  public static optionMap<S, T>(val: Async<S>, f: (a: S) => Option<Async<T>>): Async<Option<T>> {
+    return val.flatMap((a) =>
+      f(a).unwrap(
+        (value) => value.map(Option.of),
+        () => Async.lift(Option.none())
+      )
+    )
   }
 
   public static join<T>(val: Async<Async<T>>): Async<T> {
