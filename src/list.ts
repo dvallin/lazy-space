@@ -113,6 +113,10 @@ export class List<T> implements Monad<T> {
     return List.all(this, predicate)
   }
 
+  public distinct(): List<T> {
+    return List.distinct(this)
+  }
+
   public reverse(): List<T> {
     return List.reverse(this)
   }
@@ -131,6 +135,10 @@ export class List<T> implements Monad<T> {
 
   public toArray(): T[] {
     return List.toArray(this)
+  }
+
+  public toSet(): Set<T> {
+    return List.toSet(this)
   }
 
   public eval(): void {
@@ -309,6 +317,17 @@ export class List<T> implements Monad<T> {
     return List.find(val, (v) => !predicate(v)).isNone()
   }
 
+  public static distinct<T>(val: List<T>): List<T> {
+    const filter = new Set()
+    return val.filter((v) => {
+      const firstTime = !filter.has(v)
+      if (firstTime) {
+        filter.add(v)
+      }
+      return firstTime
+    })
+  }
+
   public static batch<T>(val: List<T>, length: number, step: number = length): List<T[]> {
     if (val._head.isSome()) {
       return new List(Option.some(new Lazy(() => val.take(length).toArray())), () => val.drop(step).batch(length, step))
@@ -319,6 +338,13 @@ export class List<T> implements Monad<T> {
   public static toArray<T>(val: List<T>): T[] {
     return val.fold([], (l: T[], r) => {
       l.push(r)
+      return l
+    })
+  }
+
+  public static toSet<T>(val: List<T>): Set<T> {
+    return val.fold(new Set(), (l, r) => {
+      l.add(r)
       return l
     })
   }
@@ -363,6 +389,6 @@ export class List<T> implements Monad<T> {
   }
 
   public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
-    return list.filterType(Option.isSome).map((v) => v.value)
+    return list.flatMap((o) => o.toList())
   }
 }

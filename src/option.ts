@@ -1,6 +1,7 @@
 import { Left, Right } from './either'
 import { Monad } from './monad'
 import { Identity } from './identity'
+import { List } from './list'
 
 export type option<T> = T | undefined | null
 export class Option<T> implements Monad<T> {
@@ -72,6 +73,10 @@ export class Option<T> implements Monad<T> {
 
   public filter(f: (a: T) => boolean): Option<T> {
     return Option.filter(this, f)
+  }
+
+  public toList(): List<T> {
+    return Option.toList(this)
   }
 
   public isLeft(): this is Left<T> {
@@ -295,6 +300,13 @@ export class Option<T> implements Monad<T> {
 
   public static filter<T>(val: Option<T>, f: (a: T) => boolean): Option<T> {
     return Option.filterType(val, (v): v is T => f(v))
+  }
+
+  public static toList<T>(val: Option<T>): List<T> {
+    return val.unwrap(
+      (v) => List.lift(v),
+      () => List.empty()
+    )
   }
 }
 

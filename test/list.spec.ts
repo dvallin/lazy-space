@@ -350,6 +350,17 @@ describe('List', () => {
       ).toEqual([2, 4, 6])
     })
   })
+  describe('distinct', () => {
+    it('works on infinite lists', () => {
+      expect(
+        natural()
+          .flatMap((i) => repeat(i).take(i))
+          .distinct()
+          .take(5)
+          .toArray()
+      ).toEqual([1, 2, 3, 4, 5])
+    })
+  })
 
   describe('concat', () => {
     it('concats whole lists', () => {
@@ -477,6 +488,12 @@ describe('List', () => {
         [1, 2, 2],
         [1, 3, 1],
       ])
+    })
+  })
+
+  describe('toSet', () => {
+    it('collects to Set', () => {
+      expect(of([1, 1, 2]).toSet().size).toEqual(2)
     })
   })
 })

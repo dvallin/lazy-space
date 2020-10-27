@@ -1,27 +1,15 @@
-import { Dictionary, Option } from '../src'
+import { Dictionary } from '../src'
 
 describe('Dictionary', () => {
-  it('builds from object', () => {
-    const dict = Dictionary.fromObject({ a: { b: 1, c: [1, 2, 3] }, d: 'hello' })
-    expect(dict.keys().toArray()).toEqual(['a', 'd'])
-    expect(dict.get('a').keys().toArray()).toEqual(['b', 'c'])
-    expect(dict.get('a').get('c').keys().toArray()).toEqual(['0', '1', '2'])
-    expect(dict.get('d').value().value).toEqual('hello')
+  describe('append', () => {
+    it('appends values', () => {
+      expect(Dictionary.empty<number>().append('1', 1).append('2', 2).append('1', 3).get('1').toArray()).toEqual([1, 3])
+    })
   })
 
-  it('sets', () => {
-    const dict = Dictionary.empty().set('a', 1).set('b', 2)
-    expect(dict.keys().toArray()).toEqual(['a', 'b'])
-    expect(dict.get('a').value().value).toEqual(1)
-    expect(dict.get('b').value().value).toEqual(2)
-    expect(dict.get('c').value()).toEqual(Option.none())
-  })
-
-  it('sets and inserts', () => {
-    const dict = Dictionary.empty().set('a', 1).insert('b', Dictionary.empty().set('c', 2))
-    expect(dict.keys().toArray()).toEqual(['a', 'b'])
-    expect(dict.get('a').value().value).toEqual(1)
-    expect(dict.get('b').keys().toArray()).toEqual(['c'])
-    expect(dict.get('b').get('c').value().value).toEqual(2)
+  describe('get', () => {
+    it('gets empty list on missing key', () => {
+      expect(Dictionary.empty().get('1').isEmpty()).toBeTruthy()
+    })
   })
 })
