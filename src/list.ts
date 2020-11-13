@@ -13,19 +13,19 @@ export class List<T> implements Monad<T> {
     return List.tail(this)
   }
 
-  public map<U>(f: (a: T) => U, memoized = false): List<U> {
-    return List.map(this, f, memoized)
+  public map<U>(f: (a: T, index: number) => U, memoized = false, index = 0): List<U> {
+    return List.map(this, f, memoized, index)
   }
 
-  public with(f: (a: T) => unknown): List<T> {
+  public with(f: (a: T, index: number) => unknown): List<T> {
     return List.with(this, f)
   }
 
-  public flatMap<U>(f: (a: T) => List<U>): List<U> {
-    return List.flatMap(this, f)
+  public flatMap<U>(f: (a: T, index: number) => List<U>, index = 0): List<U> {
+    return List.flatMap(this, f, index)
   }
 
-  public optionMap<U>(f: (a: T) => Option<List<U>>): List<Option<U>> {
+  public optionMap<U>(f: (a: T, index: number) => Option<List<U>>): List<Option<U>> {
     return List.optionMap(this, f)
   }
 
@@ -85,7 +85,7 @@ export class List<T> implements Monad<T> {
     return List.concat(this, other)
   }
 
-  public intersperse(item: T): List<T> {
+  public intersperse(item: (v: T, index: number) => T): List<T> {
     return List.intersperse(this, item)
   }
 
@@ -169,27 +169,32 @@ export class List<T> implements Monad<T> {
     return new List(Option.of(val[start]), () => List.ofLazies(val, start + 1))
   }
 
-  public static map<S, T>(val: List<S>, f: (a: S) => T, memoized = false): List<T> {
+  public static map<S, T>(val: List<S>, f: (a: S, index: number) => T, memoized = false, index = 0): List<T> {
     return new List(
-      val._head.map((a) => a.map(f, memoized)),
-      () => val._tail().map(f)
+      val._head.map((a) => a.map((v) => f(v, index), memoized)),
+      () => val._tail().map(f, memoized, index + 1)
     )
   }
 
-  public static with<S>(val: List<S>, f: (a: S) => unknown): List<S> {
-    return val.map((a) => {
-      f(a)
+  public static with<S>(val: List<S>, f: (a: S, index: number) => unknown): List<S> {
+    return val.map((a, index) => {
+      f(a, index)
       return a
     })
   }
 
-  public static flatMap<S, T>(val: List<S>, f: (s: S) => List<T>): List<T> {
-    return val.foldr(List.empty, (t: () => List<T>, h) => f(h).concat(t))
+  public static flatMap<S, T>(val: List<S>, f: (s: S, index: number) => List<T>, index = 0): List<T> {
+    let i = index
+    return val.foldr(List.empty, (t: () => List<T>, h) => {
+      const r = f(h, i)
+      i++
+      return r.concat(t)
+    })
   }
 
-  static optionMap<T, U>(value: List<T>, f: (a: T) => Option<List<U>>): List<Option<U>> {
-    return value.flatMap((a) =>
-      f(a).unwrap(
+  static optionMap<T, U>(value: List<T>, f: (a: T, index: number) => Option<List<U>>): List<Option<U>> {
+    return value.flatMap((a, index) =>
+      f(a, index).unwrap(
         (value) => value.map(Option.of),
         () => List.lift(Option.none())
       )
@@ -208,8 +213,8 @@ export class List<T> implements Monad<T> {
     return left.foldr(right, (t, h) => List.lift(h, t))
   }
 
-  public static intersperse<T>(left: List<T>, item: T): List<T> {
-    return left.flatMap((a) => List.of([item, a])).drop()
+  public static intersperse<T>(left: List<T>, item: (v: T, index: number) => T): List<T> {
+    return left.flatMap((a, index) => List.of([item(a, index), a])).drop()
   }
 
   public static join<T>(val: List<List<T>>): List<T> {

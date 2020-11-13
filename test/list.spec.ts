@@ -23,13 +23,18 @@ describe('List', () => {
       List.of(all).map((a) => visited.push(a))
       expect(visited).toEqual([])
     })
+
+    it('has index', () => {
+      const nx2 = natural().map((_, i) => i)
+      expect(List.toArray(take(nx2, 3))).toEqual([0, 1, 2])
+    })
   })
 
   describe('with', () => {
     it('makes side effects', () => {
       const fn = jest.fn()
       const value = List.lift('1').with(fn).toArray()
-      expect(fn).toHaveBeenCalledWith('1')
+      expect(fn).toHaveBeenCalledWith('1', 0)
       expect(value).toEqual(['1'])
     })
   })
@@ -47,6 +52,11 @@ describe('List', () => {
         { x: 1, y: 2 },
         { x: 1, y: 3 },
       ])
+    })
+
+    it('has index', () => {
+      const nx2 = natural().flatMap((_, i) => List.lift(i))
+      expect(List.toArray(take(nx2, 3))).toEqual([0, 1, 2])
     })
   })
 
@@ -375,11 +385,20 @@ describe('List', () => {
 
   describe('intersperse', () => {
     it('alternates between item and list', () => {
-      expect(List.repeat('v').intersperse(',').take(4).toArray()).toEqual(['v', ',', 'v', ','])
+      expect(
+        List.repeat('v')
+          .intersperse(() => ',')
+          .take(4)
+          .toArray()
+      ).toEqual(['v', ',', 'v', ','])
     })
 
     it('does not append the last item', () => {
-      expect(List.of(['a', 'b', 'c']).intersperse(',').toArray()).toEqual(['a', ',', 'b', ',', 'c'])
+      expect(
+        List.of(['a', 'b', 'c'])
+          .intersperse(() => ',')
+          .toArray()
+      ).toEqual(['a', ',', 'b', ',', 'c'])
     })
   })
 
