@@ -3,7 +3,8 @@ import { Lazy } from '../lazy'
 import { List } from '../list'
 import { Monad } from '../monad'
 import { Option } from '../option'
-import { empty, natural, ofNative, once, range, repeat, Source } from './source'
+import { Try } from '../try'
+import { empty, natural, ofNative, once, range, repeat, Source, onError } from './source'
 
 export class Stream<T> implements Monad<T> {
   public constructor(private readonly source: Source<T>) {}
@@ -14,6 +15,10 @@ export class Stream<T> implements Monad<T> {
 
   public with(f: (a: T) => unknown): Stream<T> {
     return Stream.with(this, f)
+  }
+
+  public onError(f: (e: Error) => unknown): Stream<T> {
+    return Stream.onError(this, f)
   }
 
   public flatMap<U>(f: (a: T) => Stream<U>): Stream<U> {
@@ -71,6 +76,7 @@ export class Stream<T> implements Monad<T> {
   public static of<T>(source: Lazy<Async<Option<T>>>): Stream<T> {
     return new Stream({
       next: () => source.eval(),
+      onError,
     })
   }
 
@@ -97,6 +103,10 @@ export class Stream<T> implements Monad<T> {
               })
           )
         ).recover(() => Option.none())
+      },
+      onError: (e) => {
+        streams.map((source) => Try.run(() => source.source.onError(e)))
+        throw e
       },
     })
   }
@@ -128,7 +138,10 @@ export class Stream<T> implements Monad<T> {
               () => Async.lift(Option.none<U>())
             )
           )
-          .recover(() => Option.none()),
+          .onError((e) => {
+            val.source.onError(e)
+          }),
+      onError: val.source.onError,
     })
   }
 
@@ -148,18 +161,29 @@ export class Stream<T> implements Monad<T> {
       return current.getOrThrow(new Error('')).flatMap((s) =>
         s.unwrap(
           (currentStream) =>
-            currentStream.source.next().flatMap((head) => {
-              if (head.isNone()) {
-                current = Option.none()
-                return next()
-              }
-              return Async.resolve(head)
-            }),
+            currentStream.source
+              .next()
+              .flatMap((head) => {
+                if (head.isNone()) {
+                  current = Option.none()
+                  return next()
+                }
+                return Async.resolve(head)
+              })
+              .onError((error) => {
+                val.source.onError(error)
+              }),
           () => Async.resolve(Option.none())
         )
       )
     }
-    return new Stream({ next })
+    return new Stream({
+      next,
+      onError: (e) => {
+        Try.run(() => current.map((c) => c.map((s) => s.map((stream) => stream.source.onError(e)))))
+        val.source.onError(e)
+      },
+    })
   }
 
   public static asyncMap<T, U>(val: Stream<T>, f: (v: T) => Async<U>): Stream<U> {
@@ -168,6 +192,16 @@ export class Stream<T> implements Monad<T> {
 
   public static lift<U>(v: U): Stream<U> {
     return new Stream(once(v))
+  }
+
+  public static onError<U>(val: Stream<U>, f: (e: Error) => unknown): Stream<U> {
+    return new Stream({
+      next: val.source.next,
+      onError: (e) => {
+        f(e)
+        val.source.onError(e)
+      },
+    })
   }
 
   public static filter<T>(val: Stream<T>, f: (a: T) => boolean): Stream<T> {
@@ -184,7 +218,7 @@ export class Stream<T> implements Monad<T> {
           )
         )
       )
-    return new Stream({ next })
+    return new Stream({ next, onError: val.source.onError })
   }
 
   public static scan<T, U>(val: Stream<T>, initial: U, combine: (l: U, r: T) => U): Stream<U> {
@@ -197,6 +231,7 @@ export class Stream<T> implements Monad<T> {
             return current
           })
         ),
+      onError: val.source.onError,
     })
   }
 
@@ -210,13 +245,14 @@ export class Stream<T> implements Monad<T> {
         }
         return Async.resolve(Option.none())
       },
+      onError: val.source.onError,
     })
   }
 
   public static takeWhile<T>(val: Stream<T>, predicate: (a: T) => boolean): Stream<T> {
     const next = (): Async<Option<T>> =>
       val.source.next().flatMap((a) => (a.map((head) => predicate(head)).getOrElse(false) ? Async.lift(a) : Async.lift(Option.none())))
-    return new Stream({ next })
+    return new Stream({ next, onError: val.source.onError })
   }
 
   public static drop<T>(val: Stream<T>, amount = 1): Stream<T> {
@@ -228,13 +264,13 @@ export class Stream<T> implements Monad<T> {
       }
       return val.source.next()
     }
-    return new Stream({ next })
+    return new Stream({ next, onError: val.source.onError })
   }
 
   public static dropWhile<T>(val: Stream<T>, predicate: (a: T) => boolean): Stream<T> {
     const next = (): Async<Option<T>> =>
       val.source.next().flatMap((a) => (a.map((head) => predicate(head)).getOrElse(false) ? next() : Async.lift(a)))
-    return new Stream({ next })
+    return new Stream({ next, onError: val.source.onError })
   }
 
   public static join<U>(v: Stream<Stream<U>>): Stream<U> {
@@ -256,6 +292,10 @@ export class Stream<T> implements Monad<T> {
             close()
             throw e
           }),
+      onError: (e) => {
+        close()
+        val.source.onError(e)
+      },
     })
   }
 
@@ -267,6 +307,7 @@ export class Stream<T> implements Monad<T> {
         current = current.tail()
         return Async.resolve(head)
       },
+      onError,
     })
   }
 

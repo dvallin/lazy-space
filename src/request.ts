@@ -44,7 +44,7 @@ export class Request<C, T> implements Monad<T> {
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  onError(f: (error: any, c: C) => never): Request<C, T> {
+  onError(f: (error: any, c: C) => unknown): Request<C, T> {
     return Request.onError(this, f)
   }
 
@@ -128,8 +128,15 @@ export class Request<C, T> implements Monad<T> {
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  static onError<C, T>(value: Request<C, T>, f: (error: any, c: C) => never): Request<C, T> {
-    return new Request(value.request.map((a, c) => a.onError((v) => f(v, c))))
+  static onError<C, T>(value: Request<C, T>, f: (error: any, c: C) => unknown): Request<C, T> {
+    return new Request(
+      value.request.map((a, c) =>
+        a.onError((v) => {
+          f(v, c)
+          throw v
+        })
+      )
+    )
   }
 
   static flatMap<C, T, U>(value: Request<C, T>, f: (a: T, c: C) => Request<C, U>): Request<C, U> {

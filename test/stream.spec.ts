@@ -1,4 +1,4 @@
-import { Async, Lazy, List, range, Stream } from '../src'
+import { Async, Lazy, List, Option, range, Stream } from '../src'
 
 describe('Stream', () => {
   describe('empty', () => {
@@ -25,6 +25,22 @@ describe('Stream', () => {
         expect(result.value).toEqual([1, 2, 3, 4])
       }
     })
+
+    it('closes on downstream errors', async () => {
+      let i = 1
+      const result = await Stream.ofNative(async function* () {
+        for (; i < 5; i++) {
+          yield Promise.resolve(i)
+        }
+      })
+        .map(() => {
+          throw new Error('error')
+        })
+        .collect()
+        .run()
+      expect(result.isFailure()).toBeTruthy()
+      expect(i).toEqual(1)
+    })
   })
 
   describe('lift', () => {
@@ -48,12 +64,28 @@ describe('Stream', () => {
       expect(close).toHaveBeenCalledTimes(1)
     })
 
-    it('closes on error', async () => {
+    it('closes on upstream error', async () => {
       const close = jest.fn()
       const result = await Stream.ofNative(async function* () {
         throw new Error('my message')
       })
         .bracket(close)
+        .collect()
+        .run()
+      expect(result.isFailure()).toBeTruthy()
+      if (result.isFailure()) {
+        expect(result.value.message).toEqual('my message')
+      }
+      expect(close).toHaveBeenCalledTimes(1)
+    })
+
+    it('closes on downstream error', async () => {
+      const close = jest.fn()
+      const result = await Stream.range(0, 3)
+        .bracket(close)
+        .map(() => {
+          throw new Error('my message')
+        })
         .collect()
         .run()
       expect(result.isFailure()).toBeTruthy()
@@ -156,6 +188,34 @@ describe('Stream', () => {
         expect(result.value).toHaveLength(0)
       }
     })
+
+    it('propagates errors up', async () => {
+      const close = jest.fn()
+      const result = await Stream.range(0, 2)
+        .bracket(close)
+        .flatMap(() =>
+          Stream.repeat(1).map(() => {
+            throw new Error('error')
+          })
+        )
+        .collect()
+        .run()
+      expect(close).toHaveBeenCalledTimes(1)
+      expect(result.isFailure()).toBeTruthy()
+    })
+
+    it('propagates errors into current stream', async () => {
+      const onError = jest.fn()
+      const result = await Stream.range(0, 2)
+        .flatMap(() => Stream.lift(1).onError(onError))
+        .map(() => {
+          throw new Error('error')
+        })
+        .collect()
+        .run()
+      expect(onError).toHaveBeenCalledTimes(1)
+      expect(result.isFailure()).toBeTruthy()
+    })
   })
 
   describe('asyncMap', () => {
@@ -180,15 +240,12 @@ describe('Stream', () => {
       }
     })
 
-    it('breaks on rejects', async () => {
+    it('fails on rejects', async () => {
       const result = await Stream.range(0, 2)
         .asyncMap((i) => (i === 1 ? Async.reject() : Async.resolve(i)))
         .collect()
         .run()
-      expect(result.isSuccess()).toBeTruthy()
-      if (result.isSuccess()) {
-        expect(result.value).toEqual([0])
-      }
+      expect(result.isFailure()).toBeTruthy()
     })
   })
 
@@ -259,6 +316,35 @@ describe('Stream', () => {
         .run()
       expect(result.isSuccess())
       expect(result.value).toEqual([1, 2, 3, 4, 1, 2])
+    })
+
+    it('propagates errors to source streams (and some artificial coverage)', async () => {
+      const natural = jest.fn()
+      const lifted = jest.fn()
+      const of = jest.fn()
+      const fromList = jest.fn()
+      const empty = jest.fn()
+      const repeat = jest.fn()
+      const result = await Stream.merge([
+        Stream.natural().bracket(natural).take(4),
+        Stream.lift(2).bracket(lifted),
+        Stream.of(Lazy.lift(Async.lift(Option.some(3)))).bracket(of),
+        Stream.fromList(List.lift(3)).bracket(fromList),
+        Stream.empty().bracket(empty),
+        Stream.repeat(4).bracket(repeat),
+      ])
+        .map(() => {
+          throw new Error('message')
+        })
+        .collect()
+        .run()
+      expect(result.isFailure())
+      expect(natural).toHaveBeenCalled()
+      expect(lifted).toHaveBeenCalled()
+      expect(of).toHaveBeenCalled()
+      expect(fromList).toHaveBeenCalled()
+      expect(empty).toHaveBeenCalled()
+      expect(repeat).toHaveBeenCalled()
     })
   })
 

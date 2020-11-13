@@ -88,26 +88,14 @@ describe('Request', () => {
 
   describe('onError', () => {
     it('does not pass onError on success', async () => {
-      const call = jest.fn()
-      await one
-        .onError((e) => {
-          call(e)
-          throw e
-        })
-        .run(context)
-        .run()
-      expect(call).not.toHaveBeenCalled()
+      const onError = jest.fn()
+      await one.onError(onError).run(context).run()
+      expect(onError).not.toHaveBeenCalled()
     })
     it('passes errors into onError', async () => {
-      const call = jest.fn()
-      await fail
-        .onError((e) => {
-          call(e)
-          throw e
-        })
-        .run(context)
-        .run()
-      expect(call).toHaveBeenCalledWith('failure')
+      const onError = jest.fn()
+      await fail.onError(onError).run(context).run()
+      expect(onError).toHaveBeenCalledWith('failure', { some: 'context' })
     })
   })
 
