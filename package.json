@@ -1,6 +1,6 @@
 {
   "name": "lazy-space",
-  "version": "0.4.1-SNAPSHOT",
+  "version": "0.4.3-SNAPSHOT",
   "description": "Monads and collections in typescript",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -9,6 +9,7 @@
   ],
   "repository": "github:dvallin/lazy-space",
   "license": "MIT",
+  "sideEffects": false,
   "scripts": {
     "build": "npm run clean-lib && tsc",
     "test": "jest --coverage",
