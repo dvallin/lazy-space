@@ -33,6 +33,6 @@ export class Dictionary<T, S extends string = string> {
   }
 
   public static get<T, S extends string>(dict: Dictionary<T, S>, key: S): List<T> {
-    return Option.of(dict.state.eval()[key]).getOrElse(List.empty())
+    return Option.of(dict.state.eval()[key] as List<T>).getOrElse(List.empty())
   }
 }
