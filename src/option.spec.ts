@@ -1,4 +1,5 @@
-import { Option, List, OptionT } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { List, Option, OptionT } from '.'
 import { testMonad } from './monad.tests'
 
 const right = Option.right
@@ -21,7 +22,7 @@ describe('Option', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = left('1').with(fn)
       expect(fn).toHaveBeenCalledWith('1')
       expect(value.value).toEqual('1')
@@ -30,10 +31,10 @@ describe('Option', () => {
 
   describe('flatMap', () => {
     it('binds to the left value', () => {
-      expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))
+      expect(left('1').flatMap(s => left(Number(s)))).toEqual(left(1))
     })
     it('works on right value', () => {
-      expect(right<number>().flatMap((s) => left(Number(s)))).toEqual(right())
+      expect(right<number>().flatMap(s => left(Number(s)))).toEqual(right())
     })
   })
 
@@ -50,17 +51,17 @@ describe('Option', () => {
     it('passes left value', () => {
       expect(
         left(1).unwrap(
-          (l) => l + 1,
-          () => 3
-        )
+          l => l + 1,
+          () => 3,
+        ),
       ).toEqual(2)
     })
     it('passes right value', () => {
       expect(
         right<number>().unwrap(
-          (l) => l + 1,
-          () => 3
-        )
+          l => l + 1,
+          () => 3,
+        ),
       ).toEqual(3)
     })
   })
@@ -146,18 +147,18 @@ describe('Option', () => {
     it('filters', () => {
       expect(
         Option.of('v')
-          .filter((v) => v === 'v')
-          .isSome()
+          .filter(v => v === 'v')
+          .isSome(),
       ).toBeTruthy()
       expect(
         Option.of('u')
-          .filter((v) => v === 'v')
-          .isNone()
+          .filter(v => v === 'v')
+          .isNone(),
       ).toBeTruthy()
       expect(
         Option.none()
-          .filter((v) => v === 'v')
-          .isNone()
+          .filter(v => v === 'v')
+          .isNone(),
       ).toBeTruthy()
     })
   })
@@ -167,17 +168,17 @@ describe('Option', () => {
       expect(
         Option.of<string | number>('v')
           .filterType((v): v is string => typeof v === 'string')
-          .isSome()
+          .isSome(),
       ).toBeTruthy()
       expect(
         Option.of<string | number>(1)
           .filterType((v): v is string => typeof v === 'string')
-          .isNone()
+          .isNone(),
       ).toBeTruthy()
       expect(
         Option.none()
           .filterType((v): v is string => typeof v === 'string')
-          .isNone()
+          .isNone(),
       ).toBeTruthy()
     })
   })
@@ -191,9 +192,11 @@ describe('all', () => {
 
   it('collects somes into arrays', () => {
     expect(Option.all([Option.some(1), Option.some(2)]).get()).toEqual([1, 2])
-    expect(
-      Option.all<unknown>([Option.some(1), Option.some(undefined), Option.some('')]).get()
-    ).toEqual([1, undefined, ''])
+    expect(Option.all<unknown>([Option.some(1), Option.some(undefined), Option.some('')]).get()).toEqual([
+      1,
+      undefined,
+      '',
+    ])
   })
 })
 
@@ -207,12 +210,12 @@ describe('zip', () => {
     expect(
       Option.zip(Option.some(1), Option.some(2))
         .map(([l, r]) => l + r)
-        .get()
+        .get(),
     ).toEqual(3)
     expect(
       Option.zip(Option.some(1), Option.some(undefined), Option.some(''))
         .map(([l, r, s]) => l + s + r)
-        .get()
+        .get(),
     ).toEqual('1undefined')
   })
 })
@@ -222,12 +225,12 @@ describe('OptionT', () => {
 
   const list = new OptionT(List.of([right<number>(), left(2)]))
   it('maps', () => {
-    const c = list.map((s) => s + 1)
+    const c = list.map(s => s + 1)
     expect((c.value as List<Option<number>>).toArray()).toEqual([right(), left(3)])
   })
 
   it('flatmaps', () => {
-    const c = list.flatMap((s) => new OptionT(List.of([left(s + 1)])))
+    const c = list.flatMap(s => new OptionT(List.of([left(s + 1)])))
     expect((c.value as List<Option<number>>).toArray()).toEqual([right(), left(3)])
   })
 })

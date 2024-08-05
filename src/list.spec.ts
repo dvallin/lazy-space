@@ -1,4 +1,5 @@
-import { List, Option, Lazy } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { Lazy, List, Option } from '.'
 import { testMonad } from './monad.tests'
 
 const { of, take, natural, join, repeat, drop } = List
@@ -8,19 +9,19 @@ describe('List', () => {
 
   describe('map', () => {
     it('works on infinite lists', () => {
-      const nx2 = natural().map((v) => v * 2)
+      const nx2 = natural().map(v => v * 2)
       expect(List.toArray(take(nx2, 3))).toEqual([2, 4, 6])
     })
 
     it('can take very long lists', () => {
-      const nx2 = List.map(natural(), (v) => v * 2)
+      const nx2 = List.map(natural(), v => v * 2)
       expect(List.toArray(take(nx2, 6000))).toHaveLength(6000)
     })
 
     it('is lazy', () => {
       const visited: string[] = []
       const all: string[] = ['1', '2', '3']
-      List.of(all).map((a) => visited.push(a))
+      List.of(all).map(a => visited.push(a))
       expect(visited).toEqual([])
     })
 
@@ -32,7 +33,7 @@ describe('List', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = List.lift('1').with(fn).toArray()
       expect(fn).toHaveBeenCalledWith('1', 0)
       expect(value).toEqual(['1'])
@@ -41,12 +42,12 @@ describe('List', () => {
 
   describe('flatmap', () => {
     it('works on finite lists', () => {
-      const list = of([3, 3]).flatMap((s) => of([2 * s, 2 * s]))
+      const list = of([3, 3]).flatMap(s => of([2 * s, 2 * s]))
       expect(List.toArray(list)).toEqual([6, 6, 6, 6])
     })
 
     it('works on infinite lists', () => {
-      const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
+      const nxn = natural().flatMap(x => natural().map(y => ({ x, y })))
       expect(List.toArray(take(nxn, 3))).toEqual([
         { x: 1, y: 1 },
         { x: 1, y: 2 },
@@ -67,7 +68,7 @@ describe('List', () => {
     })
 
     it('works on infinite lists', () => {
-      const nxn = natural().optionMap((x) => (x % 2 === 1 ? Option.none() : Option.of(natural().map((y) => ({ x, y })))))
+      const nxn = natural().optionMap(x => (x % 2 === 1 ? Option.none() : Option.of(natural().map(y => ({ x, y })))))
       expect(List.toArray(take(nxn, 3))).toEqual([Option.none(), Option.of({ x: 2, y: 1 }), Option.of({ x: 2, y: 2 })])
     })
   })
@@ -103,7 +104,7 @@ describe('List', () => {
     })
 
     it('works on infinite lists', () => {
-      const doubles = join(natural().map((n) => of([n, n])))
+      const doubles = join(natural().map(n => of([n, n])))
 
       // then
       expect(List.toArray(take(doubles, 5))).toEqual([1, 1, 2, 2, 3])
@@ -111,7 +112,7 @@ describe('List', () => {
 
     it('can join very long lists', () => {
       // when
-      const doubles = join(natural().map((n) => of([n, n])))
+      const doubles = join(natural().map(n => of([n, n])))
 
       // then
       expect(List.toArray(take(doubles, 6000))).toHaveLength(6000)
@@ -148,18 +149,18 @@ describe('List', () => {
     it('consumes all elements', () => {
       const visited: string[] = []
       const all: string[] = ['1', '2', '3']
-      List.of(all).forEach((a) => visited.push(a))
+      List.of(all).forEach(a => visited.push(a))
       expect(visited).toEqual(all)
     })
   })
 
   describe('takeWhile', () => {
     it('takes on infinite lists', () => {
-      expect(List.toArray(natural().takeWhile((n) => n < 2))).toEqual([1])
+      expect(List.toArray(natural().takeWhile(n => n < 2))).toEqual([1])
     })
 
     it('takes full lists', () => {
-      expect(List.toArray(of([1, 2, 3]).takeWhile((n) => n < 100))).toEqual([1, 2, 3])
+      expect(List.toArray(of([1, 2, 3]).takeWhile(n => n < 100))).toEqual([1, 2, 3])
     })
   })
 
@@ -168,18 +169,18 @@ describe('List', () => {
       expect(
         List.toArray(
           natural()
-            .dropWhile((n) => n < 2)
-            .take()
-        )
+            .dropWhile(n => n < 2)
+            .take(),
+        ),
       ).toEqual([2])
     })
 
     it('drops full lists', () => {
-      expect(List.toArray(of([1, 2, 3]).dropWhile((n) => n < 100))).toEqual([])
+      expect(List.toArray(of([1, 2, 3]).dropWhile(n => n < 100))).toEqual([])
     })
 
     it('drops finite lists', () => {
-      expect(List.toArray(of([1, 2, 3]).dropWhile((n) => n < 2))).toEqual([2, 3])
+      expect(List.toArray(of([1, 2, 3]).dropWhile(n => n < 2))).toEqual([2, 3])
     })
   })
 
@@ -194,11 +195,11 @@ describe('List', () => {
     })
 
     it('can take very long lists', () => {
-      const nxn = natural().flatMap((x) => natural().map((y) => ({ x, y })))
+      const nxn = natural().flatMap(x => natural().map(y => ({ x, y })))
       expect(List.toArray(take(nxn, 6000))).toHaveLength(6000)
     })
 
-    testLazyOperation((l) => l.take(3))
+    testLazyOperation(l => l.take(3))
   })
 
   describe('at', () => {
@@ -222,7 +223,7 @@ describe('List', () => {
       expect(List.head(List.empty().drop())).toEqual(Option.none())
     })
 
-    testLazyOperation((l) => l.drop(3))
+    testLazyOperation(l => l.drop(3))
   })
 
   describe('fold', () => {
@@ -230,7 +231,7 @@ describe('List', () => {
       expect(
         repeat(1)
           .take(5)
-          .fold(3, (l, r) => l + r)
+          .fold(3, (l, r) => l + r),
       ).toEqual(8)
     })
 
@@ -238,7 +239,7 @@ describe('List', () => {
       expect(
         repeat(1)
           .take(6000)
-          .fold(3, (l, r) => l + r)
+          .fold(3, (l, r) => l + r),
       ).toEqual(6003)
     })
   })
@@ -249,7 +250,7 @@ describe('List', () => {
         natural()
           .scan(0, (a, b) => a + b)
           .take(5)
-          .toArray()
+          .toArray(),
       ).toEqual([1, 3, 6, 10, 15])
     })
 
@@ -257,7 +258,7 @@ describe('List', () => {
       expect(
         List.empty<number>()
           .scan(0, (a, b) => a + b)
-          .toArray()
+          .toArray(),
       ).toEqual([])
     })
   })
@@ -267,7 +268,7 @@ describe('List', () => {
       expect(
         natural()
           .take(5)
-          .all((v) => v < 6)
+          .all(v => v < 6),
       ).toBeTruthy()
     })
 
@@ -275,47 +276,47 @@ describe('List', () => {
       expect(
         repeat(undefined)
           .take(5)
-          .all((v) => v === undefined)
+          .all(v => v === undefined),
       ).toBeTruthy()
     })
 
     it('is false if at least one is false', () => {
-      expect(natural().all((v) => v < 6)).toBeFalsy()
+      expect(natural().all(v => v < 6)).toBeFalsy()
     })
   })
 
   describe('some', () => {
     it('is true if at least one is true', () => {
-      expect(natural().some((v) => v > 4)).toBeTruthy()
+      expect(natural().some(v => v > 4)).toBeTruthy()
     })
 
     it('works on undefines', () => {
-      expect(repeat(undefined).some((v) => v === undefined)).toBeTruthy()
+      expect(repeat(undefined).some(v => v === undefined)).toBeTruthy()
     })
 
     it('is false if none is true', () => {
       expect(
         natural()
           .take(5)
-          .some((v) => v > 5)
+          .some(v => v > 5),
       ).toBeFalsy()
     })
   })
 
   describe('find', () => {
     it('finds', () => {
-      expect(natural().find((v) => v === 6000)).toEqual(Option.some(6000))
+      expect(natural().find(v => v === 6000)).toEqual(Option.some(6000))
     })
 
     it('works on undefines', () => {
-      expect(repeat(undefined).find((v) => v === undefined)).toEqual(Option.some(undefined))
+      expect(repeat(undefined).find(v => v === undefined)).toEqual(Option.some(undefined))
     })
 
     it('returns invalid if cannot find element', () => {
       expect(
         natural()
           .take(5)
-          .find((v) => v === 6)
+          .find(v => v === 6),
       ).toEqual(Option.none())
     })
   })
@@ -324,18 +325,18 @@ describe('List', () => {
     it('filters', () => {
       expect(
         natural()
-          .filter((v) => v % 2 === 0)
+          .filter(v => v % 2 === 0)
           .take(3)
-          .toArray()
+          .toArray(),
       ).toEqual([2, 4, 6])
     })
 
     it('works on undefines', () => {
       expect(
         repeat(undefined)
-          .filter((v) => v === undefined)
+          .filter(v => v === undefined)
           .take(2)
-          .toArray()
+          .toArray(),
       ).toEqual([undefined, undefined])
     })
 
@@ -343,8 +344,8 @@ describe('List', () => {
       expect(
         natural()
           .take(5)
-          .filter((v) => v === 6)
-          .size()
+          .filter(v => v === 6)
+          .size(),
       ).toEqual(0)
     })
   })
@@ -353,10 +354,10 @@ describe('List', () => {
     it('filters', () => {
       expect(
         natural()
-          .map((i) => (i % 2 === 0 ? i : 'this is not an even number'))
+          .map(i => (i % 2 === 0 ? i : 'this is not an even number'))
           .filterType((v): v is number => typeof v === 'number')
           .take(3)
-          .toArray()
+          .toArray(),
       ).toEqual([2, 4, 6])
     })
   })
@@ -364,10 +365,10 @@ describe('List', () => {
     it('works on infinite lists', () => {
       expect(
         natural()
-          .flatMap((i) => repeat(i).take(i))
+          .flatMap(i => repeat(i).take(i))
           .distinct()
           .take(5)
-          .toArray()
+          .toArray(),
       ).toEqual([1, 2, 3, 4, 5])
     })
   })
@@ -378,7 +379,7 @@ describe('List', () => {
         of([1, 2])
           .concat(() => List.natural(3))
           .take(4)
-          .toArray()
+          .toArray(),
       ).toEqual([1, 2, 3, 4])
     })
   })
@@ -389,7 +390,7 @@ describe('List', () => {
         List.repeat('v')
           .intersperse(() => ',')
           .take(4)
-          .toArray()
+          .toArray(),
       ).toEqual(['v', ',', 'v', ','])
     })
 
@@ -397,7 +398,7 @@ describe('List', () => {
       expect(
         List.of(['a', 'b', 'c'])
           .intersperse(() => ',')
-          .toArray()
+          .toArray(),
       ).toEqual(['a', ',', 'b', ',', 'c'])
     })
   })
@@ -431,7 +432,9 @@ describe('List', () => {
 
   describe('flattenOptionals', () => {
     it('flattens', () => {
-      expect(List.flattenOptionals(of([Option.none(), Option.some(1), Option.none(), Option.some(2)])).toArray()).toEqual([1, 2])
+      expect(
+        List.flattenOptionals(of([Option.none(), Option.some(1), Option.none(), Option.some(2)])).toArray(),
+      ).toEqual([1, 2])
     })
   })
 
@@ -457,16 +460,16 @@ describe('List', () => {
     it('works with empty lists', () => {
       expect(
         List.product(List.empty())
-          .map((l) => l.toArray())
-          .toArray()
+          .map(l => l.toArray())
+          .toArray(),
       ).toEqual([[]])
     })
 
     it('works on two lists', () => {
       expect(
         List.product(List.of([List.of([1, 2, 3]), List.of([1, 2])]))
-          .map((l) => l.toArray())
-          .toArray()
+          .map(l => l.toArray())
+          .toArray(),
       ).toEqual([
         [1, 1],
         [1, 2],
@@ -480,8 +483,8 @@ describe('List', () => {
     it('works on many lists', () => {
       expect(
         List.product(List.of([List.of([1, 2]), List.of([1, 2]), List.of([1, 2])]))
-          .map((l) => l.toArray())
-          .toArray()
+          .map(l => l.toArray())
+          .toArray(),
       ).toEqual([
         [1, 1, 1],
         [1, 1, 2],
@@ -498,8 +501,8 @@ describe('List', () => {
       expect(
         List.product(List.of([List.of([1, 2]), List.natural(), List.of([1, 2])]))
           .take(5)
-          .map((l) => l.toArray())
-          .toArray()
+          .map(l => l.toArray())
+          .toArray(),
       ).toEqual([
         [1, 1, 1],
         [1, 1, 2],
@@ -526,10 +529,10 @@ function testLazyOperation(op: (l: List<boolean>) => void): void {
           new Lazy(() => {
             lazy = false
             return lazy
-          })
+          }),
         ),
-        () => List.empty()
-      )
+        () => List.empty(),
+      ),
     )
     expect(lazy).toBeTruthy()
   })

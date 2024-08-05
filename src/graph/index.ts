@@ -1,5 +1,5 @@
-import { List } from '../list'
-import { Option } from '../option'
+import type { List } from '../list'
+import type { Option } from '../option'
 
 export type VertexId = string
 export type EdgeId = string

@@ -1,4 +1,5 @@
-import { GraphBuilder, Tree, List, Option } from '../../src'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { GraphBuilder, List, Option, Tree } from '..'
 
 describe('GraphBuilder', () => {
   let builder: GraphBuilder<void, void>
@@ -33,7 +34,10 @@ describe('GraphBuilder', () => {
   })
 
   describe('from full tree', () => {
-    const tree = Tree.node('1', List.of([Tree.lift('11'), Tree.node('12', List.empty()), Tree.node('13', List.of([Tree.lift('21')]))]))
+    const tree = Tree.node(
+      '1',
+      List.of([Tree.lift('11'), Tree.node('12', List.empty()), Tree.node('13', List.of([Tree.lift('21')]))]),
+    )
 
     it('builds directed graph', () => {
       const graph = GraphBuilder.fromTree(tree).toAdjacencyGraph()
@@ -43,8 +47,8 @@ describe('GraphBuilder', () => {
       expect(graph.neighbours('_.0').toArray()).toEqual([])
       expect(graph.neighbours('_.1').toArray()).toEqual([])
       expect(graph.neighbours('_.2').toArray()).toEqual(['_.2.0'])
-      expect(graph.getVertex('_.0').map((v) => v.value)).toEqual(Option.some('11'))
-      expect(graph.getVertex('_.1').map((v) => v.value)).toEqual(Option.some('12'))
+      expect(graph.getVertex('_.0').map(v => v.value)).toEqual(Option.some('11'))
+      expect(graph.getVertex('_.1').map(v => v.value)).toEqual(Option.some('12'))
     })
 
     it('builds undirected graph', () => {
@@ -55,8 +59,8 @@ describe('GraphBuilder', () => {
       expect(graph.neighbours('_.0').toArray()).toEqual(['_'])
       expect(graph.neighbours('_.1').toArray()).toEqual(['_'])
       expect(graph.neighbours('_.2').toArray()).toEqual(['_', '_.2.0'])
-      expect(graph.getVertex('_.0').map((v) => v.value)).toEqual(Option.some('11'))
-      expect(graph.getVertex('_.1').map((v) => v.value)).toEqual(Option.some('12'))
+      expect(graph.getVertex('_.0').map(v => v.value)).toEqual(Option.some('11'))
+      expect(graph.getVertex('_.1').map(v => v.value)).toEqual(Option.some('12'))
     })
   })
 })

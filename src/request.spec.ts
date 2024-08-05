@@ -1,4 +1,5 @@
-import { Async, Try, Request, Lazy, List, Option } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { Async, Lazy, List, Option, Request, Try } from '.'
 import { testMonad } from './monad.tests'
 
 const context = { some: 'context' }
@@ -13,7 +14,7 @@ describe('Request', () => {
   describe('map', () => {
     it('maps successful requests', async () => {
       const result = await one
-        .map((a) => a + 1)
+        .map(a => a + 1)
         .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
@@ -21,7 +22,7 @@ describe('Request', () => {
     })
     it('does not map failed requests', async () => {
       const result = await fail
-        .map((a) => a + 1)
+        .map(a => a + 1)
         .run(context)
         .run()
       expect(Try.isFailure(result)).toBeTruthy()
@@ -29,7 +30,7 @@ describe('Request', () => {
 
     it('works on promises', async () => {
       const result = await one
-        .map((a) => Promise.resolve(a + 1))
+        .map(a => Promise.resolve(a + 1))
         .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
@@ -50,7 +51,7 @@ describe('Request', () => {
 
   describe('with', () => {
     it('makes side effects', async () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = await Request.lift('1').with(fn).read(context).run()
       expect(fn).toHaveBeenCalledWith('1', context)
       expect(value.value).toEqual('1')
@@ -88,12 +89,12 @@ describe('Request', () => {
 
   describe('onError', () => {
     it('does not pass onError on success', async () => {
-      const onError = jest.fn()
+      const onError = vi.fn()
       await one.onError(onError).run(context).run()
       expect(onError).not.toHaveBeenCalled()
     })
     it('passes errors into onError', async () => {
-      const onError = jest.fn()
+      const onError = vi.fn()
       await fail.onError(onError).run(context).run()
       expect(onError).toHaveBeenCalledWith('failure', { some: 'context' })
     })
@@ -102,7 +103,7 @@ describe('Request', () => {
   describe('flatMap', () => {
     it('flatmaps successful requests', async () => {
       const result = await one
-        .flatMap((a) => Request.lift(a + 1))
+        .flatMap(a => Request.lift(a + 1))
         .read(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
@@ -110,7 +111,7 @@ describe('Request', () => {
     })
     it('does not flatmap failed requests', async () => {
       const result = await fail
-        .flatMap((a) => Request.lift(a + 1))
+        .flatMap(a => Request.lift(a + 1))
         .read(context)
         .run()
       expect(Try.isFailure(result)).toBeTruthy()
@@ -139,7 +140,7 @@ describe('Request', () => {
   describe('optionMap', () => {
     it('maps some requests to some', async () => {
       const result = await one
-        .optionMap((a) => Option.some(Request.lift(a)))
+        .optionMap(a => Option.some(Request.lift(a)))
         .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
@@ -148,7 +149,7 @@ describe('Request', () => {
 
     it('maps none requests to none', async () => {
       const result = await one
-        .optionMap((_a) => Option.none())
+        .optionMap(_a => Option.none())
         .run(context)
         .run()
       expect(Try.isSuccess(result)).toBeTruthy()
@@ -195,7 +196,8 @@ describe('Request', () => {
 
     it('eagerly executes all', async () => {
       const executions: string[] = []
-      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const push = (name: string): Request<unknown, void> =>
+        Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
       const result = await Request.all([push('1'), fail, push('2')])
         .read(context)
         .run()
@@ -249,7 +251,8 @@ describe('Request', () => {
   describe('chain', () => {
     it('executes all in order', async () => {
       const executions: string[] = []
-      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const push = (name: string): Request<unknown, void> =>
+        Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
       const result = await Request.chain(push('1'), push('2'), push('3')).read(context).run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(executions).toEqual(['1', '2', '3'])
@@ -257,7 +260,8 @@ describe('Request', () => {
 
     it('fails if a single request fails', async () => {
       const executions: string[] = []
-      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const push = (name: string): Request<unknown, void> =>
+        Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
       const result = await Request.chain(push('1'), fail, push('3')).read(context).run()
       expect(Try.isFailure(result)).toBeTruthy()
       expect(executions).toEqual(['1'])
@@ -267,7 +271,8 @@ describe('Request', () => {
   describe('chainN', () => {
     it('executes all in order', async () => {
       const executions: string[] = []
-      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const push = (name: string): Request<unknown, void> =>
+        Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
       const result = await Request.chainN(push('1'), push('2'), push('3')).read(context).run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(executions).toEqual(['1', '2', '3'])
@@ -275,7 +280,8 @@ describe('Request', () => {
 
     it('fails if a single request fails', async () => {
       const executions: string[] = []
-      const push = (name: string): Request<unknown, void> => Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
+      const push = (name: string): Request<unknown, void> =>
+        Request.ofLazy(Lazy.of(() => executions.push(name))).toVoid()
       const result = await Request.chainN(push('1'), fail, push('3')).read(context).run()
       expect(Try.isFailure(result)).toBeTruthy()
       expect(executions).toEqual(['1'])
@@ -286,9 +292,9 @@ describe('Request', () => {
     it('passes each result into the next request', async () => {
       const pipeline = Request.flow(
         Request.lift(1),
-        (i) => Request.lift('' + (i + 1)),
-        (i) => Request.lift(Number.parseInt(i) * 2),
-        (i) => Request.lift('' + (i + 1))
+        i => Request.lift(`${i + 1}`),
+        i => Request.lift(Number.parseInt(i) * 2),
+        i => Request.lift(`${i + 1}`),
       )
 
       const result = await pipeline.read(context).run()
@@ -300,7 +306,7 @@ describe('Request', () => {
 
   describe('retry', () => {
     it('retries with exponential backoff', async () => {
-      const delay = jest.spyOn(Async, 'delay')
+      const delay = vi.spyOn(Async, 'delay')
       const ms = 1
       let times = 0
       const failsTwice = Request.ofNative(() => (++times < 3 ? Promise.reject('failure') : Promise.resolve(42)))

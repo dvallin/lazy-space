@@ -1,4 +1,5 @@
-import { List, lazy, Lazy, Option } from '../src'
+import { describe, expect, it } from 'vitest'
+import { Lazy, List, Option, type lazy } from '.'
 
 describe('parser', () => {
   interface Section {
@@ -25,7 +26,7 @@ describe('parser', () => {
     type,
     children,
     index,
-    follow
+    follow,
   ) => List.lift({ type, children, first: index, follow })
   const buildMarker: (type: Marker['type'], index: number) => List<Result<Marker>> = (type, index) =>
     List.lift({ type, first: index, follow: index })
@@ -34,46 +35,46 @@ describe('parser', () => {
   const fail: () => List<Result> = List.empty
 
   const empty: Recognizer = (_data, index) => buildMarker('empty', index)
-  const literal: (value: string) => Recognizer = (value) => (data, index) => {
+  const literal: (value: string) => Recognizer = value => (data, index) => {
     const v = data.substring(index, index + value.length)
     return v === value ? buildLiteral(index, v) : fail()
   }
 
-  const or: (recognizers: List<Recognizer>) => Recognizer = (recognizers) => (data, index) =>
-    recognizers.flatMap((recognizer) => recognizer(data, index))
+  const or: (recognizers: List<Recognizer>) => Recognizer = recognizers => (data, index) =>
+    recognizers.flatMap(recognizer => recognizer(data, index))
 
-  const plus: (recognizer: Recognizer) => Recognizer<Node> = (recognizer) => (data, index) => {
-    const result = recognizer(data, index).flatMap((r) => buildNode('plus', List.lift(r), index, r.follow))
-    return result.concat(() => result.flatMap((a) => plus(recognizer)(data, a.follow)))
+  const plus: (recognizer: Recognizer) => Recognizer<Node> = recognizer => (data, index) => {
+    const result = recognizer(data, index).flatMap(r => buildNode('plus', List.lift(r), index, r.follow))
+    return result.concat(() => result.flatMap(a => plus(recognizer)(data, a.follow)))
   }
-  const star: (recognizer: Recognizer) => Recognizer = (recognizer) => or(List.of([plus(recognizer), empty]))
+  const star: (recognizer: Recognizer) => Recognizer = recognizer => or(List.of([plus(recognizer), empty]))
 
-  const sequence: (recognizers: List<Recognizer>) => Recognizer<Node> = (recognizers) =>
+  const sequence: (recognizers: List<Recognizer>) => Recognizer<Node> = recognizers =>
     recognizers
       .foldr(
         () => Option.none<Recognizer<Node>>(),
         (l, r) =>
           Option.some((data, index) =>
             l().unwrap(
-              (left) => {
+              left => {
                 const currentResult = r(data, index)
-                return currentResult.flatMap((result) =>
-                  left(data, result.follow).flatMap((r) =>
+                return currentResult.flatMap(result =>
+                  left(data, result.follow).flatMap(r =>
                     buildNode(
                       'sequence',
                       currentResult.concat(() => r.children),
                       index,
-                      r.follow
-                    )
-                  )
+                      r.follow,
+                    ),
+                  ),
                 )
               },
               () => {
                 const currentResult = r(data, index)
-                return currentResult.flatMap((r) => buildNode('sequence', currentResult, index, r.follow))
-              }
-            )
-          )
+                return currentResult.flatMap(r => buildNode('sequence', currentResult, index, r.follow))
+              },
+            ),
+          ),
       )
       .getOrThrow(new Error('missing'))
 
@@ -114,7 +115,9 @@ describe('parser', () => {
   })
 
   it('recognizes sequences with or', () => {
-    const complexSequence = sequence(List.of([or(List.of([literal('const'), literal('var')])), literal(' '), literal('variable')]))
+    const complexSequence = sequence(
+      List.of([or(List.of([literal('const'), literal('var')])), literal(' '), literal('variable')]),
+    )
     expect(simplify(complexSequence('const variable', 0))).toEqual([
       {
         type: 'sequence',
@@ -189,12 +192,12 @@ describe('parser', () => {
   })
 
   function lazyList<T>(...lazies: lazy<T>[]): List<T> {
-    return List.ofLazies(lazies.map((a) => new Lazy(a)))
+    return List.ofLazies(lazies.map(a => new Lazy(a)))
   }
 
   function simplify(results: List<Result>): unknown[] {
     return results
-      .map((a) => ({
+      .map(a => ({
         type: a.type,
         value: a.type === 'literal' ? a.value : undefined,
         children: a.type === 'sequence' || a.type === 'or' || a.type === 'plus' ? simplify(a.children) : undefined,

@@ -1,4 +1,5 @@
-import { Either, EitherT, List, Option } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { Either, EitherT, List, Option } from '.'
 import { testMonad } from './monad.tests'
 
 const right = Either.right
@@ -18,7 +19,7 @@ describe('either', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = left('1').with(fn)
       expect(fn).toHaveBeenCalledWith('1')
       expect(value.value).toEqual('1')
@@ -27,28 +28,28 @@ describe('either', () => {
 
   describe('flatMap', () => {
     it('binds to the left value', () => {
-      expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))
+      expect(left('1').flatMap(s => left(Number(s)))).toEqual(left(1))
     })
     it('binds to the right value', () => {
-      expect(left('1').flatMap((s) => right(new Error(s)))).toEqual(right(new Error('1')))
+      expect(left('1').flatMap(s => right(new Error(s)))).toEqual(right(new Error('1')))
     })
     it('works on right value', () => {
-      expect(right<number, string>('1').flatMap((s) => left(Number(s)))).toEqual(right('1'))
+      expect(right<number, string>('1').flatMap(s => left(Number(s)))).toEqual(right('1'))
     })
   })
 
   describe('optionMap', () => {
     it('binds to the left value', () => {
-      expect(left('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
+      expect(left('1').optionMap(s => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
     })
     it('binds to the right value', () => {
-      expect(left('1').optionMap((s) => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
+      expect(left('1').optionMap(s => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
     })
     it('binds to none', () => {
       expect(left('1').optionMap(() => Option.none())).toEqual(left(Option.none()))
     })
     it('works on right value', () => {
-      expect(right<number, string>('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(right('1'))
+      expect(right<number, string>('1').optionMap(s => Option.of(left(Number(s))))).toEqual(right('1'))
     })
   })
 
@@ -65,36 +66,36 @@ describe('either', () => {
     it('passes left value', () => {
       expect(
         left<number, number>(1).unwrap(
-          (l) => l + 1,
-          (r) => r + 2
-        )
+          l => l + 1,
+          r => r + 2,
+        ),
       ).toEqual(2)
     })
     it('passes right value', () => {
       expect(
         right<number, number>(1).unwrap(
-          (l) => l + 1,
-          (r) => r + 2
-        )
+          l => l + 1,
+          r => r + 2,
+        ),
       ).toEqual(3)
     })
   })
 
   describe('recover', () => {
     it('returns left', () => {
-      expect(left(1).recover((r) => '' + r)).toEqual(1)
+      expect(left(1).recover(r => `${r}`)).toEqual(1)
     })
     it('passes right into function', () => {
-      expect(right(1).recover((r) => '' + r)).toEqual('1')
+      expect(right(1).recover(r => `${r}`)).toEqual('1')
     })
   })
 
   describe('flatRecover', () => {
     it('returns left', () => {
-      expect(left(1).flatRecover((r) => left('' + r))).toEqual(left(1))
+      expect(left(1).flatRecover(r => left(`${r}`))).toEqual(left(1))
     })
     it('passes left into function', () => {
-      expect(right(1).flatRecover((r) => left('' + r))).toEqual(left('1'))
+      expect(right(1).flatRecover(r => left(`${r}`))).toEqual(left('1'))
     })
     it('passes right into function', () => {
       expect(right(1).flatRecover(() => right(2))).toEqual(right(2))
@@ -185,12 +186,12 @@ describe('EitherT', () => {
 
   const list = new EitherT(List.of([right<number, string>('1'), left<number, string>(2)]))
   it('maps', () => {
-    const c = list.map((s) => s + 1)
+    const c = list.map(s => s + 1)
     expect((c.value as List<Either<number, string>>).toArray()).toEqual([right('1'), left(3)])
   })
 
   it('flatmaps', () => {
-    const c = list.flatMap((s) => new EitherT(List.of([left(s + 1)])))
+    const c = list.flatMap(s => new EitherT(List.of([left(s + 1)])))
     expect((c.value as List<Either<number, string>>).toArray()).toEqual([right('1'), left(3)])
   })
 })

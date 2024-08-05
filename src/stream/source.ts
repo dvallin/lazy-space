@@ -28,7 +28,8 @@ export function repeat<T>(value: T): Source<T> {
 export function ofNative<T>(iterator: () => AsyncGenerator<T>): Source<T> {
   const generator = Lazy.of(iterator, true)
   return {
-    next: () => Async.of(generator.eval().next()).map((result) => (result.done ? Option.none() : Option.some(result.value))),
+    next: () =>
+      Async.of(generator.eval().next()).map(result => (result.done ? Option.none() : Option.some(result.value))),
     onError,
   }
 }
@@ -40,9 +41,8 @@ export function once<T>(value: T): Source<T> {
       if (!done) {
         done = true
         return Async.lift(Option.of(value))
-      } else {
-        return Async.lift(Option.none())
       }
+      return Async.lift(Option.none())
     },
     onError,
   }
@@ -59,7 +59,7 @@ export function natural(from: number): Source<number> {
 export function range(from: number, to: number): Source<number> {
   const n = natural(from)
   return {
-    next: () => n.next().map((o) => o.filter((i) => i <= to)),
+    next: () => n.next().map(o => o.filter(i => i <= to)),
     onError,
   }
 }

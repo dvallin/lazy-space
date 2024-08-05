@@ -1,4 +1,5 @@
-import { Dictionary } from '../src'
+import { describe, expect, it } from 'vitest'
+import { Dictionary } from '.'
 
 describe('Dictionary', () => {
   describe('append', () => {

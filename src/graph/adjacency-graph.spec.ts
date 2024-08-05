@@ -1,4 +1,5 @@
-import { GraphBuilder } from '../../src'
+import { describe, expect, it } from 'vitest'
+import { GraphBuilder } from '..'
 
 describe('AdjacencyGraph', () => {
   const graph = new GraphBuilder<string, string>()

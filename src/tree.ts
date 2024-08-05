@@ -1,6 +1,6 @@
-import { List } from './list'
 import { Either } from './either'
-import { Monad } from './monad'
+import { List } from './list'
+import type { Monad } from './monad'
 import { Option } from './option'
 
 export interface TreeNode<L, N> {
@@ -22,28 +22,28 @@ export class Tree<L, N = L> implements Monad<L> {
   public children(): List<Tree<L, N>> {
     return this.tree.unwrap(
       () => List.empty(),
-      (n) => n.children
+      n => n.children,
     )
   }
 
   public at(index = 0): Option<Tree<L, N>> {
     return this.tree.unwrap(
       () => Option.none(),
-      (n) => n.children.at(index)
+      n => n.children.at(index),
     )
   }
 
   public nodeValue(): Option<N> {
     return this.tree.unwrap(
       () => Option.none(),
-      (n) => Option.some(n.value)
+      n => Option.some(n.value),
     )
   }
 
   public leafValue(): Option<L> {
     return this.tree.unwrap(
-      (l) => Option.some(l.value),
-      () => Option.none()
+      l => Option.some(l.value),
+      () => Option.none(),
     )
   }
 
@@ -53,8 +53,8 @@ export class Tree<L, N = L> implements Monad<L> {
 
   public append(tree: Tree<L, N>, mergeKey: Option<N> = Option.none()): Tree<L, N> {
     return this.unwrap(
-      (l) => mergeKey.map((key) => Tree.node(key, List.of([Tree.lift(l.value), tree]))).getOrElse(this),
-      (n) => Tree.node(n.value, n.children.append(tree))
+      l => mergeKey.map(key => Tree.node(key, List.of([Tree.lift<L, N>(l.value), tree]))).getOrElse(this),
+      n => Tree.node(n.value, n.children.append(tree)),
     )
   }
 
@@ -100,17 +100,17 @@ export class Tree<L, N = L> implements Monad<L> {
 
   public static map<L, L2, N = L>(value: Tree<L, N>, f: (a: L) => L2): Tree<L2, N> {
     return value.tree.unwrap(
-      (leaf) => Tree.lift(f(leaf.value)),
-      (node) =>
+      leaf => Tree.lift(f(leaf.value)),
+      node =>
         Tree.node(
           node.value,
-          node.children.map((t) => t.map(f))
-        )
+          node.children.map(t => t.map(f)),
+        ),
     )
   }
 
   public static with<L, N = L>(value: Tree<L, N>, f: (a: L) => unknown): Tree<L, N> {
-    return value.map((a) => {
+    return value.map(a => {
       f(a)
       return a
     })
@@ -118,50 +118,50 @@ export class Tree<L, N = L> implements Monad<L> {
 
   public static flatMap<L, U, N = L>(value: Tree<L, N>, f: (a: L) => Tree<U, N>): Tree<U, N> {
     return value.tree.unwrap(
-      (leaf) => f(leaf.value),
-      (node) =>
+      leaf => f(leaf.value),
+      node =>
         Tree.node(
           node.value,
-          node.children.map((t) => t.flatMap(f))
-        )
+          node.children.map(t => t.flatMap(f)),
+        ),
     )
   }
 
   static optionMap<L, U, N = L>(value: Tree<L, N>, f: (a: L) => Option<Tree<U, N>>): Tree<Option<U>, N> {
-    return value.flatMap((a) =>
+    return value.flatMap(a =>
       f(a).unwrap(
-        (value) => value.map(Option.of),
-        () => Tree.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => Tree.lift(Option.none()),
+      ),
     )
   }
 
   public static join<L, N>(v: Tree<Tree<L, N>, N>): Tree<L, N> {
-    return v.flatMap((t) => t)
+    return v.flatMap(i => i)
   }
 
   public static bimap<L, L2, N = L, N2 = L2>(value: Tree<L, N>, f: (a: L) => L2, g: (a: N) => N2): Tree<L2, N2> {
     return value.tree.unwrap(
-      (leaf) => Tree.lift(f(leaf.value)),
-      (node) =>
+      leaf => Tree.lift(f(leaf.value)),
+      node =>
         Tree.node(
           g(node.value),
-          node.children.map((t) => t.bimap(f, g))
-        )
+          node.children.map(t => t.bimap(f, g)),
+        ),
     )
   }
 
   public static traverse<L, N = L>(tree: Tree<L, N>): List<Either<L, N>> {
     return tree.tree.unwrap(
-      (leaf) => List.lift(Either.left<L, N>(leaf.value)),
-      (node) => List.lift(Either.right<L, N>(node.value)).concat(() => node.children.flatMap((t) => t.traverse()))
+      leaf => List.lift(Either.left<L, N>(leaf.value)),
+      node => List.lift(Either.right<L, N>(node.value)).concat(() => node.children.flatMap(t => t.traverse())),
     )
   }
 
   public static leafs<L, N = L>(tree: Tree<L, N>): List<L> {
     return tree.tree.unwrap(
-      (leaf) => List.lift(leaf.value),
-      (node) => node.children.flatMap((t) => t.leafs())
+      leaf => List.lift(leaf.value),
+      node => node.children.flatMap(t => t.leafs()),
     )
   }
 
@@ -174,7 +174,8 @@ export class Tree<L, N = L> implements Monad<L> {
       .map(([k, v]) => {
         if (typeof v === 'object') {
           return Tree.fromObject(v, k)
-        } else if (
+        }
+        if (
           typeof v === 'string' ||
           typeof v === 'number' ||
           typeof v === 'symbol' ||

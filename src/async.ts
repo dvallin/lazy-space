@@ -1,8 +1,8 @@
-import { Try } from './try'
-import { Monad } from './monad'
 import { Lazy } from './lazy'
 import { List } from './list'
+import type { Monad } from './monad'
 import { Option } from './option'
+import { Try } from './try'
 
 export type async<T> = Promise<T>
 
@@ -17,12 +17,12 @@ export class Async<T> implements Monad<T> {
     return Async.with(this, f)
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public recover<U>(f: (error: any) => U | Promise<U>): Async<T | U> {
     return Async.recover(this, f)
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public onError(f: (error: any) => never): Async<T> {
     return Async.onError(this, f)
   }
@@ -39,7 +39,7 @@ export class Async<T> implements Monad<T> {
     return Async.optionMap(this, f)
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public flatRecover<U>(f: (error: any) => Async<U>): Async<T | U> {
     return Async.flatRecover(this, f)
   }
@@ -81,7 +81,7 @@ export class Async<T> implements Monad<T> {
   }
 
   public static delay(ms = 0): Async<void> {
-    return new Async(new Promise((resolve) => setTimeout(resolve, ms)))
+    return new Async(new Promise(resolve => setTimeout(resolve, ms)))
   }
 
   public static throttle(ms: number): Lazy<Async<void>> {
@@ -91,9 +91,8 @@ export class Async<T> implements Monad<T> {
       if (last + ms < now) {
         last = now
         return Async.empty()
-      } else {
-        return Async.reject('throttled')
       }
+      return Async.reject('throttled')
     })
   }
 
@@ -102,12 +101,12 @@ export class Async<T> implements Monad<T> {
     return Lazy.of(() => {
       clearTimeout(timeout)
       return Async.of(
-        new Promise((resolve) => {
+        new Promise(resolve => {
           timeout = setTimeout(() => {
             clearTimeout(timeout)
             resolve()
           }, ms)
-        })
+        }),
       )
     })
   }
@@ -121,25 +120,25 @@ export class Async<T> implements Monad<T> {
   }
 
   public static with<S>(val: Async<S>, f: (a: S) => unknown): Async<S> {
-    return val.map((a) => {
+    return val.map(a => {
       f(a)
       return a
     })
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public static recover<S, U>(val: Async<S>, f: (error: any) => U | Promise<U>): Async<S | U> {
     return new Async(val.promise.catch(f))
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public static onError<S>(val: Async<S>, f: (error: any) => never): Async<S> {
     return new Async(val.promise.catch(f))
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public static flatRecover<S, U>(val: Async<S>, f: (error: any) => Async<U>): Async<S | U> {
-    return val.recover((e) => f(e).promise)
+    return val.recover(e => f(e).promise)
   }
 
   public static finally<S>(val: Async<S>, f: () => unknown): Async<S> {
@@ -151,24 +150,24 @@ export class Async<T> implements Monad<T> {
   }
 
   public static flatMap<S, T>(val: Async<S>, f: (a: S) => Async<T>): Async<T> {
-    return Async.of(val.promise.then((a) => f(a).promise))
+    return Async.of(val.promise.then(a => f(a).promise))
   }
 
   public static optionMap<S, T>(val: Async<S>, f: (a: S) => Option<Async<T>>): Async<Option<T>> {
-    return val.flatMap((a) =>
+    return val.flatMap(a =>
       f(a).unwrap(
-        (value) => value.map(Option.of),
-        () => Async.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => Async.lift(Option.none()),
+      ),
     )
   }
 
   public static join<T>(val: Async<Async<T>>): Async<T> {
-    return new Async(val.promise.then((i) => i.promise))
+    return new Async(val.promise.then(i => i.promise))
   }
 
   public static race<T>(values: Async<T>[]): Async<T> {
-    return new Async(Promise.race(values.map((v) => v.promise)))
+    return new Async(Promise.race(values.map(v => v.promise)))
   }
 
   public static any<T>(values: Async<T>[]): Async<T> {
@@ -176,9 +175,9 @@ export class Async<T> implements Monad<T> {
       new Promise((resolve, reject) => {
         let resolved = false
         let resolvable = values.length
-        values.map((a) =>
+        values.map(a =>
           a
-            .map((v) => {
+            .map(v => {
               if (!resolved) {
                 resolved = true
                 resolve(v)
@@ -188,9 +187,9 @@ export class Async<T> implements Monad<T> {
               if (--resolvable === 0) {
                 reject(new Error('all rejected'))
               }
-            })
+            }),
         )
-      })
+      }),
     )
   }
 
@@ -200,13 +199,18 @@ export class Async<T> implements Monad<T> {
 
   public static zip<T1, T2>(value1: Async<T1>, value2: Async<T2>): Async<[T1, T2]>
   public static zip<T1, T2, T3>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>): Async<[T1, T2, T3]>
-  public static zip<T1, T2, T3, T4>(value1: Async<T1>, value2: Async<T2>, value3: Async<T3>, value4: Async<T4>): Async<[T1, T2, T3, T4]>
+  public static zip<T1, T2, T3, T4>(
+    value1: Async<T1>,
+    value2: Async<T2>,
+    value3: Async<T3>,
+    value4: Async<T4>,
+  ): Async<[T1, T2, T3, T4]>
   public static zip<T1, T2, T3, T4, T5>(
     value1: Async<T1>,
     value2: Async<T2>,
     value3: Async<T3>,
     value4: Async<T4>,
-    value5: Async<T5>
+    value5: Async<T5>,
   ): Async<[T1, T2, T3, T4, T5]>
   public static zip<T1, T2, T3, T4, T5, T6>(
     value1: Async<T1>,
@@ -214,7 +218,7 @@ export class Async<T> implements Monad<T> {
     value3: Async<T3>,
     value4: Async<T4>,
     value5: Async<T5>,
-    value6: Async<T6>
+    value6: Async<T6>,
   ): Async<[T1, T2, T3, T4, T5, T6]>
   public static zip<T1, T2, T3, T4, T5, T6, T7>(
     value1: Async<T1>,
@@ -223,7 +227,7 @@ export class Async<T> implements Monad<T> {
     value4: Async<T4>,
     value5: Async<T5>,
     value6: Async<T6>,
-    value7: Async<T7>
+    value7: Async<T7>,
   ): Async<[T1, T2, T3, T4, T5, T6, T7]>
   public static zip<T1, T2, T3, T4, T5, T6, T7, T8>(
     value1: Async<T1>,
@@ -233,7 +237,7 @@ export class Async<T> implements Monad<T> {
     value5: Async<T5>,
     value6: Async<T6>,
     value7: Async<T7>,
-    value8: Async<T8>
+    value8: Async<T8>,
   ): Async<[T1, T2, T3, T4, T5, T6, T7, T8]>
   public static zip<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     value1: Async<T1>,
@@ -244,20 +248,20 @@ export class Async<T> implements Monad<T> {
     value6: Async<T6>,
     value7: Async<T7>,
     value8: Async<T8>,
-    value9: Async<T9>
+    value9: Async<T9>,
   ): Async<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>
   public static zip(...args: Async<unknown>[]): Async<unknown[]> {
-    return Async.all(args.filter((a) => a !== undefined))
+    return Async.all(args.filter(a => a !== undefined))
   }
 
   public static all<T>(values: Async<T>[]): Async<T[]> {
-    return new Async(Promise.all(values.map((v) => v.promise)))
+    return new Async(Promise.all(values.map(v => v.promise)))
   }
 
   public static fold<T>(values: List<Async<T>>): Async<List<T>> {
     return values.foldr(
       () => Async.resolve(List.empty()),
-      (l, r) => r.flatMap((v) => l().map((list) => list.prepend(v)))
+      (l, r) => r.flatMap(v => l().map(list => list.prepend(v))),
     )
   }
 
@@ -269,9 +273,8 @@ export class Async<T> implements Monad<T> {
     const [head, ...tail] = requests
     if (tail.length > 0) {
       return Async.flatMap(head.eval(), () => Async.chain(...tail))
-    } else {
-      return head.eval()
     }
+    return head.eval()
   }
 
   public static async run<T>(val: Async<T>): Promise<Try<T>> {
@@ -281,12 +284,15 @@ export class Async<T> implements Monad<T> {
       if (error === undefined || typeof error === 'string') {
         return Try.failure(new Error(error))
       }
-      return Try.failure(error)
+      if(error instanceof Error) {
+        return Try.failure(error)
+      }
+      return Try.failure(new Error("unkown error"))
     }
   }
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public static execute<T>(executor: (resolve: (v: T) => void, reject: (e?: any) => void) => void): Async<T> {
-    return new Async(new Promise((resolve, reject) => Try.run(() => executor(resolve, reject)).recover((e) => reject(e))))
+    return new Async(new Promise((resolve, reject) => Try.run(() => executor(resolve, reject)).recover(e => reject(e))))
   }
 }

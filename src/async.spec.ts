@@ -1,36 +1,35 @@
-import { Async, Try, Lazy, List, Option } from '../src'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Async, Lazy, List, Option, Try } from '.'
 import { testMonad } from './monad.tests'
-
-import * as Mockdate from 'mockdate'
 
 describe('Async', () => {
   testMonad(Async.empty(), async (a, b) => expect(await a.promise).toEqual(await b.promise))
 
   describe('map', () => {
     it('maps on resolve', () => {
-      const value = Async.resolve('1').map((s) => Number(s))
+      const value = Async.resolve('1').map(s => Number(s))
       return expect(value.promise).resolves.toEqual(1)
     })
 
     it('maps twice', () => {
       const value = Async.resolve('1')
-        .map((s) => Number(s))
-        .map((s) => s + 1)
+        .map(s => Number(s))
+        .map(s => s + 1)
       return expect(value.promise).resolves.toEqual(2)
     })
 
     it('maps empty', () => {
-      const value = Async.empty().map((s) => Number(s))
+      const value = Async.empty().map(s => Number(s))
       return expect(value.promise).resolves.toEqual(Number.NaN)
     })
 
     it('does not map on reject', () => {
-      const value = Async.reject('1').map((s) => Number(s))
+      const value = Async.reject('1').map(s => Number(s))
       return expect(value.promise).rejects.toEqual('1')
     })
 
     it('works on promises', () => {
-      const value = Async.resolve('1').map((s) => Promise.resolve(Number(s)))
+      const value = Async.resolve('1').map(s => Promise.resolve(Number(s)))
       return expect(value.promise).resolves.toEqual(1)
     })
 
@@ -44,7 +43,7 @@ describe('Async', () => {
 
   describe('with', () => {
     it('makes side effects', async () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = await Async.resolve('1').with(fn).run()
       expect(fn).toHaveBeenCalledWith('1')
       expect(value.value).toEqual('1')
@@ -55,14 +54,14 @@ describe('Async', () => {
     it('maps on reject', () => {
       const value = Async.reject('1')
         .recover(() => '1')
-        .map((s) => Number(s))
+        .map(s => Number(s))
       return expect(value.promise).resolves.toEqual(1)
     })
 
     it('works on promises', () => {
       const value = Async.reject('1')
         .recover(() => '1')
-        .map((s) => Promise.resolve(Number(s)))
+        .map(s => Promise.resolve(Number(s)))
       return expect(value.promise).resolves.toEqual(1)
     })
   })
@@ -71,32 +70,32 @@ describe('Async', () => {
     it('does not recover if resolved', () => {
       const value = Async.resolve('1')
         .flatRecover(() => Async.reject('2'))
-        .map((s) => Number(s))
+        .map(s => Number(s))
       return expect(value.promise).resolves.toEqual(1)
     })
 
     it('flatmaps on reject', () => {
       const value = Async.reject('1')
         .flatRecover(() => Async.resolve('2'))
-        .map((s) => Number(s))
+        .map(s => Number(s))
       return expect(value.promise).resolves.toEqual(2)
     })
 
     it('flatmaps on reject into new reject', () => {
       const value = Async.reject('1')
         .flatRecover(() => Async.reject('2'))
-        .map((s) => Number(s))
+        .map(s => Number(s))
       return expect(value.promise).rejects.toEqual('2')
     })
   })
 
   describe('finally', () => {
     it('all finallies are invoked', async () => {
-      const fn1 = jest.fn()
-      const fn2 = jest.fn()
+      const fn1 = vi.fn()
+      const fn2 = vi.fn()
       await Async.resolve('1')
         .finally(fn1)
-        .map((s) => Number(s))
+        .map(s => Number(s))
         .finally(fn2)
         .run()
       expect(fn1).toHaveBeenCalled()
@@ -104,11 +103,11 @@ describe('Async', () => {
     })
 
     it('all finallies are invoked even on rejection', async () => {
-      const fn1 = jest.fn()
-      const fn2 = jest.fn()
+      const fn1 = vi.fn()
+      const fn2 = vi.fn()
       await Async.reject('1')
         .finally(fn1)
-        .map((s) => Number(s))
+        .map(s => Number(s))
         .finally(fn2)
         .run()
       expect(fn1).toHaveBeenCalled()
@@ -142,24 +141,24 @@ describe('Async', () => {
 
   describe('flatMap', () => {
     it('flatmaps on resolve', () => {
-      const value = Async.resolve('1').flatMap((s) => Async.resolve(Number(s)))
+      const value = Async.resolve('1').flatMap(s => Async.resolve(Number(s)))
       return expect(value.promise).resolves.toEqual(1)
     })
 
     it('flattens rejects', () => {
-      const value = Async.resolve('1').flatMap((s) => Async.reject(Number(s)))
+      const value = Async.resolve('1').flatMap(s => Async.reject(Number(s)))
       return expect(value.promise).rejects.toEqual(1)
     })
 
     it('does not flatmap on reject', () => {
-      const value = Async.reject('1').flatMap((s) => Async.resolve(Number(s)))
+      const value = Async.reject('1').flatMap(s => Async.resolve(Number(s)))
       return expect(value.promise).rejects.toEqual('1')
     })
   })
 
   describe('optionMap', () => {
     it('maps on resolve', () => {
-      const value = Async.resolve('1').optionMap((s) => Option.of(Async.resolve(Number(s))))
+      const value = Async.resolve('1').optionMap(s => Option.of(Async.resolve(Number(s))))
       return expect(value.promise).resolves.toEqual(Option.some(1))
     })
 
@@ -213,9 +212,9 @@ describe('Async', () => {
 
     it('unwraps thrown errors as rejections', async () => {
       const value = await Async.lift(
-        new Promise((_r) => {
+        new Promise(_r => {
           throw error
-        })
+        }),
       ).run()
       expect(Try.isSuccess(value)).toBeFalsy()
       expect(value).toEqual(Try.failure(error))
@@ -223,13 +222,14 @@ describe('Async', () => {
   })
 
   describe('execute', () => {
-    it('resolves', () => expect(Async.execute((resolve) => resolve(1)).promise).resolves.toEqual(1))
-    it('rejectes', () => expect(Async.execute((_, reject) => reject(new Error('error'))).promise).rejects.toEqual(new Error('error')))
+    it('resolves', () => expect(Async.execute(resolve => resolve(1)).promise).resolves.toEqual(1))
+    it('rejectes', () =>
+      expect(Async.execute((_, reject) => reject(new Error('error'))).promise).rejects.toEqual(new Error('error')))
     it('catches exceptions', () =>
       expect(
         Async.execute(() => {
           throw new Error('error')
-        }).promise
+        }).promise,
       ).rejects.toEqual(new Error('error')))
   })
 
@@ -245,7 +245,9 @@ describe('Async', () => {
 
   describe('all', () => {
     it('returns array of all resolving if all resolve', () => {
-      return expect(Async.all([Async.resolve(1), Async.resolve(2), Async.resolve(3)]).promise).resolves.toEqual([1, 2, 3])
+      return expect(Async.all([Async.resolve(1), Async.resolve(2), Async.resolve(3)]).promise).resolves.toEqual([
+        1, 2, 3,
+      ])
     })
 
     it('returns first rejecting', () => {
@@ -276,7 +278,7 @@ describe('Async', () => {
       const result = await Async.chain(
         Lazy.of(() => push('1')),
         Lazy.of(() => push('2')),
-        Lazy.of(() => push('3'))
+        Lazy.of(() => push('3')),
       ).run()
       expect(Try.isSuccess(result)).toBeTruthy()
       expect(executions).toEqual(['1', '2', '3'])
@@ -288,7 +290,7 @@ describe('Async', () => {
       const result = await Async.chain(
         Lazy.of(() => push('1')),
         Lazy.of(() => Async.reject('error')),
-        Lazy.of(() => push('3'))
+        Lazy.of(() => push('3')),
       ).run()
       expect(Try.isFailure(result)).toBeTruthy()
       expect(executions).toEqual(['1'])
@@ -313,9 +315,9 @@ describe('Async', () => {
 
   describe('delay', () => {
     it('delays execution', async () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       const promise = Async.delay().map(() => 42).promise
-      jest.runAllTimers()
+      vi.runAllTimers()
       const result = await promise
       expect(result).toEqual(42)
     })
@@ -324,13 +326,13 @@ describe('Async', () => {
   describe('debounce', () => {
     it('debounces execution', async () => {
       const d = Async.debounce(10)
-      jest.useFakeTimers()
-      const callback = jest.fn()
+      vi.useFakeTimers()
+      const callback = vi.fn()
       d.eval().map(callback)
       d.eval().map(callback)
 
       const promise = d.eval().map(callback).promise
-      jest.runAllTimers()
+      vi.runAllTimers()
       await promise
 
       expect(callback).toHaveBeenCalledTimes(1)
@@ -338,17 +340,24 @@ describe('Async', () => {
   })
 
   describe('throttle', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     it('throttles execution', async () => {
-      Mockdate.set(new Date('2020-07-27T11:44:40.293Z'))
+      vi.setSystemTime(new Date('2020-07-27T11:44:40.293Z'))
       const d = Async.throttle(10)
-      const callback = jest.fn()
+      const callback = vi.fn()
 
       const first = await d.eval().map(callback).run()
 
-      Mockdate.set(new Date('2020-07-27T11:44:40.303Z'))
+      vi.setSystemTime(new Date('2020-07-27T11:44:40.303Z'))
       const second = await d.eval().map(callback).run()
 
-      Mockdate.set(new Date('2020-07-27T11:44:40.304Z'))
+      vi.setSystemTime(new Date('2020-07-27T11:44:40.304Z'))
       const third = await d.eval().map(callback).run()
 
       expect(first.isSuccess()).toBeTruthy()

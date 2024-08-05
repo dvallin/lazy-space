@@ -3,7 +3,7 @@
     "target": "ES6",
     "module": "ES2015",
     "moduleResolution": "node",
-    "outDir": "lib",
+    "outDir": "dist",
     "declaration": true,
     "sourceMap": true,
     "removeComments": true,
@@ -18,5 +18,9 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "downlevelIteration": true
-  }
+  },
+  "files": [
+      "./index.ts"
+  ],
+  "exclude": ["node_modules"]
 }

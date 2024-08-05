@@ -19,7 +19,7 @@ export class Dictionary<T, S extends string = string> {
 
   public static append<T, S extends string>(dict: Dictionary<T, S>, key: S, value: T): Dictionary<T, S> {
     return new Dictionary(
-      dict.state.map((s) => {
+      dict.state.map(s => {
         const newState = { ...s }
         const list = newState[key]
         if (list !== undefined) {
@@ -28,7 +28,7 @@ export class Dictionary<T, S extends string = string> {
           newState[key] = List.lift(value)
         }
         return newState
-      })
+      }),
     )
   }
 

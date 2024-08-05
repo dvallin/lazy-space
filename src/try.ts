@@ -1,11 +1,14 @@
-import { Left, Right } from './either'
-import { Monad } from './monad'
+import type { Left, Right } from './either'
 import { Identity } from './identity'
+import type { Monad } from './monad'
 import { Option } from './option'
 
 export type tryable<T> = T | Error
 export class Try<T> implements Monad<T> {
-  public constructor(public readonly type: 'left' | 'right', public readonly value: tryable<T>) {}
+  public constructor(
+    public readonly type: 'left' | 'right',
+    public readonly value: tryable<T>,
+  ) {}
 
   public map<U>(f: (a: T) => U): Try<U> {
     return Try.map(this, f)
@@ -125,24 +128,24 @@ export class Try<T> implements Monad<T> {
 
   public static result<T>(value: Try<T>): Option<T> {
     return value.unwrap(
-      (s) => Option.some(s),
-      () => Option.none()
+      s => Option.some(s),
+      () => Option.none(),
     )
   }
 
   public static error<T>(value: Try<T>): Option<Error> {
     return value.unwrap(
       () => Option.none(),
-      (e) => Option.some(e)
+      e => Option.some(e),
     )
   }
 
   public static get<T>(val: Try<T>): T {
     return val.unwrap(
-      (v) => v,
-      (e) => {
+      v => v,
+      e => {
         throw e
-      }
+      },
     )
   }
 
@@ -159,21 +162,20 @@ export class Try<T> implements Monad<T> {
   public static unwrap<T, U, V>(val: Try<T>, f: (s: T) => U, g: (e: Error) => V): U | V {
     if (val.isLeft()) {
       return f(val.value)
-    } else {
-      return g(val.value as Error)
     }
+    return g(val.value as Error)
   }
 
   public static map<T, U>(val: Try<T>, f: (a: T) => U): Try<U> {
     return Try.unwrap(
       val,
-      (u) => Try.run(() => f(u)),
-      (e) => Try.right(e)
+      u => Try.run(() => f(u)),
+      e => Try.right(e),
     )
   }
 
   public static with<T>(val: Try<T>, f: (a: T) => unknown): Try<T> {
-    return val.map((a) => {
+    return val.map(a => {
       f(a)
       return a
     })
@@ -182,41 +184,41 @@ export class Try<T> implements Monad<T> {
   public static flatMap<T, U>(val: Try<T>, f: (s: T) => Try<U>): Try<U> {
     return Try.unwrap(
       val,
-      (u) => f(u),
-      (e) => Try.right(e)
+      u => f(u),
+      e => Try.right(e),
     )
   }
 
   static optionMap<T, U>(value: Try<T>, f: (a: T) => Option<Try<U>>): Try<Option<U>> {
-    return value.flatMap((a) =>
+    return value.flatMap(a =>
       f(a).unwrap(
-        (value) => value.map(Option.of),
-        () => Try.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => Try.lift(Option.none()),
+      ),
     )
   }
 
   public static join<T>(val: Try<Try<T>>): Try<T> {
     return Try.unwrap(
       val,
-      (u) => u,
-      (e) => Try.right(e)
+      u => u,
+      e => Try.right(e),
     )
   }
 
   public static recover<S, U>(val: Try<S>, f: (error: Error) => U): S | U {
     return Try.unwrap(
       val,
-      (u) => u,
-      (e) => f(e)
+      u => u,
+      e => f(e),
     )
   }
 
   public static flatRecover<S, U>(val: Try<S>, f: (error: Error) => Try<U>): Try<S | U> {
     return Try.unwrap(
       val,
-      (u) => Try.left(u),
-      (e) => f(e)
+      u => Try.left(u),
+      e => f(e),
     )
   }
 
@@ -227,7 +229,7 @@ export class Try<T> implements Monad<T> {
           f(val.value)
         }
         return val
-      })
+      }),
     )
   }
 
@@ -276,7 +278,7 @@ export class Try<T> implements Monad<T> {
   }
 
   public static filterType<T, S extends T = T>(val: Try<T>, f: (a: T) => a is S): Try<S> {
-    return val.flatMap((v) => (f(v) ? Try.success(v) : Try.failure(new Error('filtered out'))))
+    return val.flatMap(v => (f(v) ? Try.success(v) : Try.failure(new Error('filtered out'))))
   }
 
   public static filter<T>(val: Try<T>, f: (a: T) => boolean): Try<T> {
@@ -290,7 +292,10 @@ export class Try<T> implements Monad<T> {
       if (error === undefined || typeof error === 'string') {
         return Try.failure(new Error(error))
       }
-      return Try.failure(error)
+      if(error instanceof Error) {
+        return Try.failure(error)
+      }
+      return Try.failure(new Error("unkown error"))
     }
   }
 }
@@ -315,18 +320,18 @@ export class TryT<T> implements Monad<T> {
   }
 
   public static map<T, U>(t: TryT<T>, f: (a: T) => U): TryT<U> {
-    return new TryT(t.value.map((m) => m.map(f))) as TryT<U>
+    return new TryT(t.value.map(m => m.map(f))) as TryT<U>
   }
 
   public static flatMap<T, U>(t: TryT<T>, f: (a: T) => TryT<U>): TryT<U> {
     return new TryT(
       t.value.flatMap(
-        (v) =>
+        v =>
           v.unwrap(
-            (s) => f(s).value,
-            (e) => t.value.lift(v.liftRight(e))
-          ) as Monad<Try<U>>
-      )
+            s => f(s).value,
+            e => t.value.lift(v.liftRight(e)),
+          ) as Monad<Try<U>>,
+      ),
     )
   }
 
@@ -335,6 +340,6 @@ export class TryT<T> implements Monad<T> {
   }
 
   public static join<T>(v: TryT<TryT<T>>): TryT<T> {
-    return v.flatMap((i) => i)
+    return v.flatMap(i => i)
   }
 }

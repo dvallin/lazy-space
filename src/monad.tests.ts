@@ -1,8 +1,9 @@
-import { Monad } from '../src'
+import { describe, it } from 'vitest'
+import type { Monad } from '.'
 
 export function testMonad<A extends Monad<unknown>>(monad: A, monadEquals: (m: A, n: A) => Promise<void>): void {
-  const f: (n: string) => Monad<number> = (s) => m.lift(Number(s))
-  const g: (n: number) => Monad<string> = (s) => m.lift(String(s))
+  const f: (n: string) => Monad<number> = s => m.lift(Number(s))
+  const g: (n: number) => Monad<string> = s => m.lift(String(s))
 
   const m = monad.lift('2')
 
@@ -10,13 +11,13 @@ export function testMonad<A extends Monad<unknown>>(monad: A, monadEquals: (m: A
     it('has left identity', () => equals(m.flatMap(f), f('2')))
     it('has right identity', () =>
       equals(
-        m.flatMap((a) => m.lift(a)),
-        m
+        m.flatMap(a => m.lift(a)),
+        m,
       ))
     it('has associativity', () =>
       equals(
         m.flatMap(f).flatMap(g),
-        m.flatMap((x) => f(x).flatMap(g))
+        m.flatMap(x => f(x).flatMap(g)),
       ))
   })
 

@@ -1,4 +1,5 @@
-import { GraphBuilder, Visit, List, GraphQueries } from '../../src'
+import { describe, expect, it } from 'vitest'
+import { GraphBuilder, GraphQueries, List, type Visit } from '..'
 
 const graph = new GraphBuilder<string, string>()
   .addVertex('A', 'vertex1')
@@ -26,7 +27,7 @@ describe('pathQuery', () => {
     })
 
     it('detects if an infinite path does not exist', () => {
-      const path = queries.path(List.natural().map((i) => ['A', 'B', 'D'][i - 1]))
+      const path = queries.path(List.natural().map(i => ['A', 'B', 'D'][i - 1]))
       expect(path.exists()).toBeFalsy()
     })
   })
@@ -36,8 +37,8 @@ describe('pathQuery', () => {
       expect(
         path
           .vertices()
-          .map((v) => v.value)
-          .toArray()
+          .map(v => v.value)
+          .toArray(),
       ).toEqual(['vertex1', 'vertex2', 'vertex3'])
     })
   })
@@ -47,8 +48,8 @@ describe('pathQuery', () => {
       expect(
         path
           .edges()
-          .map((e) => e.value)
-          .toArray()
+          .map(e => e.value)
+          .toArray(),
       ).toEqual(['edge1', 'edge2'])
     })
   })
@@ -80,14 +81,14 @@ describe('bfsQuery', () => {
 
 function getTree(query: List<Visit>): string[] {
   return query
-    .filter((v) => v.type === 'tree')
-    .map((v) => v.vertex)
+    .filter(v => v.type === 'tree')
+    .map(v => v.vertex)
     .toArray()
 }
 
 function getCycles(query: List<Visit>): string[][] {
   return query
-    .filter((v) => v.type === 'cycle')
-    .map((v) => v.path.append(v.vertex).toArray())
+    .filter(v => v.type === 'cycle')
+    .map(v => v.path.append(v.vertex).toArray())
     .toArray()
 }
