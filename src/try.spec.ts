@@ -1,4 +1,5 @@
-import { Try, TryT, List, Option } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { List, Option, Try, TryT } from '.'
 import { testMonad } from './monad.tests'
 
 const right = Try.right
@@ -20,23 +21,23 @@ describe('try', () => {
           .map(() => {
             throw new Error('')
           })
-          .isFailure()
+          .isFailure(),
       ).toBeTruthy()
     })
   })
 
   describe('finally and onError', () => {
     it('works with left value', () => {
-      const f = jest.fn()
-      const g = jest.fn()
+      const f = vi.fn()
+      const g = vi.fn()
       left('1').map(Number).onError(f).finally(g)
       expect(f).not.toHaveBeenCalled()
       expect(g).toHaveBeenCalledWith()
     })
 
     it('works with right value', () => {
-      const f = jest.fn()
-      const g = jest.fn()
+      const f = vi.fn()
+      const g = vi.fn()
       right(new Error('error')).map(Number).onError(f).finally(g)
       expect(f).toHaveBeenCalledWith(new Error('error'))
       expect(g).toHaveBeenCalled()
@@ -59,7 +60,7 @@ describe('try', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = left('1').with(fn)
       expect(fn).toHaveBeenCalledWith('1')
       expect(value.value).toEqual('1')
@@ -68,28 +69,28 @@ describe('try', () => {
 
   describe('flatMap', () => {
     it('binds to the left value', () => {
-      expect(left('1').flatMap((s) => left(Number(s)))).toEqual(left(1))
+      expect(left('1').flatMap(s => left(Number(s)))).toEqual(left(1))
     })
     it('binds to the right value', () => {
-      expect(left('1').flatMap((s) => right(new Error(s)))).toEqual(right(new Error('1')))
+      expect(left('1').flatMap(s => right(new Error(s)))).toEqual(right(new Error('1')))
     })
     it('works on right value', () => {
-      expect(right(new Error('1')).flatMap((s) => left(Number(s)))).toEqual(right(new Error('1')))
+      expect(right(new Error('1')).flatMap(s => left(Number(s)))).toEqual(right(new Error('1')))
     })
   })
 
   describe('optionMap', () => {
     it('binds to the left value', () => {
-      expect(left('1').optionMap((s) => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
+      expect(left('1').optionMap(s => Option.of(left(Number(s))))).toEqual(Option.of(left(1)))
     })
     it('binds to the right value', () => {
-      expect(left('1').optionMap((s) => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
+      expect(left('1').optionMap(s => Option.of(right(new Error(s))))).toEqual(right(new Error('1')))
     })
     it('binds to none', () => {
       expect(left('1').optionMap(() => Option.none())).toEqual(left(Option.none()))
     })
     it('works on right value', () => {
-      expect(right(new Error('1')).optionMap((s) => Option.of(left(Number(s))))).toEqual(right(new Error('1')))
+      expect(right(new Error('1')).optionMap(s => Option.of(left(Number(s))))).toEqual(right(new Error('1')))
     })
   })
   describe('join', () => {
@@ -105,39 +106,41 @@ describe('try', () => {
     it('passes left value', () => {
       expect(
         left<number>(1).unwrap(
-          (l) => l + 1,
-          (e) => e.message
-        )
+          l => l + 1,
+          e => e.message,
+        ),
       ).toEqual(2)
     })
     it('passes right value', () => {
       expect(
         right<number>(new Error('message')).unwrap(
-          (l) => l + 1,
-          (e) => e.message
-        )
+          l => l + 1,
+          e => e.message,
+        ),
       ).toEqual('message')
     })
   })
 
   describe('recover', () => {
     it('returns left', () => {
-      expect(left(1).recover((r) => '' + r)).toEqual(1)
+      expect(left(1).recover(r => `${r}`)).toEqual(1)
     })
     it('passes right into function', () => {
-      expect(right(new Error('message')).recover((e) => e.message)).toEqual('message')
+      expect(right(new Error('message')).recover(e => e.message)).toEqual('message')
     })
   })
 
   describe('flatRecover', () => {
     it('returns left', () => {
-      expect(left(1).flatRecover((e) => left(e.message))).toEqual(left(1))
+      expect(left(1).flatRecover(e => left(e.message))).toEqual(left(1))
     })
     it('passes left into function', () => {
-      expect(right(new Error('message')).flatRecover((e) => left(e.message))).toEqual(left('message'))
+      expect(right(new Error('message')).flatRecover(e => left(e.message))).toEqual(left('message'))
     })
     it('passes right into function', () => {
-      expect(right(new Error('message')).flatRecover(() => right(new Error('message2')))).toEqual(right(new Error('message2')))
+      expect(right(new Error('message')).flatRecover(() => right(new Error('message2')))).toEqual(
+        right(new Error('message2')),
+      )
     })
   })
 
@@ -224,18 +227,18 @@ describe('try', () => {
     it('filters', () => {
       expect(
         Try.of('v')
-          .filter((v) => v === 'v')
-          .isSuccess()
+          .filter(v => v === 'v')
+          .isSuccess(),
       ).toBeTruthy()
       expect(
         Try.of('u')
-          .filter((v) => v === 'v')
-          .isFailure()
+          .filter(v => v === 'v')
+          .isFailure(),
       ).toBeTruthy()
       expect(
         Try.failure(new Error('error'))
-          .filter((v) => v === 'v')
-          .isFailure()
+          .filter(v => v === 'v')
+          .isFailure(),
       ).toBeTruthy()
     })
   })
@@ -245,17 +248,17 @@ describe('try', () => {
       expect(
         Try.of<string | number>('v')
           .filterType((v): v is string => typeof v === 'string')
-          .isSuccess()
+          .isSuccess(),
       ).toBeTruthy()
       expect(
         Try.of<string | number>(1)
           .filterType((v): v is string => typeof v === 'string')
-          .isFailure()
+          .isFailure(),
       ).toBeTruthy()
       expect(
         Try.of<string | number>(new Error('error'))
           .filterType((v): v is string => typeof v === 'string')
-          .isFailure()
+          .isFailure(),
       ).toBeTruthy()
     })
   })
@@ -266,12 +269,12 @@ describe('TryT', () => {
 
   const list = new TryT(List.of([right<number>(new Error('message')), left(2)]))
   it('maps', () => {
-    const c = list.map((s) => s + 1)
+    const c = list.map(s => s + 1)
     expect((c.value as List<Try<number>>).toArray()).toEqual([right(new Error('message')), left(3)])
   })
 
   it('flatmaps', () => {
-    const c = list.flatMap((s) => new TryT(List.of([left(s + 1)])))
+    const c = list.flatMap(s => new TryT(List.of([left(s + 1)])))
     expect((c.value as List<Try<number>>).toArray()).toEqual([right(new Error('message')), left(3)])
   })
 

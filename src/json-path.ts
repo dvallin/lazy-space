@@ -1,5 +1,5 @@
-import { Option } from './option'
 import { List } from './list'
+import { Option } from './option'
 
 interface Key {
   key: string
@@ -12,7 +12,7 @@ interface Keys {
 }
 
 export class JsonPath {
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: FIXME
   public constructor(public readonly access: (o: any) => List<unknown>) {}
 
   public flatMap(other: JsonPath): JsonPath {
@@ -36,11 +36,11 @@ export class JsonPath {
   }
 
   public static identity(): JsonPath {
-    return new JsonPath((o) => List.lift(o))
+    return new JsonPath(o => List.lift(o))
   }
 
   public static flatMap(left: JsonPath, right: JsonPath): JsonPath {
-    return new JsonPath((o: Record<string, unknown>) => left.access(o).flatMap((inner) => right.access(inner)))
+    return new JsonPath((o: Record<string, unknown>) => left.access(o).flatMap(inner => right.access(inner)))
   }
 
   public static concat(left: JsonPath, right: JsonPath): JsonPath {
@@ -50,8 +50,8 @@ export class JsonPath {
   public static take(key: string): JsonPath {
     return new JsonPath((o: Record<string, unknown>) =>
       Option.of(o[key])
-        .map((v) => List.lift(v))
-        .recover(() => List.empty())
+        .map(v => List.lift(v))
+        .recover(() => List.empty()),
     )
   }
 
@@ -67,10 +67,11 @@ export class JsonPath {
     const start = path[0]
     if (start === '$') {
       return JsonPath.identity().flatMap(JsonPath.fromString(path.substring(1)))
-    } else if (start === '.' || start === '[') {
+    }
+    if (start === '.' || start === '[') {
       const { keys, length } = JsonPath.extractKeys(path.substring(1))
       const next = JsonPath.fromString(path.substring(1 + length))
-      const paths = keys.map((key) => JsonPath.fromKey(start, key))
+      const paths = keys.map(key => JsonPath.fromKey(start, key))
       return paths.reduce((p, c) => p.concat(c)).flatMap(next)
     }
     return JsonPath.identity()
@@ -123,23 +124,22 @@ export class JsonPath {
     if (!escaped) {
       if (key === '' || key === '*') {
         return JsonPath.all()
-      } else if (start === '[') {
+      }
+      if (start === '[') {
         const slices = key.split(':')
         const [head, tail] = slices
         if (tail === undefined) {
           const from = Number.parseInt(head)
           if (Number.isNaN(from)) {
             return JsonPath.take(key)
-          } else {
-            return JsonPath.slice(from, from + 1)
           }
-        } else {
-          const from = Number.parseInt(head)
-          const to = Number.parseInt(tail)
-          const safeFrom = Number.isNaN(from) ? 0 : from
-          const safeTo = Number.isNaN(to) ? undefined : to + 1
-          return JsonPath.slice(safeFrom, safeTo)
+          return JsonPath.slice(from, from + 1)
         }
+        const from = Number.parseInt(head)
+        const to = Number.parseInt(tail)
+        const safeFrom = Number.isNaN(from) ? 0 : from
+        const safeTo = Number.isNaN(to) ? undefined : to + 1
+        return JsonPath.slice(safeFrom, safeTo)
       }
     }
     return JsonPath.take(key)

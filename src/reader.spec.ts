@@ -1,4 +1,5 @@
-import { Reader, Option, ReaderT, List } from '../src'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { List, Option, Reader, ReaderT } from '.'
 import { testMonad } from './monad.tests'
 
 interface Context {
@@ -7,10 +8,10 @@ interface Context {
 }
 
 function readKey(key: string): Reader<Context, Option<string>> {
-  return Reader.lift((c) => Option.of(c.env[key]))
+  return Reader.lift(c => Option.of(c.env[key]))
 }
 function unwrapKey(key: Option<string>): Reader<Context, string> {
-  return Reader.lift((c) => {
+  return Reader.lift(c => {
     if (Option.isNone(key)) {
       c.errors.push('could not find key')
     }
@@ -33,7 +34,8 @@ describe('Reader', () => {
 
   describe('map', () => {
     it('maps a pure function onto a reader', () => {
-      const pipeline = (key: string): Reader<Context, string> => readKey(key).map((value) => Option.recover(value, () => 'missing'))
+      const pipeline = (key: string): Reader<Context, string> =>
+        readKey(key).map(value => Option.recover(value, () => 'missing'))
       expect(pipeline('env1').read(context)).toEqual('1')
       expect(pipeline('env2').read(context)).toEqual('missing')
     })
@@ -49,7 +51,7 @@ describe('Reader', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       readKey('env2').with(fn).read(context)
       expect(fn).toHaveBeenCalledWith(Option.none(), context)
     })
@@ -68,15 +70,15 @@ describe('Reader', () => {
     it('maps some', () => {
       expect(
         Reader.lift(() => 1)
-          .optionMap((a) => Option.some(Reader.lift(() => a)))
-          .read(context)
+          .optionMap(a => Option.some(Reader.lift(() => a)))
+          .read(context),
       ).toEqual(Option.of(1))
     })
     it('maps none', () => {
       expect(
         Reader.lift(() => 1)
           .optionMap(Option.none)
-          .read(context)
+          .read(context),
       ).toEqual(Option.none())
     })
   })
@@ -87,7 +89,7 @@ describe('Reader', () => {
         readKey('env2')
           .mapContext(() => ({ env: { env2: '2' }, errors: [] }))
           .read(null)
-          .get()
+          .get(),
       ).toEqual('2')
     })
   })
@@ -110,14 +112,16 @@ describe('Reader', () => {
 describe('ReaderT', () => {
   testMonad(ReaderT.lift(0), async (a, b) => expect(a.value.read({})).toEqual(b.value.read({})))
 
-  const list = new ReaderT(Reader.lift((context: string) => List.repeat('1' + context)))
+  const list = new ReaderT(Reader.lift((context: string) => List.repeat(`1${context}`)))
   it('maps', () => {
-    const c = list.map((s) => Number.parseInt(s))
+    const c = list.map(s => Number.parseInt(s))
     expect((c.value.read('2') as List<number>).take(5).toArray()).toEqual([12, 12, 12, 12, 12])
   })
 
   it('flatmaps', () => {
-    const c = list.flatMap((s) => new ReaderT(Reader.lift((context: string) => List.of([s, context])))).map((s) => Number.parseInt(s))
+    const c = list
+      .flatMap(s => new ReaderT(Reader.lift((context: string) => List.of([s, context]))))
+      .map(s => Number.parseInt(s))
     expect((c.value.read('2') as List<number>).take(5).toArray()).toEqual([12, 2, 12, 2, 12])
   })
 })

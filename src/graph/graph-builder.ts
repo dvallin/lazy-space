@@ -1,11 +1,12 @@
-import { Vertex, Edge, AdjacencyInformation } from '.'
-import { AdjacencyGraph, AdjacencyVertex } from './adjacency-graph'
+import type { AdjacencyInformation, Edge, Vertex } from '.'
 import { List } from '../list'
-import { Tree } from '../tree'
+import type { Tree } from '../tree'
+import { AdjacencyGraph, type AdjacencyVertex } from './adjacency-graph'
 
 export type EdgeKeyGenerator = (from: string, to: string) => string
 export const directed: EdgeKeyGenerator = (from, to) => `${from}->${to}`
-export const undirected: EdgeKeyGenerator = (from, to) => (from.localeCompare(to) > 0 ? directed(to, from) : directed(from, to))
+export const undirected: EdgeKeyGenerator = (from, to) =>
+  from.localeCompare(to) > 0 ? directed(to, from) : directed(from, to)
 
 export class GraphBuilder<S = undefined, T = undefined> {
   private vertices: Map<string, Vertex<S>> = new Map()
@@ -32,18 +33,18 @@ export class GraphBuilder<S = undefined, T = undefined> {
 
   private static addTree<T>(builder: GraphBuilder<T, T>, id: string, tree: Tree<T>): GraphBuilder<T, T> {
     return tree.tree.unwrap(
-      (leaf) => builder.setVertex(id, leaf.value),
-      (node) => {
+      leaf => builder.setVertex(id, leaf.value),
+      node => {
         let index = 0
         builder.setVertex(id, node.value)
-        node.children.forEach((child) => {
-          const childId = id + '.' + index
+        node.children.forEach(child => {
+          const childId = `${id}.${index}`
           builder.addEdge(id, childId)
           GraphBuilder.addTree(builder, childId, child)
           index++
         })
         return builder
-      }
+      },
     )
   }
 
@@ -66,7 +67,7 @@ export class GraphBuilder<S = undefined, T = undefined> {
     this.vertices.forEach((vertex, key) => {
       const neighbours: AdjacencyInformation[] = []
       const n = this.neighbours.get(key) || new Set()
-      n.forEach((to) => neighbours.push({ to, edge: this.edgeKey(key, to) }))
+      n.forEach(to => neighbours.push({ to, edge: this.edgeKey(key, to) }))
       vertices.set(key, {
         ...vertex,
         neighbours: List.of(neighbours),

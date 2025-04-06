@@ -1,11 +1,14 @@
-import { Left, Right } from './either'
-import { Monad } from './monad'
+import type { Left, Right } from './either'
 import { Identity } from './identity'
 import { List } from './list'
+import type { Monad } from './monad'
 
 export type option<T> = T | undefined | null
 export class Option<T> implements Monad<T> {
-  public constructor(public readonly type: 'left' | 'right', public readonly value: option<T>) {}
+  public constructor(
+    public readonly type: 'left' | 'right',
+    public readonly value: option<T>,
+  ) {}
 
   public map<U>(f: (a: T) => option<U>): Option<U> {
     return Option.map(this, f)
@@ -124,29 +127,28 @@ export class Option<T> implements Monad<T> {
   public static unwrap<T, U, V>(val: Option<T>, f: (s: T) => U, g: () => V): U | V {
     if (val.isLeft()) {
       return f(val.value)
-    } else {
-      return g()
     }
+    return g()
   }
 
   public static strictMap<T, U>(val: Option<T>, f: (a: T) => U): Option<U> {
     return Option.unwrap(
       val,
-      (u) => Option.some(f(u)),
-      () => Option.right()
+      u => Option.some(f(u)),
+      () => Option.right(),
     )
   }
 
   public static map<T, U>(val: Option<T>, f: (a: T) => option<U>): Option<U> {
     return Option.unwrap(
       val,
-      (u) => Option.of(f(u)),
-      () => Option.right()
+      u => Option.of(f(u)),
+      () => Option.right(),
     )
   }
 
   public static with<S>(val: Option<S>, f: (a: S) => unknown): Option<S> {
-    return val.map((a) => {
+    return val.map(a => {
       f(a)
       return a
     })
@@ -155,32 +157,32 @@ export class Option<T> implements Monad<T> {
   public static flatMap<T, U>(val: Option<T>, f: (s: T) => Option<U>): Option<U> {
     return Option.unwrap(
       val,
-      (u) => f(u),
-      () => Option.right()
+      u => f(u),
+      () => Option.right(),
     )
   }
 
   public static join<T>(val: Option<Option<T>>): Option<T> {
     return Option.unwrap(
       val,
-      (u) => u,
-      () => Option.right()
+      u => u,
+      () => Option.right(),
     )
   }
 
   public static recover<S, U>(val: Option<S>, f: () => U): S | U {
     return Option.unwrap(
       val,
-      (u) => u,
-      () => f()
+      u => u,
+      () => f(),
     )
   }
 
   public static flatRecover<S, U>(val: Option<S>, f: () => Option<U>): Option<S | U> {
     return Option.unwrap(
       val,
-      (u) => Option.left(u),
-      () => f()
+      u => Option.left(u),
+      () => f(),
     )
   }
 
@@ -198,14 +200,14 @@ export class Option<T> implements Monad<T> {
     value1: Option<T1>,
     value2: Option<T2>,
     value3: Option<T3>,
-    value4: Option<T4>
+    value4: Option<T4>,
   ): Option<[T1, T2, T3, T4]>
   public static zip<T1, T2, T3, T4, T5>(
     value1: Option<T1>,
     value2: Option<T2>,
     value3: Option<T3>,
     value4: Option<T4>,
-    value5: Option<T5>
+    value5: Option<T5>,
   ): Option<[T1, T2, T3, T4, T5]>
   public static zip<T1, T2, T3, T4, T5, T6>(
     value1: Option<T1>,
@@ -213,7 +215,7 @@ export class Option<T> implements Monad<T> {
     value3: Option<T3>,
     value4: Option<T4>,
     value5: Option<T5>,
-    value6: Option<T6>
+    value6: Option<T6>,
   ): Option<[T1, T2, T3, T4, T5, T6]>
   public static zip<T1, T2, T3, T4, T5, T6, T7>(
     value1: Option<T1>,
@@ -222,7 +224,7 @@ export class Option<T> implements Monad<T> {
     value4: Option<T4>,
     value5: Option<T5>,
     value6: Option<T6>,
-    value7: Option<T7>
+    value7: Option<T7>,
   ): Option<[T1, T2, T3, T4, T5, T6, T7]>
   public static zip<T1, T2, T3, T4, T5, T6, T7, T8>(
     value1: Option<T1>,
@@ -232,7 +234,7 @@ export class Option<T> implements Monad<T> {
     value5: Option<T5>,
     value6: Option<T6>,
     value7: Option<T7>,
-    value8: Option<T8>
+    value8: Option<T8>,
   ): Option<[T1, T2, T3, T4, T5, T6, T7, T8]>
   public static zip<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     value1: Option<T1>,
@@ -243,10 +245,10 @@ export class Option<T> implements Monad<T> {
     value6: Option<T6>,
     value7: Option<T7>,
     value8: Option<T8>,
-    value9: Option<T9>
+    value9: Option<T9>,
   ): Option<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>
   public static zip(...args: Option<unknown>[]): Option<unknown[]> {
-    return Option.all(args.filter((a) => a !== undefined))
+    return Option.all(args.filter(a => a !== undefined))
   }
 
   public static all<T>(values: Option<T>[]): Option<T[]> {
@@ -295,7 +297,7 @@ export class Option<T> implements Monad<T> {
   }
 
   public static filterType<T, S extends T = T>(val: Option<T>, f: (a: T) => a is S): Option<S> {
-    return val.flatMap((v) => (f(v) ? Option.some(v) : Option.none()))
+    return val.flatMap(v => (f(v) ? Option.some(v) : Option.none()))
   }
 
   public static filter<T>(val: Option<T>, f: (a: T) => boolean): Option<T> {
@@ -304,8 +306,8 @@ export class Option<T> implements Monad<T> {
 
   public static toList<T>(val: Option<T>): List<T> {
     return val.unwrap(
-      (v) => List.lift(v),
-      () => List.empty()
+      v => List.lift(v),
+      () => List.empty(),
     )
   }
 }
@@ -330,18 +332,18 @@ export class OptionT<T> implements Monad<T> {
   }
 
   public static map<T, U>(t: OptionT<T>, f: (a: T) => U): OptionT<U> {
-    return new OptionT(t.value.map((m) => m.map(f))) as OptionT<U>
+    return new OptionT(t.value.map(m => m.map(f))) as OptionT<U>
   }
 
   public static flatMap<T, U>(t: OptionT<T>, f: (a: T) => OptionT<U>): OptionT<U> {
     return new OptionT(
       t.value.flatMap(
-        (option) =>
+        option =>
           option.unwrap(
-            (s) => f(s).value,
-            () => t.value.lift(Option.none())
-          ) as Monad<Option<U>>
-      )
+            s => f(s).value,
+            () => t.value.lift(Option.none()),
+          ) as Monad<Option<U>>,
+      ),
     )
   }
 
@@ -350,6 +352,6 @@ export class OptionT<T> implements Monad<T> {
   }
 
   public static join<T>(v: OptionT<OptionT<T>>): OptionT<T> {
-    return v.flatMap((i) => i)
+    return v.flatMap(i => i)
   }
 }

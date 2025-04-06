@@ -1,9 +1,12 @@
+import { Lazy, type lazy } from './lazy'
+import type { Monad } from './monad'
 import { Option } from './option'
-import { Monad } from './monad'
-import { Lazy, lazy } from './lazy'
 
 export class List<T> implements Monad<T> {
-  public constructor(public readonly _head: Option<Lazy<T>>, public readonly _tail: lazy<List<T>>) {}
+  public constructor(
+    public readonly _head: Option<Lazy<T>>,
+    public readonly _tail: lazy<List<T>>,
+  ) {}
 
   public head(): Option<T> {
     return List.head(this)
@@ -142,7 +145,7 @@ export class List<T> implements Monad<T> {
   }
 
   public eval(): void {
-    return List.eval(this)
+    List.eval(this)
   }
 
   public static lift<T>(val: T, tail: () => List<T> = List.empty): List<T> {
@@ -171,8 +174,8 @@ export class List<T> implements Monad<T> {
 
   public static map<S, T>(val: List<S>, f: (a: S, index: number) => T, memoized = false, index = 0): List<T> {
     return new List(
-      val._head.map((a) => a.map((v) => f(v, index), memoized)),
-      () => val._tail().map(f, memoized, index + 1)
+      val._head.map(a => a.map(v => f(v, index), memoized)),
+      () => val._tail().map(f, memoized, index + 1),
     )
   }
 
@@ -195,14 +198,14 @@ export class List<T> implements Monad<T> {
   static optionMap<T, U>(value: List<T>, f: (a: T, index: number) => Option<List<U>>): List<Option<U>> {
     return value.flatMap((a, index) =>
       f(a, index).unwrap(
-        (value) => value.map(Option.of),
-        () => List.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => List.lift(Option.none()),
+      ),
     )
   }
 
   public static prepend<T>(list: List<T>, value: T): List<T> {
-    return this.lift(value, () => list)
+    return List.lift(value, () => list)
   }
 
   public static append<T>(list: List<T>, value: T): List<T> {
@@ -218,11 +221,11 @@ export class List<T> implements Monad<T> {
   }
 
   public static join<T>(val: List<List<T>>): List<T> {
-    return List.flatMap(val, (v) => v)
+    return List.flatMap(val, v => v)
   }
 
   public static head<T>(val: List<T>): Option<T> {
-    return val._head.strictMap((v) => v.eval())
+    return val._head.strictMap(v => v.eval())
   }
 
   public static tail<T>(val: List<T>): List<T> {
@@ -247,15 +250,15 @@ export class List<T> implements Monad<T> {
 
   public static takeWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
     return val._head.unwrap(
-      (h) => (predicate(h.eval()) ? new List(val._head, () => val._tail().takeWhile(predicate)) : List.empty()),
-      () => List.empty()
+      h => (predicate(h.eval()) ? new List(val._head, () => val._tail().takeWhile(predicate)) : List.empty()),
+      () => List.empty(),
     )
   }
 
   public static dropWhile<T>(val: List<T>, predicate: (v: T) => boolean): List<T> {
     return val._head.unwrap(
-      (h) => (predicate(h.eval()) ? val._tail().dropWhile(predicate) : val),
-      () => List.empty()
+      h => (predicate(h.eval()) ? val._tail().dropWhile(predicate) : val),
+      () => List.empty(),
     )
   }
 
@@ -275,18 +278,18 @@ export class List<T> implements Monad<T> {
 
   public static scan<S, T>(val: List<S>, initial: T, combine: (l: T, r: S) => T): List<T> {
     return val._head.unwrap(
-      (h) => {
+      h => {
         const head = combine(initial, h.eval())
         return List.lift(head, () => val.tail().scan(head, combine))
       },
-      () => List.empty()
+      () => List.empty(),
     )
   }
 
   public static foldr<S, T>(val: List<S>, initial: () => T, combine: (l: () => T, r: S) => T): T {
     return val._head.unwrap(
-      (h) => combine(() => val._tail().foldr(initial, combine), h.eval()),
-      () => initial()
+      h => combine(() => val._tail().foldr(initial, combine), h.eval()),
+      () => initial(),
     )
   }
 
@@ -306,7 +309,7 @@ export class List<T> implements Monad<T> {
   }
 
   public static find<T>(val: List<T>, predicate: (v: T) => boolean): Option<T> {
-    return val.seek(predicate)._head.strictMap((v) => v.eval())
+    return val.seek(predicate)._head.strictMap(v => v.eval())
   }
 
   public static filterType<T, U extends T>(val: List<T>, predicate: (v: T) => v is U): List<U> {
@@ -319,12 +322,12 @@ export class List<T> implements Monad<T> {
   }
 
   public static all<T>(val: List<T>, predicate: (v: T) => boolean): boolean {
-    return List.find(val, (v) => !predicate(v)).isNone()
+    return List.find(val, v => !predicate(v)).isNone()
   }
 
   public static distinct<T>(val: List<T>): List<T> {
     const filter = new Set()
-    return val.filter((v) => {
+    return val.filter(v => {
       const firstTime = !filter.has(v)
       if (firstTime) {
         filter.add(v)
@@ -389,11 +392,11 @@ export class List<T> implements Monad<T> {
   public static product<T>(lists: List<List<T>>): List<List<T>> {
     return lists.foldr(
       () => List.lift(List.empty()),
-      (l, r) => r.flatMap((a) => l().map((b) => List.lift(a).concat(() => b)))
+      (l, r) => r.flatMap(a => l().map(b => List.lift(a).concat(() => b))),
     )
   }
 
   public static flattenOptionals<T>(list: List<Option<T>>): List<T> {
-    return list.flatMap((o) => o.toList())
+    return list.flatMap(o => o.toList())
   }
 }

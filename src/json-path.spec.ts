@@ -1,11 +1,18 @@
-import { JsonPath } from '../src'
+import { describe, expect, it } from 'vitest'
+import { JsonPath } from '.'
 
 const state = {
   book: [
     { category: 'reference', author: 'Nigel Rees', title: 'Sayings of the Century', price: 8.95 },
     { category: 'fiction', author: 'Evelyn Waugh', title: 'Sword of Honour', price: 12.99 },
     { category: 'fiction', author: 'Herman Melville', title: 'Moby Dick', isbn: '0-553-21311-3', price: 8.99 },
-    { category: 'fiction', author: 'J. R. R. Tolkien', title: 'The Lord of the Rings', isbn: '0-395-19395-8', price: 22.99 },
+    {
+      category: 'fiction',
+      author: 'J. R. R. Tolkien',
+      title: 'The Lord of the Rings',
+      isbn: '0-395-19395-8',
+      price: 22.99,
+    },
   ],
   bicycle: {
     color: 'red',
@@ -40,7 +47,11 @@ describe('JsonPath', () => {
       expect(JsonPath.take('book').slice(0, 2).access(state).toArray()).toEqual([state.book[0], state.book[1]])
     })
     it('takes until end', () => {
-      expect(JsonPath.take('book').slice(1, undefined).access(state).toArray()).toEqual([state.book[1], state.book[2], state.book[3]])
+      expect(JsonPath.take('book').slice(1, undefined).access(state).toArray()).toEqual([
+        state.book[1],
+        state.book[2],
+        state.book[3],
+      ])
     })
   })
 
@@ -60,7 +71,10 @@ describe('JsonPath', () => {
       ])
     })
     it('filters missing values', () => {
-      expect(JsonPath.identity().take('book').all().take('isbn').access(state).toArray()).toEqual([state.book[2].isbn, state.book[3].isbn])
+      expect(JsonPath.identity().take('book').all().take('isbn').access(state).toArray()).toEqual([
+        state.book[2].isbn,
+        state.book[3].isbn,
+      ])
     })
   })
 
@@ -90,7 +104,10 @@ describe('JsonPath', () => {
       expect(JsonPath.fromString(`$['[]']`).access(state).toArray()).toEqual([state['[]']])
     })
     it('parses all access', () => {
-      expect(JsonPath.fromString('$[*].*.isbn').access(state).toArray()).toEqual([state.book[2].isbn, state.book[3].isbn])
+      expect(JsonPath.fromString('$[*].*.isbn').access(state).toArray()).toEqual([
+        state.book[2].isbn,
+        state.book[3].isbn,
+      ])
     })
     it('parses shorthand all access', () => {
       expect(JsonPath.fromString('$[]..isbn').access(state).toArray()).toEqual([state.book[2].isbn, state.book[3].isbn])
@@ -106,7 +123,10 @@ describe('JsonPath', () => {
       ])
     })
     it('parses multiple index access', () => {
-      expect(JsonPath.fromString('$.book[1,0,-1].price').access(state).toArray()).toEqual([state.book[1].price, state.book[0].price])
+      expect(JsonPath.fromString('$.book[1,0,-1].price').access(state).toArray()).toEqual([
+        state.book[1].price,
+        state.book[0].price,
+      ])
     })
     it('parses slice index access', () => {
       expect(JsonPath.fromString('$.book[0:1,:2,:].price').access(state).toArray()).toEqual([

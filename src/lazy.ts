@@ -1,11 +1,14 @@
-import { Monad } from './monad'
+import type { Monad } from './monad'
 import { Option } from './option'
 
 export type lazy<T> = () => T
 
 export class Lazy<T> implements Monad<T> {
   private memory: T | undefined = undefined
-  public constructor(public readonly value: lazy<T>, private readonly memoized: boolean = false) {}
+  public constructor(
+    public readonly value: lazy<T>,
+    private readonly memoized: boolean = false,
+  ) {}
 
   public map<U>(f: (a: T) => U, memoized = false): Lazy<U> {
     return Lazy.map(this, f, memoized)
@@ -48,16 +51,16 @@ export class Lazy<T> implements Monad<T> {
   }
 
   static optionMap<T, U>(value: Lazy<T>, f: (a: T) => Option<Lazy<U>>): Lazy<Option<U>> {
-    return value.flatMap((a) =>
+    return value.flatMap(a =>
       f(a).unwrap(
-        (value) => value.map(Option.of),
-        () => Lazy.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => Lazy.lift(Option.none()),
+      ),
     )
   }
 
   public static with<S>(value: Lazy<S>, f: (a: S) => unknown): Lazy<S> {
-    return value.map((a) => {
+    return value.map(a => {
       f(a)
       return a
     })

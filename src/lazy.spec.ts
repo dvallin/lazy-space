@@ -1,4 +1,5 @@
-import { Lazy, Option } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { Lazy, Option } from '.'
 import { testMonad } from './monad.tests'
 
 describe('lazy', () => {
@@ -6,7 +7,7 @@ describe('lazy', () => {
 
   describe('with', () => {
     it('makes side effects', () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = Lazy.lift('1').with(fn).eval()
       expect(fn).toHaveBeenCalledWith('1')
       expect(value).toEqual('1')
@@ -17,15 +18,15 @@ describe('lazy', () => {
     it('maps some', () => {
       expect(
         Lazy.lift(1)
-          .optionMap((a) => Option.some(Lazy.lift(a)))
-          .eval()
+          .optionMap(a => Option.some(Lazy.lift(a)))
+          .eval(),
       ).toEqual(Option.of(1))
     })
     it('maps none', () => {
       expect(
         Lazy.lift(1)
           .optionMap(() => Option.none())
-          .eval()
+          .eval(),
       ).toEqual(Option.none())
     })
   })

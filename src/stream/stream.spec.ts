@@ -1,4 +1,5 @@
-import { Async, Lazy, List, Option, range, Stream } from '../src'
+import { describe, expect, it, vi } from 'vitest'
+import { Async, Lazy, List, Option, Stream, range } from '..'
 
 describe('Stream', () => {
   describe('empty', () => {
@@ -55,7 +56,7 @@ describe('Stream', () => {
 
   describe('bracket', () => {
     it('closes to array', async () => {
-      const close = jest.fn()
+      const close = vi.fn()
       const result = await Stream.range(0, 3).bracket(close).collect().run()
       expect(result.isSuccess()).toBeTruthy()
       if (result.isSuccess()) {
@@ -65,8 +66,9 @@ describe('Stream', () => {
     })
 
     it('closes on upstream error', async () => {
-      const close = jest.fn()
+      const close = vi.fn()
       const result = await Stream.ofNative(async function* () {
+        yield
         throw new Error('my message')
       })
         .bracket(close)
@@ -80,7 +82,7 @@ describe('Stream', () => {
     })
 
     it('closes on downstream error', async () => {
-      const close = jest.fn()
+      const close = vi.fn()
       const result = await Stream.range(0, 3)
         .bracket(close)
         .map(() => {
@@ -96,13 +98,13 @@ describe('Stream', () => {
     })
 
     it('closes to list', async () => {
-      const close = jest.fn()
+      const close = vi.fn()
       const db = range(0, 3)
       const result = await Stream.of(
         Lazy.of(() => {
           expect(close).not.toHaveBeenCalled()
           return db.next()
-        })
+        }),
       )
         .bracket(close)
         .collectToList()
@@ -118,7 +120,7 @@ describe('Stream', () => {
   describe('map', () => {
     it('maps to array', async () => {
       const result = await Stream.range(0, 3)
-        .map((i) => i.toFixed())
+        .map(i => i.toFixed())
         .collect()
         .run()
       expect(result.isSuccess()).toBeTruthy()
@@ -128,7 +130,7 @@ describe('Stream', () => {
     })
 
     it('works with undefined (void)', async () => {
-      const map = jest.fn().mockResolvedValue(undefined)
+      const map = vi.fn().mockResolvedValue(undefined)
       const result = await Stream.range(0, 2).map(map).collect().run()
       expect(map).toHaveBeenCalledTimes(3)
       expect(result.isSuccess()).toBeTruthy()
@@ -140,7 +142,7 @@ describe('Stream', () => {
 
   describe('with', () => {
     it('makes side effects', async () => {
-      const fn = jest.fn()
+      const fn = vi.fn()
       const value = await Stream.lift('1').with(fn).collect().run()
       expect(fn).toHaveBeenCalledWith('1')
       expect(value.value).toEqual(['1'])
@@ -150,7 +152,7 @@ describe('Stream', () => {
   describe('flatMap', () => {
     it('chains streams', async () => {
       const result = await Stream.range(0, 2)
-        .flatMap((i) => Stream.range(0, 1).map((j) => [i, j].join()))
+        .flatMap(i => Stream.range(0, 1).map(j => [i, j].join()))
         .collect()
         .run()
       expect(result.isSuccess()).toBeTruthy()
@@ -160,9 +162,9 @@ describe('Stream', () => {
     })
 
     it('closes all streams', async () => {
-      const close = [jest.fn(), jest.fn(), jest.fn()]
+      const close = [vi.fn(), vi.fn(), vi.fn()]
       await Stream.range(0, 2)
-        .flatMap((i) => {
+        .flatMap(i => {
           if (i > 0) {
             expect(close[i - 1]).toHaveBeenCalledTimes(1)
           }
@@ -170,11 +172,11 @@ describe('Stream', () => {
         })
         .collect()
         .run()
-      close.forEach((c) => expect(c).toHaveBeenCalledTimes(1))
+      close.forEach(c => expect(c).toHaveBeenCalledTimes(1))
     })
 
     it('works with empty streams', async () => {
-      const map = jest.fn()
+      const map = vi.fn()
       const result = await Stream.range(0, 2)
         .flatMap(() => {
           map()
@@ -190,13 +192,13 @@ describe('Stream', () => {
     })
 
     it('propagates errors up', async () => {
-      const close = jest.fn()
+      const close = vi.fn()
       const result = await Stream.range(0, 2)
         .bracket(close)
         .flatMap(() =>
           Stream.repeat(1).map(() => {
             throw new Error('error')
-          })
+          }),
         )
         .collect()
         .run()
@@ -205,7 +207,7 @@ describe('Stream', () => {
     })
 
     it('propagates errors into current stream', async () => {
-      const onError = jest.fn()
+      const onError = vi.fn()
       const result = await Stream.range(0, 2)
         .flatMap(() => Stream.lift(1).onError(onError))
         .map(() => {
@@ -221,7 +223,7 @@ describe('Stream', () => {
   describe('asyncMap', () => {
     it('maps', async () => {
       const result = await Stream.range(0, 2)
-        .asyncMap((i) => Async.resolve(i))
+        .asyncMap(i => Async.resolve(i))
         .collect()
         .run()
       expect(result.isSuccess()).toBeTruthy()
@@ -231,7 +233,7 @@ describe('Stream', () => {
     })
 
     it('works with undefined (void)', async () => {
-      const map = jest.fn().mockResolvedValue(Async.resolve(undefined))
+      const map = vi.fn().mockResolvedValue(Async.resolve(undefined))
       const result = await Stream.range(0, 2).asyncMap(map).collect().run()
       expect(map).toHaveBeenCalledTimes(3)
       expect(result.isSuccess()).toBeTruthy()
@@ -242,7 +244,7 @@ describe('Stream', () => {
 
     it('fails on rejects', async () => {
       const result = await Stream.range(0, 2)
-        .asyncMap((i) => (i === 1 ? Async.reject() : Async.resolve(i)))
+        .asyncMap(i => (i === 1 ? Async.reject() : Async.resolve(i)))
         .collect()
         .run()
       expect(result.isFailure()).toBeTruthy()
@@ -263,7 +265,7 @@ describe('Stream', () => {
   describe('filter', () => {
     it('filters stream', async () => {
       const result = await Stream.range(0, 2)
-        .filter((a) => a % 2 === 0)
+        .filter(a => a % 2 === 0)
         .collect()
         .run()
       expect(result.isSuccess())
@@ -293,7 +295,7 @@ describe('Stream', () => {
   describe('takeWhile', () => {
     it('takes while true', async () => {
       const result = await Stream.natural()
-        .takeWhile((i) => i <= 5)
+        .takeWhile(i => i <= 5)
         .collect()
         .run()
       expect(result.isSuccess())
@@ -319,12 +321,12 @@ describe('Stream', () => {
     })
 
     it('propagates errors to source streams (and some artificial coverage)', async () => {
-      const natural = jest.fn()
-      const lifted = jest.fn()
-      const of = jest.fn()
-      const fromList = jest.fn()
-      const empty = jest.fn()
-      const repeat = jest.fn()
+      const natural = vi.fn()
+      const lifted = vi.fn()
+      const of = vi.fn()
+      const fromList = vi.fn()
+      const empty = vi.fn()
+      const repeat = vi.fn()
       const result = await Stream.merge([
         Stream.natural().bracket(natural).take(4),
         Stream.lift(2).bracket(lifted),
@@ -351,7 +353,7 @@ describe('Stream', () => {
   describe('dropWhile', () => {
     it('drops while true', async () => {
       const result = await Stream.natural()
-        .dropWhile((i) => i <= 5)
+        .dropWhile(i => i <= 5)
         .take()
         .collect()
         .run()
@@ -362,8 +364,8 @@ describe('Stream', () => {
 
   describe('forEach', () => {
     it('iterates over each item and closes', async () => {
-      const callback = jest.fn()
-      const bracket = jest.fn()
+      const callback = vi.fn()
+      const bracket = vi.fn()
       const result = await Stream.repeat(2).take(5).bracket(bracket).forEach(callback).run()
       expect(result.isSuccess())
       expect(callback).toHaveBeenCalledTimes(5)

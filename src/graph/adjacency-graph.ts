@@ -1,6 +1,6 @@
-import { Option } from '../option'
+import type { AdjacencyInformation, Edge, EdgeId, Graph, Vertex, VertexId } from '.'
 import { List } from '../list'
-import { Vertex, Edge, Graph, VertexId, EdgeId, AdjacencyInformation } from '.'
+import { Option } from '../option'
 
 export interface AdjacencyList {
   neighbours: List<AdjacencyInformation>
@@ -10,7 +10,10 @@ export type AdjacencyVertex<T> = Vertex<T> & AdjacencyList
 export type AdjacencyEdge<T> = Edge<T>
 
 export class AdjacencyGraph<S, T> implements Graph<S, T> {
-  constructor(public readonly vertices: Map<string, AdjacencyVertex<S>>, public readonly edges: Map<string, AdjacencyEdge<T>>) {}
+  constructor(
+    public readonly vertices: Map<string, AdjacencyVertex<S>>,
+    public readonly edges: Map<string, AdjacencyEdge<T>>,
+  ) {}
 
   public get vertexCount(): number {
     return this.vertices.size
@@ -30,13 +33,13 @@ export class AdjacencyGraph<S, T> implements Graph<S, T> {
 
   public getEdgeId(from: VertexId, to: VertexId): Option<EdgeId> {
     return this.getVertex(from)
-      .flatMap((v) => v.neighbours.find((neighbour) => neighbour.to === to))
-      .map((a) => a.edge)
+      .flatMap(v => v.neighbours.find(neighbour => neighbour.to === to))
+      .map(a => a.edge)
   }
 
   public neighbours(id: VertexId): List<VertexId> {
     return this.getVertex(id)
-      .map((e) => e.neighbours.map((n) => n.to))
+      .map(e => e.neighbours.map(n => n.to))
       .recover(() => List.empty())
   }
 }

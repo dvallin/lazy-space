@@ -1,4 +1,4 @@
-import { Monad } from './monad'
+import type { Monad } from './monad'
 import { Option } from './option'
 
 export class Identity<T> implements Monad<T> {
@@ -33,18 +33,18 @@ export class Identity<T> implements Monad<T> {
   }
 
   public static with<S>(m: Identity<S>, f: (a: S) => unknown): Identity<S> {
-    return m.map((a) => {
+    return m.map(a => {
       f(a)
       return a
     })
   }
 
   public static optionMap<T, U>(value: Identity<T>, f: (a: T) => Option<Identity<U>>): Identity<Option<U>> {
-    return value.flatMap((a) =>
+    return value.flatMap(a =>
       f(a).unwrap(
-        (value) => value.map(Option.of),
-        () => Identity.lift(Option.none())
-      )
+        value => value.map(Option.of),
+        () => Identity.lift(Option.none()),
+      ),
     )
   }
 
